@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+
 using OctoshiftCLI.BbsToGithub.Factories;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
@@ -31,26 +32,7 @@ namespace OctoshiftCLI.BbsToGithub
                 .AddSingleton(Logger)
                 .AddSingleton<EnvironmentVariableProvider>()
                 .AddSingleton<BbsApiFactory>()
-                .AddSingleton<GithubApiFactory>()
-                .AddSingleton<RetryPolicy>()
-                .AddSingleton<IAzureApiFactory, AzureApiFactory>()
-                .AddSingleton<IBlobServiceClientFactory, BlobServiceClientFactory>()
-                .AddSingleton<AwsApiFactory>()
-                .AddSingleton<BasicHttpClient>()
-                .AddSingleton<GithubStatusApi>()
-                .AddSingleton<VersionChecker>()
-                .AddSingleton<HttpDownloadServiceFactory>()
-                .AddSingleton<ProjectsCsvGeneratorService>()
-                .AddSingleton<ReposCsvGeneratorService>()
-                .AddSingleton<BbsInspectorService>()
-                .AddSingleton<BbsInspectorServiceFactory>()
-                .AddSingleton<FileSystemProvider>()
-                .AddSingleton<DateTimeProvider>()
-                .AddSingleton<WarningsCountLogger>()
-                .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
-                .AddSingleton<BbsArchiveDownloaderFactory>()
-                .AddSingleton<ConfirmationService>()
-                .AddSingleton<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
+                .AddSingleton<ITargetGithubApiFactory, GithubApiFactory>()
                 .AddHttpClient("Kerberos", kerberos: true, noSsl: false)
                 .AddHttpClient("NoSSL", kerberos: false, noSsl: true)
                 .AddHttpClient("KerberosNoSSL", kerberos: true, noSsl: true)

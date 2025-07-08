@@ -3,6 +3,7 @@ using FluentAssertions;
 using Moq;
 using OctoshiftCLI.BbsToGithub.Commands.MigrateRepo;
 using OctoshiftCLI.BbsToGithub.Factories;
+using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Factories;
 using OctoshiftCLI.Services;
 using Xunit;
@@ -31,7 +32,7 @@ public class MigrateRepoCommandTests
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
     private readonly Mock<FileSystemProvider> _mockFileSystemProvider = TestHelpers.CreateMock<FileSystemProvider>();
-    private readonly Mock<GithubApiFactory> _mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
+    private readonly Mock<ITargetGithubApiFactory> _mockGithubApiFactory = new();
     private readonly Mock<BbsApiFactory> _mockBbsApiFactory = TestHelpers.CreateMock<BbsApiFactory>();
     private readonly Mock<BbsArchiveDownloaderFactory> _mockBbsArchiveDownloaderFactory = TestHelpers.CreateMock<BbsArchiveDownloaderFactory>();
     private readonly Mock<IAzureApiFactory> _mockAzureApiFactory = new();
@@ -44,7 +45,7 @@ public class MigrateRepoCommandTests
         _mockServiceProvider.Setup(m => m.GetService(typeof(OctoLogger))).Returns(_mockOctoLogger.Object);
         _mockServiceProvider.Setup(m => m.GetService(typeof(EnvironmentVariableProvider))).Returns(_mockEnvironmentVariableProvider.Object);
         _mockServiceProvider.Setup(m => m.GetService(typeof(FileSystemProvider))).Returns(_mockFileSystemProvider.Object);
-        _mockServiceProvider.Setup(m => m.GetService(typeof(GithubApiFactory))).Returns(_mockGithubApiFactory.Object);
+        _mockServiceProvider.Setup(m => m.GetService(typeof(ITargetGithubApiFactory))).Returns(_mockGithubApiFactory.Object);
         _mockServiceProvider.Setup(m => m.GetService(typeof(BbsApiFactory))).Returns(_mockBbsApiFactory.Object);
         _mockServiceProvider.Setup(m => m.GetService(typeof(BbsArchiveDownloaderFactory))).Returns(_mockBbsArchiveDownloaderFactory.Object);
         _mockServiceProvider.Setup(m => m.GetService(typeof(IAzureApiFactory))).Returns(_mockAzureApiFactory.Object);
