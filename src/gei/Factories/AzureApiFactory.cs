@@ -19,18 +19,18 @@ public sealed class AzureApiFactory : IAzureApiFactory
     }
 
     public AzureApi Create(string azureStorageConnectionString = null)
-    {
-        var connectionString = string.IsNullOrWhiteSpace(azureStorageConnectionString) ? _environmentVariableProvider.AzureStorageConnectionString() : azureStorageConnectionString;
-
-        var blobServiceClient = _blobServiceClientFactory.Create(connectionString);
-        return new AzureApi(_clientFactory.CreateClient("Default"), blobServiceClient, _octoLogger);
-    }
+    => AzureApiFactoryHelper.Create(
+        _clientFactory,
+        _blobServiceClientFactory,
+        _environmentVariableProvider,
+        _octoLogger,
+        azureStorageConnectionString);
 
     public AzureApi CreateClientNoSsl(string azureStorageConnectionString)
-    {
-        var connectionString = string.IsNullOrWhiteSpace(azureStorageConnectionString) ? _environmentVariableProvider.AzureStorageConnectionString() : azureStorageConnectionString;
-
-        var blobServiceClient = _blobServiceClientFactory.Create(connectionString);
-        return new AzureApi(_clientFactory.CreateClient("NoSSL"), blobServiceClient, _octoLogger);
-    }
+    => AzureApiFactoryHelper.CreateClientNoSsl(
+        _clientFactory,
+        _blobServiceClientFactory,
+        _environmentVariableProvider,
+        _octoLogger,
+        azureStorageConnectionString);
 }
