@@ -1,6 +1,6 @@
 using FluentAssertions;
 using Moq;
-using OctoshiftCLI.GithubEnterpriseImporter.Factories;
+using OctoshiftCLI.Factories;
 using OctoshiftCLI.Services;
 using Xunit;
 

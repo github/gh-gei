@@ -2,7 +2,7 @@ using System.Net.Http;
 using Azure.Storage.Blobs;
 using FluentAssertions;
 using Moq;
-using OctoshiftCLI.GithubEnterpriseImporter.Factories;
+using OctoshiftCLI.Factories;
 using OctoshiftCLI.Services;
 using Xunit;
 
