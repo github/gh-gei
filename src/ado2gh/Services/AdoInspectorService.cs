@@ -35,7 +35,7 @@ namespace OctoshiftCLI.AdoToGithub
 
         public virtual void LoadReposCsv(string csvPath)
         {
-            _orgs = new List<string>();
+            _orgs = [];
 
             using var csvStream = OpenFileStream(csvPath);
             using var csvParser = new TextFieldParser(csvStream);
@@ -57,7 +57,7 @@ namespace OctoshiftCLI.AdoToGithub
 
                 if (!_teamProjects.ContainsKey(org))
                 {
-                    _teamProjects.Add(org, new List<string>());
+                    _teamProjects.Add(org, []);
                 }
 
                 if (!_repos.ContainsKey(org))
@@ -72,7 +72,7 @@ namespace OctoshiftCLI.AdoToGithub
 
                 if (!_repos[org].ContainsKey(teamProject))
                 {
-                    _repos[org].Add(teamProject, new List<AdoRepository>());
+                    _repos[org].Add(teamProject, []);
                 }
 
                 if (!_repos[org][teamProject].Any(x => x.Name == repo))
@@ -88,7 +88,7 @@ namespace OctoshiftCLI.AdoToGithub
             {
                 if (OrgFilter.HasValue())
                 {
-                    _orgs = new List<string>() { OrgFilter };
+                    _orgs = [OrgFilter];
                 }
                 else
                 {
