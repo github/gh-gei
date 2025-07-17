@@ -109,12 +109,10 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         {
             foreach (var teamProject in await _adoInspectorService.GetTeamProjects(org))
             {
-                foreach (var repo in await _adoInspectorService.GetRepos(org, teamProject))
+                foreach (var repo in (await _adoInspectorService.GetRepos(org, teamProject))
+                    .Where(repo => !seen.Add(GetGithubRepoName(teamProject, repo.Name))))
                 {
-                    if (!seen.Add(GetGithubRepoName(teamProject, repo.Name)))
-                    {
-                        _log.LogWarning($"DUPLICATE REPO NAME: {GetGithubRepoName(teamProject, repo.Name)}");
-                    }
+                    _log.LogWarning($"DUPLICATE REPO NAME: {GetGithubRepoName(teamProject, repo.Name)}");
                 }
             }
         }
