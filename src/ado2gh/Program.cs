@@ -82,7 +82,7 @@ namespace OctoshiftCLI.AdoToGithub
 
         private static void WarnIfNotUsingExtension()
         {
-            if (!Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory).EndsWith(Path.Combine("extensions", "gh-ado2gh").ToString()))
+            if (!Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory).EndsWith(Path.Join("extensions", "gh-ado2gh")))
             {
                 Logger.LogWarning("You are not running the ado2gh CLI as a gh extension. This is not recommended, please run: gh extension install github/gh-ado2gh");
             }
