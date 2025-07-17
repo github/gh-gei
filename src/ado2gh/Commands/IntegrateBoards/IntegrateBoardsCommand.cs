@@ -13,7 +13,9 @@ namespace OctoshiftCLI.AdoToGithub.Commands.IntegrateBoards
             name: "integrate-boards",
             description: "Configures the Azure Boards<->GitHub integration in Azure DevOps." +
                          Environment.NewLine +
-                         "Note: Expects ADO_PAT and GH_PAT env variables or --ado-pat and --github-pat options to be set.")
+                         "Note: Expects ADO_PAT and GH_PAT env variables or --ado-pat and --github-pat options to be set." +
+                         Environment.NewLine +
+                         "The ADO_PAT token must have 'All organizations' access selected.")
         {
             AddOption(AdoOrg);
             AddOption(AdoTeamProject);
