@@ -318,41 +318,40 @@ jobs:
         CLI_VERSION: ${{ github.ref }}
 
     - name: Create gh-gei Release
-      uses: softprops/action-gh-release@v2
-      with:
-        body_path: ./RELEASENOTES.md
-        files: |
-          ./dist/ado2gh.*.win-x64.zip
-          ./dist/ado2gh.*.win-x86.zip
-          ./dist/ado2gh.*.linux-x64.tar.gz
-          ./dist/ado2gh.*.osx-x64.tar.gz
-          ./dist/win-x64/gei-windows-amd64.exe
-          ./dist/win-x86/gei-windows-386.exe
-          ./dist/linux-x64/gei-linux-amd64
+      run: |
+        gh release create ${{ github.ref_name }} \
+          --notes-file ./RELEASENOTES.md \
+          ./dist/ado2gh.*.win-x64.zip \
+          ./dist/ado2gh.*.win-x86.zip \
+          ./dist/ado2gh.*.linux-x64.tar.gz \
+          ./dist/ado2gh.*.osx-x64.tar.gz \
+          ./dist/win-x64/gei-windows-amd64.exe \
+          ./dist/win-x86/gei-windows-386.exe \
+          ./dist/linux-x64/gei-linux-amd64 \
           ./dist/osx-x64/gei-darwin-amd64
 
     - name: Create gh-ado2gh Release
-      uses: softprops/action-gh-release@v2
-      with:
-        body_path: ./RELEASENOTES.md
-        repository: github/gh-ado2gh
-        token: ${{ secrets.PUBLISH_ADO2GH_TOKEN }}
-        files: |
-          ./dist/win-x86/ado2gh-windows-386.exe
-          ./dist/win-x64/ado2gh-windows-amd64.exe
-          ./dist/linux-x64/ado2gh-linux-amd64
+      env:
+        GH_TOKEN: ${{ secrets.PUBLISH_ADO2GH_TOKEN }}
+      run: |
+        gh release create ${{ github.ref_name }} \
+          --repo github/gh-ado2gh \
+          --notes-file ./RELEASENOTES.md \
+          ./dist/win-x86/ado2gh-windows-386.exe \
+          ./dist/win-x64/ado2gh-windows-amd64.exe \
+          ./dist/linux-x64/ado2gh-linux-amd64 \
           ./dist/osx-x64/ado2gh-darwin-amd64
 
     - name: Create gh-bbs2gh Release
-      uses: softprops/action-gh-release@v2
-      with:
-        body_path: ./RELEASENOTES.md
-        repository: github/gh-bbs2gh
-        token: ${{ secrets.PUBLISH_BBS2GH_TOKEN }}
-        files: |
-          ./dist/win-x86/bbs2gh-windows-386.exe
-          ./dist/win-x64/bbs2gh-windows-amd64.exe
-          ./dist/linux-x64/bbs2gh-linux-amd64
+      env:
+        GH_TOKEN: ${{ secrets.PUBLISH_BBS2GH_TOKEN }}
+      run: |
+        gh release create ${{ github.ref_name }} \
+          --repo github/gh-bbs2gh \
+          --notes-file ./RELEASENOTES.md \
+          ./dist/win-x86/bbs2gh-windows-386.exe \
+          ./dist/win-x64/bbs2gh-windows-amd64.exe \
+          ./dist/linux-x64/bbs2gh-linux-amd64 \
           ./dist/osx-x64/bbs2gh-darwin-amd64
 
     - name: Archive Release Notes
