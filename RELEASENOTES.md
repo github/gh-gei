@@ -1,1 +1,1 @@
-- Poll migration status every 60 seconds with wait-for-migration.
+- Poll migration status every 60 seconds when waiting for migrations to complete.
