@@ -52,13 +52,13 @@ public class MigrateOrgCommandHandler : ICommandHandler<MigrateOrgCommandArgs>
             if (OrganizationMigrationStatus.IsRepoMigration(migrationState))
             {
                 var migratedRepositoriesCount = (int)totalRepositoriesCount - (int)remainingRepositoriesCount;
-                _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. {migratedRepositoriesCount}/{totalRepositoriesCount} repo(s) migrated. Waiting 10 seconds...");
+                _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. {migratedRepositoriesCount}/{totalRepositoriesCount} repo(s) migrated. Waiting 60 seconds...");
             }
             else
             {
-                _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
+                _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 60 seconds...");
             }
-            await Task.Delay(10000);
+            await Task.Delay(60000);
             (migrationState, _, _, failureReason, remainingRepositoriesCount, totalRepositoriesCount) = await _githubApi.GetOrganizationMigration(migrationId);
         }
 
