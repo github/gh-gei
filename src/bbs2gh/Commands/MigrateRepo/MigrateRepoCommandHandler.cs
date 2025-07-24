@@ -19,7 +19,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private readonly IBbsArchiveDownloader _bbsArchiveDownloader;
     private readonly FileSystemProvider _fileSystemProvider;
     private readonly WarningsCountLogger _warningsCountLogger;
-    private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000;
+    private const int CHECK_EXPORT_STATUS_DELAY_IN_MILLISECONDS = 10000;
+    private const int CHECK_MIGRATION_STATUS_DELAY_IN_MILLISECONDS = 60000;
 
     public MigrateRepoCommandHandler(
         OctoLogger log,
@@ -170,7 +171,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         while (ExportState.IsInProgress(exportState))
         {
             _log.LogInformation($"Export status: {exportState}; {exportProgress}% complete");
-            await Task.Delay(CHECK_STATUS_DELAY_IN_MILLISECONDS);
+            await Task.Delay(CHECK_EXPORT_STATUS_DELAY_IN_MILLISECONDS);
             (exportState, exportMessage, exportProgress) = await _bbsApi.GetExport(exportId);
         }
 
@@ -274,8 +275,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         while (RepositoryMigrationStatus.IsPending(migrationState))
         {
-            _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
-            await Task.Delay(CHECK_STATUS_DELAY_IN_MILLISECONDS);
+            _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 60 seconds...");
+            await Task.Delay(CHECK_MIGRATION_STATUS_DELAY_IN_MILLISECONDS);
             (migrationState, _, warningsCount, failureReason, migrationLogUrl) = await _githubApi.GetMigration(migrationId);
         }
 
