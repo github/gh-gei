@@ -1,4 +1,5 @@
-﻿using OctoshiftCLI.Commands;
+﻿using System;
+using OctoshiftCLI.Commands;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
 
@@ -95,6 +96,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             {
                 throw new OctoshiftCliException("The --use-github-storage flag was provided with a connection string for an Azure storage account. Archive cannot be uploaded to both locations.");
             }
+            ValidateNamesAreNotUrls();
         }
 
         private void DefaultTargetRepo(OctoLogger log)
@@ -112,6 +114,25 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             {
                 GithubSourcePat = GithubTargetPat;
                 log?.LogInformation("Since github-target-pat is provided, github-source-pat will also use its value.");
+            }
+        }
+        private void ValidateNamesAreNotUrls()
+        {
+            if (GithubSourceOrg.HasValue() && Uri.IsWellFormedUriString(GithubSourceOrg, UriKind.Absolute))
+            {
+                throw new OctoshiftCliException("GithubSourceOrg should be an org name, not a URL.");
+            }
+            if (GithubTargetOrg.HasValue() && Uri.IsWellFormedUriString(GithubTargetOrg, UriKind.Absolute))
+            {
+                throw new OctoshiftCliException("GithubTargetOrg should be an org name, not a URL.");
+            }
+            if (SourceRepo.HasValue() && Uri.IsWellFormedUriString(SourceRepo, UriKind.Absolute))
+            {
+                throw new OctoshiftCliException("SourceRepo should be a repo name, not a URL.");
+            }
+            if (TargetRepo.HasValue() && Uri.IsWellFormedUriString(TargetRepo, UriKind.Absolute))
+            {
+                throw new OctoshiftCliException("TargetRepo should be a repo name, not a URL.");
             }
         }
     }
