@@ -275,8 +275,8 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
                     {
                         AppendLine(content, "    ExecBatch @(");
                         AppendLine(content, "        " + Wrap(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo.Name)));
-                        AppendLine(content, "        " + Wrap(AddMaintainersToGithubRepoScript(adoTeamProject, githubOrg, githubRepo)));
-                        AppendLine(content, "        " + Wrap(AddAdminsToGithubRepoScript(adoTeamProject, githubOrg, githubRepo)));
+                        AppendLine(content, "        " + Wrap(AddMaintainersToGithubRepoScript(adoTeamProject, githubOrg, githubRepo, targetApiUrl)));
+                        AppendLine(content, "        " + Wrap(AddAdminsToGithubRepoScript(adoTeamProject, githubOrg, githubRepo, targetApiUrl)));
                         AppendLine(content, "        " + Wrap(DownloadMigrationLogScript(githubOrg, githubRepo, targetApiUrl)));
 
                         appIds.TryGetValue(adoOrg, out var appId);
