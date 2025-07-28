@@ -213,7 +213,7 @@ public class GithubApi
         await _client.PatchAsync(url, payload);
     }
 
-    public virtual async Task AddTeamToRepo(string org, string repo, string teamSlug, string role, string targetApiUrl = null)
+    public virtual async Task AddTeamToRepo(string org, string repo, string teamSlug, string role)
     {
         var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/teams/{teamSlug.EscapeDataString()}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}";
         var payload = new { permission = role };
