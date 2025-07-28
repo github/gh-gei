@@ -41,7 +41,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.AddTeamToRepo
             TestHelpers.VerifyCommandOption(command.Options, "role", true);
             TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "target-api-url", false);
+            TestHelpers.VerifyCommandOption(command.Options, "target-api-url", false);
         }
 
         [Fact]
