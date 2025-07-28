@@ -26,7 +26,7 @@ public class AddTeamToRepoCommandHandler : ICommandHandler<AddTeamToRepoCommandA
         _log.LogInformation("Adding team to repo...");
 
         var teamSlug = await _githubApi.GetTeamSlug(args.GithubOrg, args.Team);
-        await _githubApi.AddTeamToRepo(args.GithubOrg, args.GithubRepo, teamSlug, args.Role);
+        await _githubApi.AddTeamToRepo(args.GithubOrg, args.GithubRepo, teamSlug, args.Role, args.TargetApiUrl);
 
         _log.LogSuccess("Successfully added team to repo");
     }

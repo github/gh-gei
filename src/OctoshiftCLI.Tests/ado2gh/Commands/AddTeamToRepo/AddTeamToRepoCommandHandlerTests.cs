@@ -39,6 +39,6 @@ public class AddTeamToRepoCommandHandlerTests
         };
         await _handler.Handle(args);
 
-        _mockGithubApi.Verify(x => x.AddTeamToRepo(GITHUB_ORG, GITHUB_REPO, teamSlug, role));
+        _mockGithubApi.Verify(x => x.AddTeamToRepo(GITHUB_ORG, GITHUB_REPO, teamSlug, role,null));
     }
 }
