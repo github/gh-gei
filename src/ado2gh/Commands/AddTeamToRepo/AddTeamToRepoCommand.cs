@@ -61,7 +61,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands.AddTeamToRepo
 
             var log = sp.GetRequiredService<OctoLogger>();
             var targetGithubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
-            var githubApi = targetGithubApiFactory.Create(apiUrl: args.TargetApiUrl,targetPersonalAccessToken: args.GithubPat);
+            var githubApi = targetGithubApiFactory.Create(apiUrl: args.TargetApiUrl, targetPersonalAccessToken: args.GithubPat);
 
             return new AddTeamToRepoCommandHandler(log, githubApi);
         }
