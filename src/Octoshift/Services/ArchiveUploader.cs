@@ -15,6 +15,7 @@ public class ArchiveUploader
     private readonly GithubClient _client;
     private readonly OctoLogger _log;
     internal int _streamSizeLimit = 100 * 1024 * 1024; // 100 MiB
+    private const int MIN_MULTIPART_BYTES = 5 * 1024 * 1024; // 5 MiB minimum size for multipart upload. Don't allow overrides smaller than this.
     private readonly RetryPolicy _retryPolicy;
 
     private const string BASE_URL = "https://uploads.github.com";
@@ -24,6 +25,8 @@ public class ArchiveUploader
         _client = client;
         _log = log;
         _retryPolicy = retryPolicy;
+
+        SetStreamSizeLimitFromEnvironment();
     }
     public virtual async Task<string> Upload(Stream archiveContent, string archiveName, string orgDatabaseId)
     {
@@ -159,5 +162,23 @@ public class ArchiveUploader
             }
         }
         throw new OctoshiftCliException("Location header is missing in the response, unable to retrieve next URL for multipart upload.");
+    }
+
+    private void SetStreamSizeLimitFromEnvironment()
+    {
+        var envValue = Environment.GetEnvironmentVariable("GITHUB_OWNED_STORAGE_MULTIPART_BYTES");
+        if (!int.TryParse(envValue, out var limit) || limit <= 0)
+        {
+            return;
+        }
+
+        if (limit < MIN_MULTIPART_BYTES)
+        {
+            _log.LogWarning($"GITHUB_OWNED_STORAGE_MULTIPART_BYTES is set to {limit} bytes, but the minimum value is {MIN_MULTIPART_BYTES} bytes. Using default value of {_streamSizeLimit} bytes.");
+            return;
+        }
+
+        _streamSizeLimit = limit;
+        _log.LogInformation($"Stream size limit set to {_streamSizeLimit} bytes.");
     }
 }

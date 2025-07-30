@@ -1,1 +1,1 @@
-
+- Allow overriding the multipart upload chunk size when using GitHub owned storage. Set the value of the chunk (min 5Mib) in bytes in a environment variable called GITHUB_OWNED_STORAGE_MULTIPART_BYTES (default value 100Mib). Only set this if you a proxy that doesn't allow the default size upload or if you are on a very slow connection.
