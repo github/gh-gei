@@ -15,14 +15,16 @@ public class ArchiveUploaderTests
 {
     private readonly Mock<GithubClient> _githubClientMock;
     private readonly Mock<OctoLogger> _logMock;
+    private readonly Mock<EnvironmentVariableProvider> _environmentVariableProviderMock;
     private readonly ArchiveUploader _archiveUploader;
 
     public ArchiveUploaderTests()
     {
         _logMock = TestHelpers.CreateMock<OctoLogger>();
         _githubClientMock = TestHelpers.CreateMock<GithubClient>();
+        _environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
         var retryPolicy = new RetryPolicy(_logMock.Object) { _httpRetryInterval = 1, _retryInterval = 0 };
-        _archiveUploader = new ArchiveUploader(_githubClientMock.Object, _logMock.Object, retryPolicy);
+        _archiveUploader = new ArchiveUploader(_githubClientMock.Object, _logMock.Object, retryPolicy, _environmentVariableProviderMock.Object);
     }
 
     [Fact]
@@ -35,6 +37,180 @@ public class ArchiveUploaderTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentNullException>(() => _archiveUploader.Upload(nullStream, archiveName, orgDatabaseId));
+    }
+
+    [Fact]
+    public void Constructor_Should_Use_Valid_Environment_Variable_Value()
+    {
+        // Arrange
+        var customSize = 10 * 1024 * 1024; // 10 MiB
+        var logMock = TestHelpers.CreateMock<OctoLogger>();
+        var githubClientMock = TestHelpers.CreateMock<GithubClient>();
+        var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
+        var retryPolicy = new RetryPolicy(logMock.Object);
+
+        environmentVariableProviderMock
+            .Setup(x => x.GithubOwnedStorageMultipartBytes(false))
+            .Returns(customSize.ToString());
+
+        // Act
+        var archiveUploader = new ArchiveUploader(githubClientMock.Object, logMock.Object, retryPolicy, environmentVariableProviderMock.Object);
+
+        // Assert
+        archiveUploader._streamSizeLimit.Should().Be(customSize);
+        logMock.Verify(x => x.LogInformation($"Stream size limit set to {customSize} bytes."), Times.Once);
+    }
+
+    [Fact]
+    public void Constructor_Should_Use_Default_When_Environment_Variable_Not_Set()
+    {
+        // Arrange
+        var defaultSize = 100 * 1024 * 1024; // 100 MiB
+        var logMock = TestHelpers.CreateMock<OctoLogger>();
+        var githubClientMock = TestHelpers.CreateMock<GithubClient>();
+        var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
+        var retryPolicy = new RetryPolicy(logMock.Object);
+
+        environmentVariableProviderMock
+            .Setup(x => x.GithubOwnedStorageMultipartBytes(false))
+            .Returns(() => null);
+
+        // Act
+        var archiveUploader = new ArchiveUploader(githubClientMock.Object, logMock.Object, retryPolicy, environmentVariableProviderMock.Object);
+
+        // Assert
+        archiveUploader._streamSizeLimit.Should().Be(defaultSize);
+    }
+
+    [Fact]
+    public void Constructor_Should_Use_Default_When_Environment_Variable_Is_Invalid()
+    {
+        // Arrange
+        var defaultSize = 100 * 1024 * 1024; // 100 MiB
+        var logMock = TestHelpers.CreateMock<OctoLogger>();
+        var githubClientMock = TestHelpers.CreateMock<GithubClient>();
+        var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
+        var retryPolicy = new RetryPolicy(logMock.Object);
+
+        environmentVariableProviderMock
+            .Setup(x => x.GithubOwnedStorageMultipartBytes(false))
+            .Returns("invalid_value");
+
+        // Act
+        var archiveUploader = new ArchiveUploader(githubClientMock.Object, logMock.Object, retryPolicy, environmentVariableProviderMock.Object);
+
+        // Assert
+        archiveUploader._streamSizeLimit.Should().Be(defaultSize);
+    }
+
+    [Fact]
+    public void Constructor_Should_Use_Default_When_Environment_Variable_Is_Zero()
+    {
+        // Arrange
+        var defaultSize = 100 * 1024 * 1024; // 100 MiB
+        var logMock = TestHelpers.CreateMock<OctoLogger>();
+        var githubClientMock = TestHelpers.CreateMock<GithubClient>();
+        var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
+        var retryPolicy = new RetryPolicy(logMock.Object);
+
+        environmentVariableProviderMock
+            .Setup(x => x.GithubOwnedStorageMultipartBytes(false))
+            .Returns("0");
+
+        // Act
+        var archiveUploader = new ArchiveUploader(githubClientMock.Object, logMock.Object, retryPolicy, environmentVariableProviderMock.Object);
+
+        // Assert
+        archiveUploader._streamSizeLimit.Should().Be(defaultSize);
+    }
+
+    [Fact]
+    public void Constructor_Should_Use_Default_When_Environment_Variable_Is_Negative()
+    {
+        // Arrange
+        var defaultSize = 100 * 1024 * 1024; // 100 MiB
+        var logMock = TestHelpers.CreateMock<OctoLogger>();
+        var githubClientMock = TestHelpers.CreateMock<GithubClient>();
+        var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
+        var retryPolicy = new RetryPolicy(logMock.Object);
+
+        environmentVariableProviderMock
+            .Setup(x => x.GithubOwnedStorageMultipartBytes(false))
+            .Returns("-1000");
+
+        // Act
+        var archiveUploader = new ArchiveUploader(githubClientMock.Object, logMock.Object, retryPolicy, environmentVariableProviderMock.Object);
+
+        // Assert
+        archiveUploader._streamSizeLimit.Should().Be(defaultSize);
+    }
+
+    [Fact]
+    public void Constructor_Should_Use_Default_And_Log_Warning_When_Environment_Variable_Below_Minimum()
+    {
+        // Arrange
+        var belowMinimumSize = 1024 * 1024; // 1 MiB (below 5 MiB minimum)
+        var defaultSize = 100 * 1024 * 1024; // 100 MiB
+        var minSize = 5 * 1024 * 1024; // 5 MiB minimum
+        var logMock = TestHelpers.CreateMock<OctoLogger>();
+        var githubClientMock = TestHelpers.CreateMock<GithubClient>();
+        var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
+        var retryPolicy = new RetryPolicy(logMock.Object);
+
+        environmentVariableProviderMock
+            .Setup(x => x.GithubOwnedStorageMultipartBytes(false))
+            .Returns(belowMinimumSize.ToString());
+
+        // Act
+        var archiveUploader = new ArchiveUploader(githubClientMock.Object, logMock.Object, retryPolicy, environmentVariableProviderMock.Object);
+
+        // Assert
+        archiveUploader._streamSizeLimit.Should().Be(defaultSize);
+        logMock.Verify(x => x.LogWarning($"GITHUB_OWNED_STORAGE_MULTIPART_BYTES is set to {belowMinimumSize} bytes, but the minimum value is {minSize} bytes. Using default value of {defaultSize} bytes."), Times.Once);
+    }
+
+    [Fact]
+    public void Constructor_Should_Accept_Value_Equal_To_Minimum()
+    {
+        // Arrange
+        var minimumSize = 5 * 1024 * 1024; // 5 MiB minimum
+        var logMock = TestHelpers.CreateMock<OctoLogger>();
+        var githubClientMock = TestHelpers.CreateMock<GithubClient>();
+        var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
+        var retryPolicy = new RetryPolicy(logMock.Object);
+
+        environmentVariableProviderMock
+            .Setup(x => x.GithubOwnedStorageMultipartBytes(false))
+            .Returns(minimumSize.ToString());
+
+        // Act
+        var archiveUploader = new ArchiveUploader(githubClientMock.Object, logMock.Object, retryPolicy, environmentVariableProviderMock.Object);
+
+        // Assert
+        archiveUploader._streamSizeLimit.Should().Be(minimumSize);
+        logMock.Verify(x => x.LogInformation($"Stream size limit set to {minimumSize} bytes."), Times.Once);
+    }
+
+    [Fact]
+    public void Constructor_Should_Accept_Large_Valid_Value()
+    {
+        // Arrange
+        var largeSize = 500 * 1024 * 1024; // 500 MiB
+        var logMock = TestHelpers.CreateMock<OctoLogger>();
+        var githubClientMock = TestHelpers.CreateMock<GithubClient>();
+        var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
+        var retryPolicy = new RetryPolicy(logMock.Object);
+
+        environmentVariableProviderMock
+            .Setup(x => x.GithubOwnedStorageMultipartBytes(false))
+            .Returns(largeSize.ToString());
+
+        // Act
+        var archiveUploader = new ArchiveUploader(githubClientMock.Object, logMock.Object, retryPolicy, environmentVariableProviderMock.Object);
+
+        // Assert
+        archiveUploader._streamSizeLimit.Should().Be(largeSize);
+        logMock.Verify(x => x.LogInformation($"Stream size limit set to {largeSize} bytes."), Times.Once);
     }
 
     [Fact]
@@ -119,7 +295,7 @@ public class ArchiveUploaderTests
         // Mocking the initial POST request to initiate multipart upload
         _githubClientMock
             .Setup(m => m.PostWithFullResponseAsync($"{baseUrl}{initialUploadUrl}", It.Is<object>(x => x.ToJson() == startUploadBody.ToJson()), null))
-            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", [firstUploadUrl]) }));
+            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { firstUploadUrl }) }));
 
         // Mocking PATCH requests for each part upload
         _githubClientMock // first PATCH request
@@ -127,12 +303,11 @@ public class ArchiveUploaderTests
                 It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 1, 2 }.ToJson()), null))
             .ThrowsAsync(new TimeoutException("The operation was canceled."))
             .ThrowsAsync(new TimeoutException("The operation was canceled."))
-            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", [secondUploadUrl]) }));
-
+            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { secondUploadUrl }) }));
         _githubClientMock // second PATCH request
-            .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{secondUploadUrl}",
-                It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 3 }.ToJson()), null))
-            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", [lastUrl]) }));
+                   .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{secondUploadUrl}",
+                       It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 3 }.ToJson()), null))
+                   .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { lastUrl }) }));
 
         // Mocking the final PUT request to complete the multipart upload
         _githubClientMock
@@ -177,18 +352,18 @@ public class ArchiveUploaderTests
             .SetupSequence(m => m.PostWithFullResponseAsync($"{baseUrl}{initialUploadUrl}", It.Is<object>(x => x.ToJson() == startUploadBody.ToJson()), null))
             .ThrowsAsync(new TimeoutException("The operation was canceled."))
             .ThrowsAsync(new TimeoutException("The operation was canceled."))
-            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", [firstUploadUrl]) }));
+            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { firstUploadUrl }) }));
 
         // Mocking PATCH requests for each part upload
         _githubClientMock // first PATCH request
             .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{firstUploadUrl}",
                 It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 1, 2 }.ToJson()), null))
-            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", [secondUploadUrl]) }));
+                    .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { secondUploadUrl }) }));
 
         _githubClientMock // second PATCH request
             .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{secondUploadUrl}",
                 It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 3 }.ToJson()), null))
-            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", [lastUrl]) }));
+            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { lastUrl }) }));
 
         // Mocking the final PUT request to complete the multipart upload
         _githubClientMock
@@ -231,18 +406,18 @@ public class ArchiveUploaderTests
         // Mocking the initial POST request to initiate multipart upload
         _githubClientMock
             .Setup(m => m.PostWithFullResponseAsync($"{baseUrl}{initialUploadUrl}", It.Is<object>(x => x.ToJson() == startUploadBody.ToJson()), null))
-            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", [firstUploadUrl]) }));
+            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { firstUploadUrl }) }));
 
         // Mocking PATCH requests for each part upload
         _githubClientMock // first PATCH request
             .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{firstUploadUrl}",
                 It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 1, 2 }.ToJson()), null))
-            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", [secondUploadUrl]) }));
+                    .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { secondUploadUrl }) }));
 
         _githubClientMock // second PATCH request
-            .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{secondUploadUrl}",
-                It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 3 }.ToJson()), null))
-            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", [lastUrl]) }));
+                   .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{secondUploadUrl}",
+                       It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 3 }.ToJson()), null))
+                   .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { lastUrl }) }));
 
         // Mocking the final PUT request to complete the multipart upload
         _githubClientMock

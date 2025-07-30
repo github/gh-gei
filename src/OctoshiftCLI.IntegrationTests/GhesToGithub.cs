@@ -48,10 +48,11 @@ public sealed class GhesToGithub : IDisposable
 
         _versionClient = new HttpClient();
         var retryPolicy = new RetryPolicy(logger);
-        _archiveUploader = new ArchiveUploader(_targetGithubClient, logger, retryPolicy);
+        var environmentVariableProvider = new EnvironmentVariableProvider(logger);
 
         _sourceGithubHttpClient = new HttpClient();
         _sourceGithubClient = new GithubClient(logger, _sourceGithubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), sourceGithubToken);
+        _archiveUploader = new ArchiveUploader(_sourceGithubClient, logger, retryPolicy, environmentVariableProvider);
         _sourceGithubApi = new GithubApi(_sourceGithubClient, GHES_API_URL, new RetryPolicy(logger), _archiveUploader);
 
         _targetGithubHttpClient = new HttpClient();
