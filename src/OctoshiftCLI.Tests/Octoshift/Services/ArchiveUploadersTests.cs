@@ -11,6 +11,7 @@ using Xunit;
 
 namespace OctoshiftCLI.Tests.Octoshift.Services;
 
+[Collection("Environment Variables")]
 public class ArchiveUploaderTests : IDisposable
 {
     private bool _disposed;
