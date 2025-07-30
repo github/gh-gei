@@ -13,6 +13,8 @@ namespace OctoshiftCLI.Tests.Octoshift.Services;
 
 public class ArchiveUploaderTests : IDisposable
 {
+    private bool _disposed;
+
     private readonly Mock<GithubClient> _githubClientMock;
     private readonly Mock<OctoLogger> _logMock;
     private readonly ArchiveUploader _archiveUploader;
@@ -26,10 +28,22 @@ public class ArchiveUploaderTests : IDisposable
         _archiveUploader = new ArchiveUploader(_githubClientMock.Object, _logMock.Object, retryPolicy);
     }
 
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                // Clean up environment variable after each test
+                Environment.SetEnvironmentVariable(ENV_VAR_NAME, null);
+            }
+            _disposed = true;
+        }
+    }
     public void Dispose()
     {
-        // Clean up environment variable after each test
-        Environment.SetEnvironmentVariable(ENV_VAR_NAME, null);
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 
     [Fact]
@@ -285,10 +299,10 @@ public class ArchiveUploaderTests : IDisposable
             .ThrowsAsync(new TimeoutException("The operation was canceled."))
             .ThrowsAsync(new TimeoutException("The operation was canceled."))
             .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", [secondUploadUrl]) }));
- _githubClientMock // second PATCH request
-            .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{secondUploadUrl}",
-                It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 3 }.ToJson()), null))
-            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", [lastUrl]) }));
+        _githubClientMock // second PATCH request
+                   .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{secondUploadUrl}",
+                       It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 3 }.ToJson()), null))
+                   .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", [lastUrl]) }));
 
         // Mocking the final PUT request to complete the multipart upload
         _githubClientMock
@@ -395,10 +409,10 @@ public class ArchiveUploaderTests : IDisposable
                 It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 1, 2 }.ToJson()), null))
                     .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", [secondUploadUrl]) }));
 
- _githubClientMock // second PATCH request
-            .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{secondUploadUrl}",
-                It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 3 }.ToJson()), null))
-            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", [lastUrl]) }));
+        _githubClientMock // second PATCH request
+                   .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{secondUploadUrl}",
+                       It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 3 }.ToJson()), null))
+                   .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", [lastUrl]) }));
 
         // Mocking the final PUT request to complete the multipart upload
         _githubClientMock
