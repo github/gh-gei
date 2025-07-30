@@ -12,19 +12,22 @@ namespace OctoshiftCLI.Services;
 
 public class ArchiveUploader
 {
+    private const int MIN_MULTIPART_BYTES = 5 * 1024 * 1024; // 5 MiB minimum size for multipart upload. Don't allow overrides smaller than this.
+
     private readonly GithubClient _client;
     private readonly OctoLogger _log;
+    private readonly EnvironmentVariableProvider _environmentVariableProvider;
     internal int _streamSizeLimit = 100 * 1024 * 1024; // 100 MiB
-    private const int MIN_MULTIPART_BYTES = 5 * 1024 * 1024; // 5 MiB minimum size for multipart upload. Don't allow overrides smaller than this.
     private readonly RetryPolicy _retryPolicy;
 
     private const string BASE_URL = "https://uploads.github.com";
 
-    public ArchiveUploader(GithubClient client, OctoLogger log, RetryPolicy retryPolicy)
+    public ArchiveUploader(GithubClient client, OctoLogger log, RetryPolicy retryPolicy, EnvironmentVariableProvider environmentVariableProvider)
     {
         _client = client;
         _log = log;
         _retryPolicy = retryPolicy;
+        _environmentVariableProvider = environmentVariableProvider;
 
         SetStreamSizeLimitFromEnvironment();
     }
@@ -166,7 +169,7 @@ public class ArchiveUploader
 
     private void SetStreamSizeLimitFromEnvironment()
     {
-        var envValue = Environment.GetEnvironmentVariable("GITHUB_OWNED_STORAGE_MULTIPART_BYTES");
+        var envValue = _environmentVariableProvider.GithubOwnedStorageMultipartBytes();
         if (!int.TryParse(envValue, out var limit) || limit <= 0)
         {
             return;
