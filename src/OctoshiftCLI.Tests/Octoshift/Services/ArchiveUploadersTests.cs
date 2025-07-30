@@ -73,7 +73,7 @@ public class ArchiveUploaderTests
 
         environmentVariableProviderMock
             .Setup(x => x.GithubOwnedStorageMultipartBytes(false))
-            .Returns((string)null);
+            .Returns(() => null);
 
         // Act
         var archiveUploader = new ArchiveUploader(githubClientMock.Object, logMock.Object, retryPolicy, environmentVariableProviderMock.Object);
