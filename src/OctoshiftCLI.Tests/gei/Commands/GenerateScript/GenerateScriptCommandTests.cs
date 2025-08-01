@@ -67,12 +67,13 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
             {
                 GithubSourceOrg = "foo",
                 GhesApiUrl = "https://github.contoso.com",
+                TargetUploadsUrl = "https://uploads.github.com",
                 NoSslVerify = true,
             };
 
             _ = _command.BuildHandler(args, _serviceProvider);
 
-            _mockGithubApiFactory.Verify(m => m.CreateClientNoSsl(args.GhesApiUrl, null, It.IsAny<string>()), Times.Once);
+            _mockGithubApiFactory.Verify(m => m.CreateClientNoSsl(args.GhesApiUrl, args.TargetUploadsUrl, It.IsAny<string>()), Times.Once);
         }
 
         [Fact]
@@ -80,13 +81,14 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
         {
             var args = new GenerateScriptCommandArgs
             {
+                TargetUploadsUrl = "https://uploads.github.com",
                 GithubSourceOrg = "foo",
                 GithubSourcePat = "1234",
             };
 
             _ = _command.BuildHandler(args, _serviceProvider);
 
-            _mockGithubApiFactory.Verify(m => m.Create(It.IsAny<string>(), null, args.GithubSourcePat), Times.Once);
+            _mockGithubApiFactory.Verify(m => m.Create(It.IsAny<string>(), args.TargetUploadsUrl, args.GithubSourcePat), Times.Once);
         }
     }
 }
