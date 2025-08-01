@@ -58,7 +58,7 @@ public class MigrateRepoCommandTests
         var command = new MigrateRepoCommand();
         command.Should().NotBeNull();
         command.Name.Should().Be("migrate-repo");
-        command.Options.Count.Should().Be(32);
+        command.Options.Count.Should().Be(33);
 
         TestHelpers.VerifyCommandOption(command.Options, "bbs-server-url", true);
         TestHelpers.VerifyCommandOption(command.Options, "bbs-project", true);
@@ -90,6 +90,7 @@ public class MigrateRepoCommandTests
         TestHelpers.VerifyCommandOption(command.Options, "keep-archive", false);
         TestHelpers.VerifyCommandOption(command.Options, "no-ssl-verify", false);
         TestHelpers.VerifyCommandOption(command.Options, "target-api-url", false);
+        TestHelpers.VerifyCommandOption(command.Options, "target-uploads-url", false, true);
         TestHelpers.VerifyCommandOption(command.Options, "use-github-storage", false, true);
     }
 
