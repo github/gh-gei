@@ -39,7 +39,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
             var command = new GenerateScriptCommand();
             command.Should().NotBeNull();
             command.Name.Should().Be("generate-script");
-            command.Options.Count.Should().Be(16);
+            command.Options.Count.Should().Be(17);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-source-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
