@@ -191,7 +191,7 @@ public class MigrateRepoCommandTests
         // Assert
         handler.Should().NotBeNull();
 
-        _mockGithubApiFactory.Verify(m => m.Create(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockGithubApiFactory.Verify(m => m.Create(It.IsAny<string>(), null, It.IsAny<string>()), Times.Never);
         _mockBbsApiFactory.Verify(m => m.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()), Times.Never);
         _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSshDownloader(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Never);
         _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSmbDownloader(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
@@ -215,7 +215,7 @@ public class MigrateRepoCommandTests
         // Assert
         handler.Should().NotBeNull();
 
-        _mockGithubApiFactory.Verify(m => m.Create(null, GITHUB_PAT));
+        _mockGithubApiFactory.Verify(m => m.Create(null, null, GITHUB_PAT));
     }
 
     [Fact]
@@ -236,7 +236,7 @@ public class MigrateRepoCommandTests
         // Assert
         handler.Should().NotBeNull();
 
-        _mockGithubApiFactory.Verify(m => m.Create(targetApiUrl, GITHUB_PAT));
+        _mockGithubApiFactory.Verify(m => m.Create(targetApiUrl, null, GITHUB_PAT));
     }
 
     [Fact]

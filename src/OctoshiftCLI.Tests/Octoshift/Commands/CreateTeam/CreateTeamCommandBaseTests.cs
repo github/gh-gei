@@ -40,7 +40,7 @@ public class CreateTeamCommandTests
 
         _command.BuildHandler(args, _serviceProvider);
 
-        _mockGithubApiFactory.Verify(m => m.Create(It.IsAny<string>(), args.GithubPat), Times.Once);
+        _mockGithubApiFactory.Verify(m => m.Create(It.IsAny<string>(), null, args.GithubPat), Times.Once);
     }
 
     [Fact]
@@ -57,6 +57,6 @@ public class CreateTeamCommandTests
 
         _command.BuildHandler(args, _serviceProvider);
 
-        _mockGithubApiFactory.Verify(m => m.Create(args.TargetApiUrl, null), Times.Once);
+        _mockGithubApiFactory.Verify(m => m.Create(args.TargetApiUrl, null, null), Times.Once);
     }
 }

@@ -41,7 +41,7 @@ public class RevokeMigratorRoleCommandBaseTests
 
         _command.BuildHandler(args, _serviceProvider);
 
-        _mockGithubApiFactory.Verify(m => m.Create(It.IsAny<string>(), githubPat));
+        _mockGithubApiFactory.Verify(m => m.Create(It.IsAny<string>(), null, githubPat));
     }
 
     [Fact]
@@ -59,7 +59,7 @@ public class RevokeMigratorRoleCommandBaseTests
 
         _command.BuildHandler(args, _serviceProvider);
 
-        _mockGithubApiFactory.Verify(m => m.Create(ghesApiUrl, null));
+        _mockGithubApiFactory.Verify(m => m.Create(ghesApiUrl, null, null));
     }
 
     [Fact]
@@ -79,6 +79,6 @@ public class RevokeMigratorRoleCommandBaseTests
 
         _command.BuildHandler(args, _serviceProvider);
 
-        _mockGithubApiFactory.Verify(m => m.Create(targetApiUrl, null));
+        _mockGithubApiFactory.Verify(m => m.Create(targetApiUrl, null, null));
     }
 }

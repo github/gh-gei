@@ -67,7 +67,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateOrg
 
             _command.BuildHandler(args, _serviceProvider);
 
-            _mockGithubApiFactory.Verify(m => m.Create(targetApiUrl, githubTargetPat));
+            _mockGithubApiFactory.Verify(m => m.Create(targetApiUrl, null, githubTargetPat));
         }
     }
 }

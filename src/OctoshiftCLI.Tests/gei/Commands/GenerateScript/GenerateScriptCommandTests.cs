@@ -56,6 +56,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
             TestHelpers.VerifyCommandOption(command.Options, "aws-region", false);
             TestHelpers.VerifyCommandOption(command.Options, "keep-archive", false);
             TestHelpers.VerifyCommandOption(command.Options, "target-api-url", false);
+            TestHelpers.VerifyCommandOption(command.Options, "target-uploads-url", false, true);
             TestHelpers.VerifyCommandOption(command.Options, "use-github-storage", false, true);
         }
 
@@ -71,7 +72,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
 
             _ = _command.BuildHandler(args, _serviceProvider);
 
-            _mockGithubApiFactory.Verify(m => m.CreateClientNoSsl(args.GhesApiUrl, It.IsAny<string>()), Times.Once);
+            _mockGithubApiFactory.Verify(m => m.CreateClientNoSsl(args.GhesApiUrl, null, It.IsAny<string>()), Times.Once);
         }
 
         [Fact]
@@ -85,7 +86,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
 
             _ = _command.BuildHandler(args, _serviceProvider);
 
-            _mockGithubApiFactory.Verify(m => m.Create(It.IsAny<string>(), args.GithubSourcePat), Times.Once);
+            _mockGithubApiFactory.Verify(m => m.Create(It.IsAny<string>(), null, args.GithubSourcePat), Times.Once);
         }
     }
 }
