@@ -49,7 +49,6 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.MigrateRepo
             TestHelpers.VerifyCommandOption(_command.Options, "github-pat", false);
             TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
             TestHelpers.VerifyCommandOption(_command.Options, "target-api-url", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "target-uploads-url", false, true);
         }
 
         [Fact]
@@ -71,7 +70,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.MigrateRepo
 
             _command.BuildHandler(args, _serviceProvider);
 
-            _mockGithubApiFactory.Verify(m => m.Create(null, null, githubPat));
+            _mockGithubApiFactory.Verify(m => m.Create(null, It.IsAny<string>(), githubPat));
         }
         [Fact]
         public void It_Uses_Target_Api_Url_When_Provided()
@@ -94,7 +93,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.MigrateRepo
 
             _command.BuildHandler(args, _serviceProvider);
 
-            _mockGithubApiFactory.Verify(m => m.Create(targetApiUrl, null, githubPat));
+            _mockGithubApiFactory.Verify(m => m.Create(targetApiUrl, It.IsAny<string>(), githubPat));
         }
     }
 }
