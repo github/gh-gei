@@ -134,9 +134,10 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         var noSslVerify = args.NoSslVerify ? " --no-ssl-verify" : "";
         var targetRepoVisibility = " --target-repo-visibility private";
         var targetApiUrlOption = args.TargetApiUrl.HasValue() ? $" --target-api-url \"{args.TargetApiUrl}\"" : "";
+        var targetUploadsUrlOption = args.TargetUploadsUrl.HasValue() ? $" --target-uploads-url \"{args.TargetUploadsUrl}\"" : "";
         var githubStorageOption = args.UseGithubStorage ? " --use-github-storage" : "";
 
-        return $"gh bbs2gh migrate-repo{targetApiUrlOption}{bbsServerUrlOption}{bbsUsernameOption}{bbsSharedHomeOption}{bbsProjectOption}{bbsRepoOption}{sshArchiveDownloadOptions}" +
+        return $"gh bbs2gh migrate-repo{targetApiUrlOption}{targetUploadsUrlOption}{bbsServerUrlOption}{bbsUsernameOption}{bbsSharedHomeOption}{bbsProjectOption}{bbsRepoOption}{sshArchiveDownloadOptions}" +
                $"{smbArchiveDownloadOptions}{githubOrgOption}{githubRepoOption}{verboseOption}{waitOption}{kerberosOption}{awsBucketNameOption}{awsRegionOption}{keepArchive}{noSslVerify}{targetRepoVisibility}{githubStorageOption}";
     }
 

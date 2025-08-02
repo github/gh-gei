@@ -13,15 +13,15 @@ namespace OctoshiftCLI.Services;
 public class ArchiveUploader
 {
     private readonly GithubClient _client;
+    private readonly string _uploadsUrl;
     private readonly OctoLogger _log;
     internal int _streamSizeLimit = 100 * 1024 * 1024; // 100 MiB
     private readonly RetryPolicy _retryPolicy;
 
-    private const string BASE_URL = "https://uploads.github.com";
-
-    public ArchiveUploader(GithubClient client, OctoLogger log, RetryPolicy retryPolicy)
+    public ArchiveUploader(GithubClient client, string uploadsUrl, OctoLogger log, RetryPolicy retryPolicy)
     {
         _client = client;
+        _uploadsUrl = uploadsUrl;
         _log = log;
         _retryPolicy = retryPolicy;
     }
@@ -41,14 +41,14 @@ public class ArchiveUploader
 
         if (isMultipart)
         {
-            var url = $"{BASE_URL}/organizations/{orgDatabaseId.EscapeDataString()}/gei/archive/blobs/uploads";
+            var url = $"{_uploadsUrl}/organizations/{orgDatabaseId.EscapeDataString()}/gei/archive/blobs/uploads";
 
             response = await UploadMultipart(archiveContent, archiveName, url);
             return response;
         }
         else
         {
-            var url = $"{BASE_URL}/organizations/{orgDatabaseId.EscapeDataString()}/gei/archive?name={archiveName.EscapeDataString()}";
+            var url = $"{_uploadsUrl}/organizations/{orgDatabaseId.EscapeDataString()}/gei/archive?name={archiveName.EscapeDataString()}";
 
             response = await _retryPolicy.Retry(async () => await _client.PostAsync(url, streamContent));
             var data = JObject.Parse(response);
@@ -155,7 +155,7 @@ public class ArchiveUploader
             var locationValue = locationHeader.Value.FirstOrDefault();
             if (locationValue.HasValue())
             {
-                return new Uri(new Uri(BASE_URL), locationValue);
+                return new Uri(new Uri(_uploadsUrl), locationValue);
             }
         }
         throw new OctoshiftCliException("Location header is missing in the response, unable to retrieve next URL for multipart upload.");

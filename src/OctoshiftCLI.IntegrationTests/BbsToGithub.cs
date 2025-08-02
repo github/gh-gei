@@ -16,6 +16,7 @@ public sealed class BbsToGithub : IDisposable
 {
     private const string SSH_KEY_FILE = "ssh_key.pem";
     private const string AWS_REGION = "us-east-1";
+    private const string UPLOADS_URL = "https://uploads.github.com";
 
     private readonly ITestOutputHelper _output;
     private readonly OctoLogger _logger;
@@ -60,7 +61,7 @@ public sealed class BbsToGithub : IDisposable
         _targetGithubHttpClient = new HttpClient();
         _targetGithubClient = new GithubClient(_logger, _targetGithubHttpClient, new VersionChecker(_versionClient, _logger), new RetryPolicy(_logger), new DateTimeProvider(), targetGithubToken);
         var retryPolicy = new RetryPolicy(_logger);
-        _archiveUploader = new ArchiveUploader(_targetGithubClient, _logger, retryPolicy);
+        _archiveUploader = new ArchiveUploader(_targetGithubClient, UPLOADS_URL, _logger, retryPolicy);
         _targetGithubApi = new GithubApi(_targetGithubClient, "https://api.github.com", new RetryPolicy(_logger), _archiveUploader);
 
         _blobServiceClient = new BlobServiceClient(_azureStorageConnectionString);
