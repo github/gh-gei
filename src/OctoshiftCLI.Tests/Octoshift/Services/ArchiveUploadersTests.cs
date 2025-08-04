@@ -14,6 +14,8 @@ namespace OctoshiftCLI.Tests.Octoshift.Services;
 
 public class ArchiveUploaderTests
 {
+    private const string UPLOADS_URL = "https://uploads.github.com";
+
     private readonly Mock<GithubClient> _githubClientMock;
     private readonly Mock<OctoLogger> _logMock;
     private readonly ArchiveUploader _archiveUploader;
@@ -23,7 +25,7 @@ public class ArchiveUploaderTests
         _logMock = TestHelpers.CreateMock<OctoLogger>();
         _githubClientMock = TestHelpers.CreateMock<GithubClient>();
         var retryPolicy = new RetryPolicy(_logMock.Object) { _httpRetryInterval = 1, _retryInterval = 0 };
-        _archiveUploader = new ArchiveUploader(_githubClientMock.Object, _logMock.Object, retryPolicy);
+        _archiveUploader = new ArchiveUploader(_githubClientMock.Object, UPLOADS_URL, _logMock.Object, retryPolicy);
     }
 
     [Fact]

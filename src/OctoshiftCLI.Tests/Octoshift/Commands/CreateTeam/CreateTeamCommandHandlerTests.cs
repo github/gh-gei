@@ -33,7 +33,7 @@ public class CreateTeamCommandHandlerTests
         _mockGithubApi.Setup(x => x.GetTeamMembers(GITHUB_ORG, TEAM_SLUG).Result).Returns(TEAM_MEMBERS);
         _mockGithubApi.Setup(x => x.GetIdpGroupId(GITHUB_ORG, IDP_GROUP).Result).Returns(IDP_GROUP_ID);
         _mockGithubApi.Setup(x => x.CreateTeam(GITHUB_ORG, TEAM_NAME).Result).Returns(("1", TEAM_SLUG));
-        _mockGithubApi.Setup(x => x.GetTeams(GITHUB_ORG).Result).Returns(new List<(string, string)>());
+        _mockGithubApi.Setup(x => x.GetTeams(GITHUB_ORG).Result).Returns(new List<(string, string, string)>());
 
         var args = new CreateTeamCommandArgs
         {
@@ -54,7 +54,7 @@ public class CreateTeamCommandHandlerTests
     {
         _mockGithubApi.Setup(x => x.GetTeamMembers(GITHUB_ORG, TEAM_SLUG).Result).Returns(TEAM_MEMBERS);
         _mockGithubApi.Setup(x => x.GetIdpGroupId(GITHUB_ORG, IDP_GROUP).Result).Returns(IDP_GROUP_ID);
-        _mockGithubApi.Setup(x => x.GetTeams(GITHUB_ORG).Result).Returns(new List<(string, string)> { (TEAM_NAME, TEAM_SLUG) });
+        _mockGithubApi.Setup(x => x.GetTeams(GITHUB_ORG).Result).Returns(new List<(string, string, string)> { ("1", TEAM_NAME, TEAM_SLUG) });
 
         var actualLogOutput = new List<string>();
         _mockOctoLogger.Setup(m => m.LogInformation(It.IsAny<string>())).Callback<string>(s => actualLogOutput.Add(s));

@@ -59,7 +59,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.AddTeamToRepo
 
             _command.BuildHandler(args, _serviceProvider);
 
-            _mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
+            _mockGithubApiFactory.Verify(m => m.Create(null, null, githubPat));
         }
 
         [Fact]
@@ -73,7 +73,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.AddTeamToRepo
             command.SetHandler(async x => await command.BuildHandler(x, _serviceProvider).Handle(x), argsBinder);
             await command.InvokeAsync(args);
 
-            _mockGithubApiFactory.Verify(x => x.Create(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            _mockGithubApiFactory.Verify(x => x.Create(It.IsAny<string>(), null, It.IsAny<string>()), Times.Never);
         }
     }
 }

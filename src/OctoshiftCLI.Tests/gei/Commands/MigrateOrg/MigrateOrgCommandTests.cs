@@ -36,7 +36,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateOrg
             var command = new MigrateOrgCommand();
             command.Should().NotBeNull();
             command.Name.Should().Be("migrate-org");
-            command.Options.Count.Should().Be(8);
+            command.Options.Count.Should().Be(9);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-source-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
@@ -46,6 +46,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateOrg
             TestHelpers.VerifyCommandOption(command.Options, "github-target-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
             TestHelpers.VerifyCommandOption(command.Options, "target-api-url", false);
+            TestHelpers.VerifyCommandOption(command.Options, "target-uploads-url", false, true);
         }
 
         [Fact]
@@ -54,6 +55,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateOrg
             var githubSourcePat = "abc123";
             var githubTargetPat = "def456";
             var targetApiUrl = "https://api.github.com";
+            var targetUploadsUrl = "https://uploads.github.com";
 
             var args = new MigrateOrgCommandArgs
             {
@@ -62,12 +64,13 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateOrg
                 GithubTargetOrg = "target-org",
                 GithubTargetEnterprise = "target-enterprise",
                 GithubTargetPat = githubTargetPat,
-                TargetApiUrl = targetApiUrl
+                TargetApiUrl = targetApiUrl,
+                TargetUploadsUrl = targetUploadsUrl
             };
 
             _command.BuildHandler(args, _serviceProvider);
 
-            _mockGithubApiFactory.Verify(m => m.Create(targetApiUrl, githubTargetPat));
+            _mockGithubApiFactory.Verify(m => m.Create(targetApiUrl, targetUploadsUrl, githubTargetPat));
         }
     }
 }

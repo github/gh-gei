@@ -1,6 +1,6 @@
 using OctoshiftCLI.Services;
 
-namespace OctoshiftCLI.BbsToGithub.Factories;
+namespace OctoshiftCLI.Factories;
 
 public interface IAzureApiFactory
 {

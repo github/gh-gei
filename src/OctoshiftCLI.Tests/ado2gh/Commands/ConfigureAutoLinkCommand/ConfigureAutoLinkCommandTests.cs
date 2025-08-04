@@ -57,7 +57,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.ConfigureAutoLink
 
             _command.BuildHandler(args, _serviceProvider);
 
-            _mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
+            _mockGithubApiFactory.Verify(m => m.Create(null, null, githubPat));
         }
     }
 }

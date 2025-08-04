@@ -27,6 +27,7 @@ public class GenerateScriptCommandArgs : CommandArgs
     public bool KeepArchive { get; set; }
     public bool NoSslVerify { get; set; }
     public string TargetApiUrl { get; set; }
+    public string TargetUploadsUrl { get; set; }
     public bool UseGithubStorage { get; set; }
 
     public override void Validate(OctoLogger log)

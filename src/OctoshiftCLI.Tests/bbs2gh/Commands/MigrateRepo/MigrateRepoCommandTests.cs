@@ -3,6 +3,8 @@ using FluentAssertions;
 using Moq;
 using OctoshiftCLI.BbsToGithub.Commands.MigrateRepo;
 using OctoshiftCLI.BbsToGithub.Factories;
+using OctoshiftCLI.Contracts;
+using OctoshiftCLI.Factories;
 using OctoshiftCLI.Services;
 using Xunit;
 
@@ -30,7 +32,7 @@ public class MigrateRepoCommandTests
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
     private readonly Mock<FileSystemProvider> _mockFileSystemProvider = TestHelpers.CreateMock<FileSystemProvider>();
-    private readonly Mock<GithubApiFactory> _mockGithubApiFactory = TestHelpers.CreateMock<GithubApiFactory>();
+    private readonly Mock<ITargetGithubApiFactory> _mockGithubApiFactory = new();
     private readonly Mock<BbsApiFactory> _mockBbsApiFactory = TestHelpers.CreateMock<BbsApiFactory>();
     private readonly Mock<BbsArchiveDownloaderFactory> _mockBbsArchiveDownloaderFactory = TestHelpers.CreateMock<BbsArchiveDownloaderFactory>();
     private readonly Mock<IAzureApiFactory> _mockAzureApiFactory = new();
@@ -43,7 +45,7 @@ public class MigrateRepoCommandTests
         _mockServiceProvider.Setup(m => m.GetService(typeof(OctoLogger))).Returns(_mockOctoLogger.Object);
         _mockServiceProvider.Setup(m => m.GetService(typeof(EnvironmentVariableProvider))).Returns(_mockEnvironmentVariableProvider.Object);
         _mockServiceProvider.Setup(m => m.GetService(typeof(FileSystemProvider))).Returns(_mockFileSystemProvider.Object);
-        _mockServiceProvider.Setup(m => m.GetService(typeof(GithubApiFactory))).Returns(_mockGithubApiFactory.Object);
+        _mockServiceProvider.Setup(m => m.GetService(typeof(ITargetGithubApiFactory))).Returns(_mockGithubApiFactory.Object);
         _mockServiceProvider.Setup(m => m.GetService(typeof(BbsApiFactory))).Returns(_mockBbsApiFactory.Object);
         _mockServiceProvider.Setup(m => m.GetService(typeof(BbsArchiveDownloaderFactory))).Returns(_mockBbsArchiveDownloaderFactory.Object);
         _mockServiceProvider.Setup(m => m.GetService(typeof(IAzureApiFactory))).Returns(_mockAzureApiFactory.Object);
@@ -56,7 +58,7 @@ public class MigrateRepoCommandTests
         var command = new MigrateRepoCommand();
         command.Should().NotBeNull();
         command.Name.Should().Be("migrate-repo");
-        command.Options.Count.Should().Be(32);
+        command.Options.Count.Should().Be(33);
 
         TestHelpers.VerifyCommandOption(command.Options, "bbs-server-url", true);
         TestHelpers.VerifyCommandOption(command.Options, "bbs-project", true);
@@ -88,6 +90,7 @@ public class MigrateRepoCommandTests
         TestHelpers.VerifyCommandOption(command.Options, "keep-archive", false);
         TestHelpers.VerifyCommandOption(command.Options, "no-ssl-verify", false);
         TestHelpers.VerifyCommandOption(command.Options, "target-api-url", false);
+        TestHelpers.VerifyCommandOption(command.Options, "target-uploads-url", false, true);
         TestHelpers.VerifyCommandOption(command.Options, "use-github-storage", false, true);
     }
 
@@ -189,7 +192,7 @@ public class MigrateRepoCommandTests
         // Assert
         handler.Should().NotBeNull();
 
-        _mockGithubApiFactory.Verify(m => m.Create(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockGithubApiFactory.Verify(m => m.Create(It.IsAny<string>(), null, It.IsAny<string>()), Times.Never);
         _mockBbsApiFactory.Verify(m => m.Create(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()), Times.Never);
         _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSshDownloader(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Never);
         _mockBbsArchiveDownloaderFactory.Verify(m => m.CreateSmbDownloader(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
@@ -213,7 +216,7 @@ public class MigrateRepoCommandTests
         // Assert
         handler.Should().NotBeNull();
 
-        _mockGithubApiFactory.Verify(m => m.Create(null, GITHUB_PAT));
+        _mockGithubApiFactory.Verify(m => m.Create(null, null, GITHUB_PAT));
     }
 
     [Fact]
@@ -234,7 +237,7 @@ public class MigrateRepoCommandTests
         // Assert
         handler.Should().NotBeNull();
 
-        _mockGithubApiFactory.Verify(m => m.Create(targetApiUrl, GITHUB_PAT));
+        _mockGithubApiFactory.Verify(m => m.Create(targetApiUrl, null, GITHUB_PAT));
     }
 
     [Fact]
