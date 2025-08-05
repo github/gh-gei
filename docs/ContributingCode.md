@@ -70,7 +70,7 @@ Only repo maintainers can publish a release. The process is kicked off by pushin
 
 ### How to publish a release
 
-1. Check [`RELEASENOTES.md`](http://releasenotes.md/) to see if there is anything to release.
+1. Check [`RELEASENOTES.md`](RELEASENOTES.md) to see if there is anything to release.
 2. Switch to the `main` branch and `pull` the latest.
 3. *optional* List the tags e.g. `git tag`
 4. Tag the version e.g. `git tag v1.18.0`
