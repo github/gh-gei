@@ -66,20 +66,20 @@ There are 3 types of static analysis that are enforced on every PR:
 3. dotnet format - This is a style/formatting check. To ensure we follow consistent code formatting you should run `dotnet format` locally before creating a PR. If the PR build fails on dotnet format it's almost certainly because you didn't run dotnet format before committing.
 
 ## Publishing a Release
-Only repo maintainers can publish a release. The process is kicked off by pushing a tag in the format `v0.7`. We follow [Semantic Versioning](https://semver.org/) when deciding on the next version number.
+Only repo maintainers can publish a release. The process is kicked off by pushing a tag in the format `v1.18.0`. We follow [Semantic Versioning](https://semver.org/) when deciding on the next version number.
 
 ### How to publish a release
 
-1. Check [`RELEASENOTES.md`](http://releasenotes.md/) to see if there is anything to release.
+1. Check [`RELEASENOTES.md`](/RELEASENOTES.md) to see if there is anything to release.
 2. Switch to the `main` branch and `pull` the latest.
 3. *optional* List the tags e.g. `git tag`
-4. Tag the version e.g. `git tag v5.0`
+4. Tag the version e.g. `git tag v1.18.0`
 5. Push the tags up e.g. `git push --tags`
 6. This will trigger an Actions workflow that results in a new release being published, once the build is done it will wait for approval(from maintainers) in order to `pushlish` the binaries. The workflow does the following steps:
     - Validates that the SHA referenced by the tag is in the history of the `main` branch
     - Runs `publish.ps1` to build self-contained binaries for each platform. This script also embeds the version number (extracted from the tag) into each binary.
-    - Creates a release in this repo with the self-contained binaries, uses the contents of `RELEASENOTES.md` as the release description.
-    - Moves the contents of `[RELEASENOTES.md](http://RELEASENOTES.md)` to a version specific file under the name of the created `tag` in the releasenotes folder, then empties out `RELEASENOTES.md` and commits the 2 files.
+    - Creates a release in this repo with the self-contained binaries, uses the contents of [`RELEASENOTES.md`](/RELEASENOTES.md) as the release description.
+    - Moves the contents of [`RELEASENOTES.md`](/RELEASENOTES.md) to a version specific file under the name of the created `tag` in the releasenotes folder, then empties out [`RELEASENOTES.md`](/RELEASENOTES.md) and commits the 2 files.
 
 ## Development Basics
 

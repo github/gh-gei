@@ -53,7 +53,7 @@ public class GrantMigratorRoleCommandBase : CommandBase<GrantMigratorRoleCommand
         var log = sp.GetRequiredService<OctoLogger>();
         var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
         var apiUrl = args.TargetApiUrl ?? args.GhesApiUrl;
-        var githubApi = githubApiFactory.Create(apiUrl, args.GithubPat);
+        var githubApi = githubApiFactory.Create(apiUrl, null, args.GithubPat);
 
         return new GrantMigratorRoleCommandHandler(log, githubApi);
     }

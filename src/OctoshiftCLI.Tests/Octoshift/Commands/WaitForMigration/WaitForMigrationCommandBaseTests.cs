@@ -40,7 +40,7 @@ public class WaitForMigrationCommandBaseTests
 
         _command.BuildHandler(args, _serviceProvider);
 
-        _mockGithubApiFactory.Verify(m => m.Create(targetApiUrl, It.IsAny<string>()));
+        _mockGithubApiFactory.Verify(m => m.Create(targetApiUrl, null, It.IsAny<string>()));
     }
 }
 

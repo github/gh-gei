@@ -88,7 +88,7 @@ public class ReclaimMannequinCommandBase : CommandBase<ReclaimMannequinCommandAr
 
         var log = sp.GetRequiredService<OctoLogger>();
         var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
-        var githubApi = githubApiFactory.Create(args.TargetApiUrl, args.GithubPat);
+        var githubApi = githubApiFactory.Create(args.TargetApiUrl, null, args.GithubPat);
         var reclaimService = new ReclaimService(githubApi, log);
         var confirmationService = sp.GetRequiredService<ConfirmationService>();
 

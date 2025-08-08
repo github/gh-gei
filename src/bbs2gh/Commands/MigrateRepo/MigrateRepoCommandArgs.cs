@@ -29,6 +29,7 @@ public class MigrateRepoCommandArgs : CommandArgs
     public bool QueueOnly { get; set; }
     public string TargetRepoVisibility { get; set; }
     public string TargetApiUrl { get; set; }
+    public string TargetUploadsUrl { get; set; }
     public bool Kerberos { get; set; }
 
     public string BbsServerUrl { get; set; }
