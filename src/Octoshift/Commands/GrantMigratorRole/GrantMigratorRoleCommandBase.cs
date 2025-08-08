@@ -10,7 +10,7 @@ public class GrantMigratorRoleCommandBase : CommandBase<GrantMigratorRoleCommand
 {
     public GrantMigratorRoleCommandBase() : base(
         name: "grant-migrator-role",
-        description: "Allows an organization admin to grant a USER or TEAM the migrator role for a single GitHub organization. The migrator role allows the role assignee to perform migrations into the target organization.")
+        description: "Allows an organization owner to grant a USER or TEAM the migrator role for a single GitHub organization. The migrator role allows the role assignee to perform migrations into the target organization.")
     {
     }
 
