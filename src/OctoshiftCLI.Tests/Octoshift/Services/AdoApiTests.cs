@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -1012,7 +1012,7 @@ public class AdoApiTests
                     refsUrl = $"https://api.github.com/repos/{GITHUB_ORG}/{githubRepo}/git/refs",
                     safeRepository = $"{GITHUB_ORG}/{githubRepo}",
                     shortName = githubRepo,
-                    reportBuildStatus = true
+                    reportBuildStatus = "true"
                 },
                 id = $"{GITHUB_ORG}/{githubRepo}",
                 type = "GitHub",
@@ -1031,7 +1031,8 @@ public class AdoApiTests
                     settingsSourceType = 2,
                     branchFilters = Array.Empty<object>(),
                     pathFilters = Array.Empty<object>(),
-                    batchChanges = false
+                    batchChanges = false,
+                    reportBuildStatus = "true"
                 },
                 new
                 {
@@ -1045,7 +1046,8 @@ public class AdoApiTests
                         allowSecrets = false
                     },
                     branchFilters = Array.Empty<object>(),
-                    pathFilters = Array.Empty<object>()
+                    pathFilters = Array.Empty<object>(),
+                    reportBuildStatus = "true"
                 }
             },
             settingsSourceType = 2 // Use YAML definitions
@@ -1120,7 +1122,7 @@ public class AdoApiTests
                     refsUrl,
                     safeRepository = $"{GITHUB_ORG}/{githubRepo}",
                     shortName = githubRepo,
-                    reportBuildStatus = true
+                    reportBuildStatus = "true"
                 },
                 id = $"{GITHUB_ORG}/{githubRepo}",
                 type = "GitHub",
@@ -1139,7 +1141,8 @@ public class AdoApiTests
                     settingsSourceType = 2,
                     branchFilters = Array.Empty<object>(),
                     pathFilters = Array.Empty<object>(),
-                    batchChanges = false
+                    batchChanges = false,
+                    reportBuildStatus = "true"
                 },
                 new
                 {
@@ -1153,7 +1156,8 @@ public class AdoApiTests
                         allowSecrets = false
                     },
                     branchFilters = Array.Empty<object>(),
-                    pathFilters = Array.Empty<object>()
+                    pathFilters = Array.Empty<object>(),
+                    reportBuildStatus = "true"
                 }
             },
             settingsSourceType = 2 // Use YAML definitions
@@ -1224,7 +1228,7 @@ public class AdoApiTests
                     refsUrl = $"https://api.github.com/repos/{GITHUB_ORG}/{githubRepo}/git/refs",
                     safeRepository = $"{GITHUB_ORG}/{githubRepo}",
                     shortName = githubRepo,
-                    reportBuildStatus = true  // Boolean to match other tests
+                    reportBuildStatus = "true"  // String to match other tests
                 },
                 id = $"{GITHUB_ORG}/{githubRepo}",
                 type = "GitHub",
@@ -1242,7 +1246,8 @@ public class AdoApiTests
                     settingsSourceType = 2,
                     branchFilters = Array.Empty<object>(),
                     pathFilters = Array.Empty<object>(),
-                    batchChanges = false
+                    batchChanges = false,
+                    reportBuildStatus = "true"
                 },
                 new
                 {
@@ -1256,7 +1261,8 @@ public class AdoApiTests
                         allowSecrets = false
                     },
                     branchFilters = Array.Empty<object>(),
-                    pathFilters = Array.Empty<object>()
+                    pathFilters = Array.Empty<object>(),
+                    reportBuildStatus = "true"
                 }
             },
             oneLastThing = false,

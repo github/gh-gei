@@ -255,9 +255,9 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             // Act
             await _adoApi.ChangePipelineRepo(ADO_ORG, TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, "github-org", githubRepo, serviceConnectionId, originalTriggers);
 
-            // Assert - Should preserve original triggers (both CI and PR, no build status reporting)
+            // Assert - Should preserve original triggers (both CI and PR, with build status reporting)
             _mockAdoClient.Verify(m => m.PutAsync(pipelineUrl, It.Is<object>(payload =>
-                VerifyTriggersPreserved(payload, true, false)
+                VerifyTriggersPreserved(payload, true, true)
             )), Times.Once);
         }
 
@@ -333,7 +333,7 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             }
 
             // Check CI trigger build status reporting
-            var ciHasBuildStatus = ciTrigger["reportBuildStatus"]?.Value<bool>() == true;
+            var ciHasBuildStatus = ciTrigger["reportBuildStatus"]?.ToString() == "true";
             if (ciHasBuildStatus != enableBuildStatusReporting)
             {
                 return false;
@@ -349,7 +349,7 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
                 }
 
                 // Check PR trigger build status reporting
-                var prHasBuildStatus = prTrigger["reportBuildStatus"]?.Value<bool>() == true;
+                var prHasBuildStatus = prTrigger["reportBuildStatus"]?.ToString() == "true";
                 if (prHasBuildStatus != enableBuildStatusReporting)
                 {
                     return false;

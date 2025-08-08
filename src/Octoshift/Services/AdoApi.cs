@@ -601,29 +601,7 @@ public class AdoApi
         var currentRepoName = data["repository"]?["name"]?.ToString();
 
         // Check if this pipeline is required by branch policy for build validation
-        var isPipelineRequiredByBranchPolicy = false;
-        if (!string.IsNullOrEmpty(currentRepoName))
-        {
-            try
-            {
-                isPipelineRequiredByBranchPolicy = await IsPipelineRequiredByBranchPolicy(adoOrg, teamProject, currentRepoName, pipelineId);
-            }
-            catch (HttpRequestException)
-            {
-                // If branch policy checking fails due to network/HTTP issues, default to false
-                isPipelineRequiredByBranchPolicy = false;
-            }
-            catch (JsonException)
-            {
-                // If branch policy checking fails due to JSON parsing issues, default to false
-                isPipelineRequiredByBranchPolicy = false;
-            }
-            catch (ArgumentException)
-            {
-                // If branch policy checking fails due to invalid arguments, default to false
-                isPipelineRequiredByBranchPolicy = false;
-            }
-        }
+        var (isPipelineRequiredByBranchPolicy, branchPolicyCheckSucceeded) = await CheckBranchPolicyRequirement(adoOrg, teamProject, currentRepoName, pipelineId);
 
         foreach (var prop in data.Properties())
         {
@@ -636,22 +614,52 @@ public class AdoApi
                 // Handle triggers based on branch policy requirements and original triggers
                 if (isPipelineRequiredByBranchPolicy)
                 {
-                    // Scenario 2: Pipeline IS required by branch policy
-                    // Enable both PR and CI triggers with build status reporting
-                    prop.Value = CreateYamlControlledTriggers(enablePullRequestValidation: true, enableBuildStatusReporting: true);
+                    // Scenario 1: Pipeline IS required by branch policy
+                    // Enable both PR and CI triggers with build status reporting (required for branch policy integration)
+                    var originalCiReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "continuousIntegration");
+                    var originalPrReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "pullRequest");
+                    // For branch policy scenarios, enable reportBuildStatus if it was originally enabled OR if no original setting exists
+                    var enableCiBuildStatus = IsReportBuildStatusEnabled(originalCiReportBuildStatus) || originalTriggers == null || !HasTriggerType(originalTriggers, "continuousIntegration");
+                    var enablePrBuildStatus = IsReportBuildStatusEnabled(originalPrReportBuildStatus) || originalTriggers == null || !HasTriggerType(originalTriggers, "pullRequest");
+                    prop.Value = CreateYamlControlledTriggers(enablePullRequestValidation: true, enableCiBuildStatusReporting: enableCiBuildStatus, enablePrBuildStatusReporting: enablePrBuildStatus);
+                }
+                else if (branchPolicyCheckSucceeded)
+                {
+                    // Scenario 2a: Pipeline NOT required by branch policy, but check was successful
+                    // Preserve existing triggers regardless of complexity
+                    if (originalTriggers != null)
+                    {
+                        var hadPullRequestTrigger = HasPullRequestTrigger(originalTriggers);
+                        var originalCiReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "continuousIntegration");
+                        var originalPrReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "pullRequest");
+                        prop.Value = CreateYamlControlledTriggers(enablePullRequestValidation: hadPullRequestTrigger, enableCiBuildStatusReporting: IsReportBuildStatusEnabled(originalCiReportBuildStatus), enablePrBuildStatusReporting: IsReportBuildStatusEnabled(originalPrReportBuildStatus));
+                    }
+                    else
+                    {
+                        // Default case: Enable PR validation with build status reporting for backwards compatibility
+                        prop.Value = CreateYamlControlledTriggers(enablePullRequestValidation: true, enableCiBuildStatusReporting: true, enablePrBuildStatusReporting: true);
+                    }
+                }
+                else if (originalTriggers != null && HasCompleteTriggerSet(originalTriggers))
+                {
+                    // Scenario 2b: Branch policy check failed/not performed, but has rich trigger configuration
+                    // Preserve existing rich triggers with proper UI structure
+                    var hadPullRequestTrigger = HasPullRequestTrigger(originalTriggers);
+                    var originalCiReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "continuousIntegration");
+                    var originalPrReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "pullRequest");
+                    prop.Value = CreateYamlControlledTriggers(enablePullRequestValidation: hadPullRequestTrigger, enableCiBuildStatusReporting: IsReportBuildStatusEnabled(originalCiReportBuildStatus), enablePrBuildStatusReporting: IsReportBuildStatusEnabled(originalPrReportBuildStatus));
                 }
                 else if (originalTriggers != null)
                 {
-                    // Scenario 1: Pipeline NOT required by branch policy, but has original triggers
-                    // Preserve existing triggers as-is (don't modify them)
-                    var hadPullRequestTrigger = HasPullRequestTrigger(originalTriggers);
-                    prop.Value = CreateYamlControlledTriggers(enablePullRequestValidation: hadPullRequestTrigger, enableBuildStatusReporting: false);
+                    // Scenario 2c: Branch policy check failed/not performed, has minimal trigger configuration
+                    // Use YAML-only approach (empty triggers array) to let YAML completely control triggers
+                    prop.Value = new JArray();
                 }
                 else
                 {
-                    // Default case: No original triggers and not required by branch policy
-                    // Add basic CI trigger only
-                    prop.Value = CreateYamlControlledTriggers(enablePullRequestValidation: false, enableBuildStatusReporting: false);
+                    // Default case: No original triggers and branch policy check failed
+                    // For basic rewiring scenarios (backwards compatibility), enable both PR validation and build status reporting
+                    prop.Value = CreateYamlControlledTriggers(enablePullRequestValidation: true, enableCiBuildStatusReporting: true, enablePrBuildStatusReporting: true);
                 }
             }
 
@@ -663,22 +671,49 @@ public class AdoApi
         {
             if (isPipelineRequiredByBranchPolicy)
             {
-                // Scenario 2: Pipeline IS required by branch policy
-                // Enable both PR and CI triggers with build status reporting
-                payload["triggers"] = CreateYamlControlledTriggers(enablePullRequestValidation: true, enableBuildStatusReporting: true);
+                // Scenario 1: Pipeline IS required by branch policy
+                // Enable both PR and CI triggers with build status reporting preserved from original
+                var originalCiReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "continuousIntegration");
+                var originalPrReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "pullRequest");
+                payload["triggers"] = CreateYamlControlledTriggers(enablePullRequestValidation: true, enableCiBuildStatusReporting: IsReportBuildStatusEnabled(originalCiReportBuildStatus), enablePrBuildStatusReporting: IsReportBuildStatusEnabled(originalPrReportBuildStatus));
+            }
+            else if (branchPolicyCheckSucceeded)
+            {
+                // Scenario 2a: Pipeline NOT required by branch policy, but check was successful
+                // Preserve existing triggers regardless of complexity
+                if (originalTriggers != null)
+                {
+                    var hadPullRequestTrigger = HasPullRequestTrigger(originalTriggers);
+                    var originalCiReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "continuousIntegration");
+                    var originalPrReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "pullRequest");
+                    payload["triggers"] = CreateYamlControlledTriggers(enablePullRequestValidation: hadPullRequestTrigger, enableCiBuildStatusReporting: IsReportBuildStatusEnabled(originalCiReportBuildStatus), enablePrBuildStatusReporting: IsReportBuildStatusEnabled(originalPrReportBuildStatus));
+                }
+                else
+                {
+                    // Default case: Enable PR validation with build status reporting for backwards compatibility
+                    payload["triggers"] = CreateYamlControlledTriggers(enablePullRequestValidation: true, enableCiBuildStatusReporting: true, enablePrBuildStatusReporting: true);
+                }
+            }
+            else if (originalTriggers != null && HasCompleteTriggerSet(originalTriggers))
+            {
+                // Scenario 2b: Branch policy check failed/not performed, but has rich trigger configuration
+                // Preserve existing rich triggers with proper UI structure
+                var hadPullRequestTrigger = HasPullRequestTrigger(originalTriggers);
+                var originalCiReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "continuousIntegration");
+                var originalPrReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "pullRequest");
+                payload["triggers"] = CreateYamlControlledTriggers(enablePullRequestValidation: hadPullRequestTrigger, enableCiBuildStatusReporting: IsReportBuildStatusEnabled(originalCiReportBuildStatus), enablePrBuildStatusReporting: IsReportBuildStatusEnabled(originalPrReportBuildStatus));
             }
             else if (originalTriggers != null)
             {
-                // Scenario 1: Pipeline NOT required by branch policy, but has original triggers
-                // Preserve existing triggers as-is (don't modify them)
-                var hadPullRequestTrigger = HasPullRequestTrigger(originalTriggers);
-                payload["triggers"] = CreateYamlControlledTriggers(enablePullRequestValidation: hadPullRequestTrigger, enableBuildStatusReporting: false);
+                // Scenario 2c: Branch policy check failed/not performed, has minimal trigger configuration
+                // Use YAML-only approach (empty triggers array) to let YAML completely control triggers
+                payload["triggers"] = new JArray();
             }
             else
             {
-                // Default case: No original triggers and not required by branch policy
-                // Add basic CI trigger only
-                payload["triggers"] = CreateYamlControlledTriggers(enablePullRequestValidation: false, enableBuildStatusReporting: false);
+                // Default case: No original triggers and branch policy check failed
+                // For basic rewiring scenarios (backwards compatibility), enable both PR validation and build status reporting
+                payload["triggers"] = CreateYamlControlledTriggers(enablePullRequestValidation: true, enableCiBuildStatusReporting: true, enablePrBuildStatusReporting: true);
             }
         }
 
@@ -735,6 +770,169 @@ public class AdoApi
         return originalTriggers is JArray triggerArray && triggerArray.Any(trigger =>
             trigger is JObject triggerObj &&
             triggerObj["triggerType"]?.ToString() == "pullRequest");
+    }
+
+    private bool HasCompleteTriggerSet(JToken originalTriggers)
+    {
+        if (originalTriggers is not JArray triggerArray)
+        {
+            return false;
+        }
+
+        // Check if any trigger has rich configuration that should be preserved
+        foreach (var trigger in triggerArray)
+        {
+            if (trigger is not JObject triggerObj)
+            {
+                continue;
+            }
+
+            // Check for rich PR trigger configuration
+            if (triggerObj["triggerType"]?.ToString() == "pullRequest")
+            {
+                // Rich PR trigger settings that indicate it should be preserved
+                if (triggerObj["forks"] != null ||
+                    triggerObj["isCommentRequiredForPullRequest"] != null ||
+                    triggerObj["requireCommentsForNonTeamMembersOnly"] != null ||
+                    triggerObj["autoCancel"] != null ||
+                    triggerObj["settingsSourceType"] != null)
+                {
+                    return true;
+                }
+            }
+
+            // Check for rich CI trigger configuration  
+            if (triggerObj["triggerType"]?.ToString() == "continuousIntegration")
+            {
+                // Rich CI trigger settings that indicate it should be preserved
+                if (triggerObj["batchChanges"] != null ||
+                    triggerObj["settingsSourceType"] != null ||
+                    triggerObj["maxConcurrentBuildsPerBranch"] != null)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private string GetOriginalReportBuildStatus(JToken originalTriggers, string triggerType)
+    {
+        if (originalTriggers is not JArray triggerArray)
+        {
+            return "true"; // Default to "true" when no original triggers exist
+        }
+
+        // Look for the specified trigger type and extract its reportBuildStatus setting
+        foreach (var trigger in triggerArray)
+        {
+            if (trigger is JObject triggerObj &&
+                triggerObj["triggerType"]?.ToString() == triggerType)
+            {
+                // Return the original reportBuildStatus value, defaulting to "true" if not present
+                var reportBuildStatusToken = triggerObj["reportBuildStatus"];
+                if (reportBuildStatusToken == null)
+                {
+                    return "true"; // Default to "true" when property doesn't exist
+                }
+
+                // Handle both boolean and string values - normalize to string
+                if (reportBuildStatusToken.Type == JTokenType.Boolean)
+                {
+                    return reportBuildStatusToken.Value<bool>() ? "true" : "false";
+                }
+                else if (reportBuildStatusToken.Type == JTokenType.String)
+                {
+                    var stringValue = reportBuildStatusToken.ToString();
+                    // Normalize to lowercase for consistency
+                    return string.Equals(stringValue, "true", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(stringValue, "True", StringComparison.OrdinalIgnoreCase)
+                        ? "true"
+                        : "false";
+                }
+
+                // Try to convert any other type to boolean, then to string
+                try
+                {
+                    return reportBuildStatusToken.ToObject<bool>() ? "true" : "false";
+                }
+                catch (JsonException)
+                {
+                    return "true"; // Default to "true" if JSON conversion fails
+                }
+                catch (InvalidOperationException)
+                {
+                    return "true"; // Default to "true" if operation is invalid
+                }
+            }
+        }
+
+        return "true"; // Default to "true" when trigger type not found in original triggers
+    }
+
+    private static bool IsReportBuildStatusEnabled(string reportBuildStatusValue)
+    {
+        return string.Equals(reportBuildStatusValue, "true", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool HasTriggerType(JToken originalTriggers, string triggerType)
+    {
+        if (originalTriggers is not JArray triggerArray)
+        {
+            return false;
+        }
+
+        // Check if the specified trigger type exists
+        foreach (var trigger in triggerArray)
+        {
+            if (trigger is JObject triggerObj &&
+                triggerObj["triggerType"]?.ToString() == triggerType)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private async Task<(bool isRequired, bool checkSucceeded)> CheckBranchPolicyRequirement(string adoOrg, string teamProject, string currentRepoName, int pipelineId)
+    {
+        if (string.IsNullOrEmpty(currentRepoName))
+        {
+            return (false, false);
+        }
+
+        try
+        {
+            var isRequired = await IsPipelineRequiredByBranchPolicy(adoOrg, teamProject, currentRepoName, pipelineId);
+            return (isRequired, true);
+        }
+        catch (HttpRequestException)
+        {
+            // If branch policy checking fails due to network/HTTP issues, consider check failed
+            return (false, false);
+        }
+        catch (TaskCanceledException)
+        {
+            // If branch policy checking times out, consider check failed
+            return (false, false);
+        }
+        catch (JsonException)
+        {
+            // If branch policy checking fails due to JSON parsing issues, consider check failed
+            return (false, false);
+        }
+        catch (ArgumentException)
+        {
+            // If branch policy checking fails due to invalid arguments, consider check failed
+            return (false, false);
+        }
+        catch (InvalidOperationException)
+        {
+            // If branch policy checking fails due to invalid state, consider check failed
+            return (false, false);
+        }
     }
 
     public virtual async Task<bool> IsPipelineRequiredByBranchPolicy(string adoOrg, string teamProject, string repoName, int pipelineId)
@@ -859,7 +1057,7 @@ public class AdoApi
         };
     }
 
-    private JArray CreateYamlControlledTriggers(bool enablePullRequestValidation = false, bool enableBuildStatusReporting = false)
+    private JArray CreateYamlControlledTriggers(bool enablePullRequestValidation = false, bool enableCiBuildStatusReporting = false, bool enablePrBuildStatusReporting = false)
     {
         // Create triggers that are enabled but configured to use YAML definitions
         // This enables the CI and PR validation features while letting YAML control the details
@@ -872,10 +1070,10 @@ public class AdoApi
             ["batchChanges"] = false
         };
 
-        // Add build status reporting if required by branch policy
-        if (enableBuildStatusReporting)
+        // Add build status reporting based on original ADO setting
+        if (enableCiBuildStatusReporting)
         {
-            ciTrigger["reportBuildStatus"] = true;
+            ciTrigger["reportBuildStatus"] = "true";
         }
 
         var triggers = new JArray { ciTrigger };
@@ -898,10 +1096,10 @@ public class AdoApi
                 ["pathFilters"] = new JArray() // Empty means defer to YAML
             };
 
-            // Add build status reporting if required by branch policy
-            if (enableBuildStatusReporting)
+            // Add build status reporting based on original ADO setting
+            if (enablePrBuildStatusReporting)
             {
-                prTrigger["reportBuildStatus"] = true;
+                prTrigger["reportBuildStatus"] = "true";
             }
 
             triggers.Add(prTrigger);
