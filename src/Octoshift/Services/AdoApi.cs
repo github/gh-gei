@@ -727,17 +727,14 @@ public class AdoApi
     private bool HasPullRequestTrigger(JToken originalTriggers)
     {
         if (originalTriggers == null)
-            return false;
-
-        // Check if any trigger has triggerType = "pullRequest"
-        if (originalTriggers is JArray triggerArray)
         {
-            return triggerArray.Any(trigger =>
-                trigger is JObject triggerObj &&
-                triggerObj["triggerType"]?.ToString() == "pullRequest");
+            return false;
         }
 
-        return false;
+        // Check if any trigger has triggerType = "pullRequest"
+        return originalTriggers is JArray triggerArray && triggerArray.Any(trigger =>
+            trigger is JObject triggerObj &&
+            triggerObj["triggerType"]?.ToString() == "pullRequest");
     }
 
     public virtual async Task<bool> IsPipelineRequiredByBranchPolicy(string adoOrg, string teamProject, string repoName, int pipelineId)
@@ -760,8 +757,7 @@ public class AdoApi
             var policyResponse = await _client.GetAsync(policyUrl);
             var policyData = JObject.Parse(policyResponse);
 
-            var policies = policyData["value"] as JArray;
-            if (policies == null)
+            if (policyData["value"] is not JArray policies)
             {
                 return false;
             }
@@ -769,8 +765,10 @@ public class AdoApi
             // Look for build validation policies that reference our pipeline
             foreach (var policy in policies)
             {
-                var policyObj = policy as JObject;
-                if (policyObj == null) continue;
+                if (policy is not JObject policyObj)
+                {
+                    continue;
+                }
 
                 // Check if this is a build validation policy
                 var policyType = policyObj["type"]?["displayName"]?.ToString();

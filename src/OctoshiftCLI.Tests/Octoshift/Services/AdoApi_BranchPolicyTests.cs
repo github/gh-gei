@@ -321,13 +321,13 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
         {
             var json = JObject.Parse(payload.ToJson());
 
-            if (!(json["triggers"] is JArray triggers))
+            if (json["triggers"] is not JArray triggers)
             {
                 return false;
             }
 
             // Should always have CI trigger
-            if (!(triggers.FirstOrDefault(t => t["triggerType"]?.ToString() == "continuousIntegration") is JObject ciTrigger))
+            if (triggers.FirstOrDefault(t => t["triggerType"]?.ToString() == "continuousIntegration") is not JObject ciTrigger)
             {
                 return false;
             }
