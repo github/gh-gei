@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octoshift.Models;
 using OctoshiftCLI.Extensions;
@@ -510,7 +511,7 @@ public class AdoApi
         await _client.PatchAsync(url, payload);
     }
 
-    public virtual async Task<(string DefaultBranch, string Clean, string CheckoutSubmodules)> GetPipeline(string org, string teamProject, int pipelineId)
+    public virtual async Task<(string DefaultBranch, string Clean, string CheckoutSubmodules, JToken Triggers)> GetPipeline(string org, string teamProject, int pipelineId)
     {
         var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
 
@@ -530,10 +531,13 @@ public class AdoApi
         var checkoutSubmodules = (string)data["repository"]["checkoutSubmodules"];
         checkoutSubmodules = checkoutSubmodules == null ? "null" : checkoutSubmodules.ToLower();
 
-        return (defaultBranch, clean, checkoutSubmodules);
+        // Capture trigger information to preserve during rewiring
+        var triggers = data["triggers"];
+
+        return (defaultBranch, clean, checkoutSubmodules, triggers);
     }
 
-    public virtual async Task ChangePipelineRepo(string adoOrg, string teamProject, int pipelineId, string defaultBranch, string clean, string checkoutSubmodules, string githubOrg, string githubRepo, string connectedServiceId, string targetApiUrl = null)
+    public virtual async Task ChangePipelineRepo(string adoOrg, string teamProject, int pipelineId, string defaultBranch, string clean, string checkoutSubmodules, string githubOrg, string githubRepo, string connectedServiceId, JToken originalTriggers = null, string targetApiUrl = null)
     {
         var url = $"{_adoBaseUrl}/{adoOrg.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
 
@@ -580,7 +584,7 @@ public class AdoApi
                 refsUrl,
                 safeRepository = $"{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}",
                 shortName = githubRepo,
-                reportBuildStatus = true
+                reportBuildStatus = "true" // Enable build status reporting for GitHub sources
             },
             id = $"{githubOrg}/{githubRepo}",
             type = "GitHub",
@@ -593,17 +597,518 @@ public class AdoApi
 
         var payload = new JObject();
 
+        // Extract current repository name for branch policy checking
+        var currentRepoName = data["repository"]?["name"]?.ToString();
+
+        // Check if this pipeline is required by branch policy for build validation
+        var (isPipelineRequiredByBranchPolicy, branchPolicyCheckSucceeded) = await CheckBranchPolicyRequirement(adoOrg, teamProject, currentRepoName, pipelineId);
+
         foreach (var prop in data.Properties())
         {
             if (prop.Name == "repository")
             {
                 prop.Value = JObject.Parse(newRepo.ToJson());
             }
+            else if (prop.Name == "triggers")
+            {
+                // Handle triggers based on branch policy requirements and original triggers
+                if (isPipelineRequiredByBranchPolicy)
+                {
+                    // Scenario 1: Pipeline IS required by branch policy
+                    // Enable both PR and CI triggers with build status reporting (required for branch policy integration)
+                    var originalCiReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "continuousIntegration");
+                    var originalPrReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "pullRequest");
+                    // For branch policy scenarios, enable reportBuildStatus if it was originally enabled OR if no original setting exists
+                    var enableCiBuildStatus = IsReportBuildStatusEnabled(originalCiReportBuildStatus) || originalTriggers == null || !HasTriggerType(originalTriggers, "continuousIntegration");
+                    var enablePrBuildStatus = IsReportBuildStatusEnabled(originalPrReportBuildStatus) || originalTriggers == null || !HasTriggerType(originalTriggers, "pullRequest");
+                    prop.Value = CreateYamlControlledTriggers(enablePullRequestValidation: true, enableCiBuildStatusReporting: enableCiBuildStatus, enablePrBuildStatusReporting: enablePrBuildStatus);
+                }
+                else if (branchPolicyCheckSucceeded)
+                {
+                    // Scenario 2a: Pipeline NOT required by branch policy, but check was successful
+                    // Preserve existing triggers regardless of complexity
+                    if (originalTriggers != null)
+                    {
+                        var hadPullRequestTrigger = HasPullRequestTrigger(originalTriggers);
+                        var originalCiReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "continuousIntegration");
+                        var originalPrReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "pullRequest");
+                        prop.Value = CreateYamlControlledTriggers(enablePullRequestValidation: hadPullRequestTrigger, enableCiBuildStatusReporting: IsReportBuildStatusEnabled(originalCiReportBuildStatus), enablePrBuildStatusReporting: IsReportBuildStatusEnabled(originalPrReportBuildStatus));
+                    }
+                    else
+                    {
+                        // Default case: Enable PR validation with build status reporting for backwards compatibility
+                        prop.Value = CreateYamlControlledTriggers(enablePullRequestValidation: true, enableCiBuildStatusReporting: true, enablePrBuildStatusReporting: true);
+                    }
+                }
+                else if (originalTriggers != null && HasCompleteTriggerSet(originalTriggers))
+                {
+                    // Scenario 2b: Branch policy check failed/not performed, but has rich trigger configuration
+                    // Preserve existing rich triggers with proper UI structure
+                    var hadPullRequestTrigger = HasPullRequestTrigger(originalTriggers);
+                    var originalCiReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "continuousIntegration");
+                    var originalPrReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "pullRequest");
+                    prop.Value = CreateYamlControlledTriggers(enablePullRequestValidation: hadPullRequestTrigger, enableCiBuildStatusReporting: IsReportBuildStatusEnabled(originalCiReportBuildStatus), enablePrBuildStatusReporting: IsReportBuildStatusEnabled(originalPrReportBuildStatus));
+                }
+                else if (originalTriggers != null)
+                {
+                    // Scenario 2c: Branch policy check failed/not performed, has minimal trigger configuration
+                    // Use YAML-only approach (empty triggers array) to let YAML completely control triggers
+                    prop.Value = new JArray();
+                }
+                else
+                {
+                    // Default case: No original triggers and branch policy check failed
+                    // For basic rewiring scenarios (backwards compatibility), enable both PR validation and build status reporting
+                    prop.Value = CreateYamlControlledTriggers(enablePullRequestValidation: true, enableCiBuildStatusReporting: true, enablePrBuildStatusReporting: true);
+                }
+            }
 
             payload.Add(prop.Name, prop.Value);
         }
 
+        // Add triggers if no triggers property exists
+        if (payload["triggers"] == null)
+        {
+            if (isPipelineRequiredByBranchPolicy)
+            {
+                // Scenario 1: Pipeline IS required by branch policy
+                // Enable both PR and CI triggers with build status reporting preserved from original
+                var originalCiReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "continuousIntegration");
+                var originalPrReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "pullRequest");
+                payload["triggers"] = CreateYamlControlledTriggers(enablePullRequestValidation: true, enableCiBuildStatusReporting: IsReportBuildStatusEnabled(originalCiReportBuildStatus), enablePrBuildStatusReporting: IsReportBuildStatusEnabled(originalPrReportBuildStatus));
+            }
+            else if (branchPolicyCheckSucceeded)
+            {
+                // Scenario 2a: Pipeline NOT required by branch policy, but check was successful
+                // Preserve existing triggers regardless of complexity
+                if (originalTriggers != null)
+                {
+                    var hadPullRequestTrigger = HasPullRequestTrigger(originalTriggers);
+                    var originalCiReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "continuousIntegration");
+                    var originalPrReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "pullRequest");
+                    payload["triggers"] = CreateYamlControlledTriggers(enablePullRequestValidation: hadPullRequestTrigger, enableCiBuildStatusReporting: IsReportBuildStatusEnabled(originalCiReportBuildStatus), enablePrBuildStatusReporting: IsReportBuildStatusEnabled(originalPrReportBuildStatus));
+                }
+                else
+                {
+                    // Default case: Enable PR validation with build status reporting for backwards compatibility
+                    payload["triggers"] = CreateYamlControlledTriggers(enablePullRequestValidation: true, enableCiBuildStatusReporting: true, enablePrBuildStatusReporting: true);
+                }
+            }
+            else if (originalTriggers != null && HasCompleteTriggerSet(originalTriggers))
+            {
+                // Scenario 2b: Branch policy check failed/not performed, but has rich trigger configuration
+                // Preserve existing rich triggers with proper UI structure
+                var hadPullRequestTrigger = HasPullRequestTrigger(originalTriggers);
+                var originalCiReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "continuousIntegration");
+                var originalPrReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "pullRequest");
+                payload["triggers"] = CreateYamlControlledTriggers(enablePullRequestValidation: hadPullRequestTrigger, enableCiBuildStatusReporting: IsReportBuildStatusEnabled(originalCiReportBuildStatus), enablePrBuildStatusReporting: IsReportBuildStatusEnabled(originalPrReportBuildStatus));
+            }
+            else if (originalTriggers != null)
+            {
+                // Scenario 2c: Branch policy check failed/not performed, has minimal trigger configuration
+                // Use YAML-only approach (empty triggers array) to let YAML completely control triggers
+                payload["triggers"] = new JArray();
+            }
+            else
+            {
+                // Default case: No original triggers and branch policy check failed
+                // For basic rewiring scenarios (backwards compatibility), enable both PR validation and build status reporting
+                payload["triggers"] = CreateYamlControlledTriggers(enablePullRequestValidation: true, enableCiBuildStatusReporting: true, enablePrBuildStatusReporting: true);
+            }
+        }
+
+        // Use YAML definitions instead of UI override settings
+        // settingsSourceType: 2 = Use YAML definitions, 1 = Override from UI
+        payload["settingsSourceType"] = 2;
+
         await _client.PutAsync(url, payload.ToObject(typeof(object)));
+
+        // Note: Removed explicit build status reporting configuration to let Azure DevOps
+        // use its default behavior (checkbox enabled by default for new pipelines)
+    }
+
+    // Keep these methods for unit testing compatibility but they're not used in YAML approach
+#pragma warning disable CS0168, IDE0051 // Disable unused member warnings - these are used via reflection in tests
+    private JToken EnsurePullRequestValidationEnabled(JToken originalTriggers)
+    {
+        var triggers = new JArray();
+
+        // If original triggers exist, preserve them
+        if (originalTriggers != null && originalTriggers.HasValues)
+        {
+            triggers = JArray.FromObject(originalTriggers);
+        }
+
+        // Check if a pull request trigger already exists
+        var existingPrTrigger = triggers
+            .OfType<JObject>()
+            .FirstOrDefault(t => t["triggerType"]?.ToString() == "pullRequest");
+
+        if (existingPrTrigger != null)
+        {
+            // Ensure the existing PR trigger has proper settings
+            EnhancePullRequestTrigger(existingPrTrigger);
+        }
+        else
+        {
+            // Create a new pull request trigger if none exists
+            var newPrTrigger = CreatePullRequestTrigger();
+            triggers.Add(newPrTrigger);
+        }
+
+        return triggers;
+    }
+
+    private bool HasPullRequestTrigger(JToken originalTriggers)
+    {
+        if (originalTriggers == null)
+        {
+            return false;
+        }
+
+        // Check if any trigger has triggerType = "pullRequest"
+        return originalTriggers is JArray triggerArray && triggerArray.Any(trigger =>
+            trigger is JObject triggerObj &&
+            triggerObj["triggerType"]?.ToString() == "pullRequest");
+    }
+
+    private bool HasCompleteTriggerSet(JToken originalTriggers)
+    {
+        if (originalTriggers is not JArray triggerArray)
+        {
+            return false;
+        }
+
+        // Check if any trigger has rich configuration that should be preserved
+        foreach (var trigger in triggerArray)
+        {
+            if (trigger is not JObject triggerObj)
+            {
+                continue;
+            }
+
+            // Check for rich PR trigger configuration
+            if (triggerObj["triggerType"]?.ToString() == "pullRequest" &&
+                (triggerObj["forks"] != null ||
+                 triggerObj["isCommentRequiredForPullRequest"] != null ||
+                 triggerObj["requireCommentsForNonTeamMembersOnly"] != null ||
+                 triggerObj["autoCancel"] != null ||
+                 triggerObj["settingsSourceType"] != null))
+            {
+                return true;
+            }
+
+            // Check for rich CI trigger configuration
+            if (triggerObj["triggerType"]?.ToString() == "continuousIntegration" &&
+                (triggerObj["batchChanges"] != null ||
+                 triggerObj["settingsSourceType"] != null ||
+                 triggerObj["maxConcurrentBuildsPerBranch"] != null))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private string GetOriginalReportBuildStatus(JToken originalTriggers, string triggerType)
+    {
+        if (originalTriggers is not JArray triggerArray)
+        {
+            return "true"; // Default to "true" when no original triggers exist
+        }
+
+        // Look for the specified trigger type and extract its reportBuildStatus setting
+        var matchingTrigger = triggerArray
+            .Where(trigger => trigger is JObject triggerObj &&
+                             triggerObj["triggerType"]?.ToString() == triggerType)
+            .Cast<JObject>()
+            .FirstOrDefault();
+
+        if (matchingTrigger != null)
+        {
+            // Return the original reportBuildStatus value, defaulting to "true" if not present
+            var reportBuildStatusToken = matchingTrigger["reportBuildStatus"];
+            if (reportBuildStatusToken == null)
+            {
+                return "true"; // Default to "true" when property doesn't exist
+            }
+
+            // Handle both boolean and string values - normalize to string
+            if (reportBuildStatusToken.Type == JTokenType.Boolean)
+            {
+                return reportBuildStatusToken.Value<bool>() ? "true" : "false";
+            }
+            else if (reportBuildStatusToken.Type == JTokenType.String)
+            {
+                var stringValue = reportBuildStatusToken.ToString();
+                // Normalize to lowercase for consistency
+                return string.Equals(stringValue, "true", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(stringValue, "True", StringComparison.OrdinalIgnoreCase)
+                    ? "true"
+                    : "false";
+            }
+
+            // Try to convert any other type to boolean, then to string
+            try
+            {
+                return reportBuildStatusToken.ToObject<bool>() ? "true" : "false";
+            }
+            catch (JsonException)
+            {
+                return "true"; // Default to "true" if JSON conversion fails
+            }
+            catch (InvalidOperationException)
+            {
+                return "true"; // Default to "true" if operation is invalid
+            }
+        }
+
+        return "true"; // Default to "true" when trigger type not found in original triggers
+    }
+
+    private static bool IsReportBuildStatusEnabled(string reportBuildStatusValue)
+    {
+        return string.Equals(reportBuildStatusValue, "true", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool HasTriggerType(JToken originalTriggers, string triggerType)
+    {
+        if (originalTriggers is not JArray triggerArray)
+        {
+            return false;
+        }
+
+        // Check if the specified trigger type exists
+        foreach (var trigger in triggerArray)
+        {
+            if (trigger is JObject triggerObj &&
+                triggerObj["triggerType"]?.ToString() == triggerType)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private async Task<(bool isRequired, bool checkSucceeded)> CheckBranchPolicyRequirement(string adoOrg, string teamProject, string currentRepoName, int pipelineId)
+    {
+        if (string.IsNullOrEmpty(currentRepoName))
+        {
+            return (false, false);
+        }
+
+        try
+        {
+            var isRequired = await IsPipelineRequiredByBranchPolicy(adoOrg, teamProject, currentRepoName, pipelineId);
+            return (isRequired, true);
+        }
+        catch (HttpRequestException)
+        {
+            // If branch policy checking fails due to network/HTTP issues, consider check failed
+            return (false, false);
+        }
+        catch (TaskCanceledException)
+        {
+            // If branch policy checking times out, consider check failed
+            return (false, false);
+        }
+        catch (JsonException)
+        {
+            // If branch policy checking fails due to JSON parsing issues, consider check failed
+            return (false, false);
+        }
+        catch (ArgumentException)
+        {
+            // If branch policy checking fails due to invalid arguments, consider check failed
+            return (false, false);
+        }
+        catch (InvalidOperationException)
+        {
+            // If branch policy checking fails due to invalid state, consider check failed
+            return (false, false);
+        }
+    }
+
+    public virtual async Task<bool> IsPipelineRequiredByBranchPolicy(string adoOrg, string teamProject, string repoName, int pipelineId)
+    {
+        try
+        {
+            // Get repository information first
+            var repoUrl = $"{_adoBaseUrl}/{adoOrg.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/git/repositories/{repoName.EscapeDataString()}?api-version=6.0";
+            var repoResponse = await _client.GetAsync(repoUrl);
+            var repoData = JObject.Parse(repoResponse);
+            var repositoryId = repoData["id"]?.ToString();
+
+            if (string.IsNullOrEmpty(repositoryId))
+            {
+                return false;
+            }
+
+            // Get branch policies for the repository
+            var policyUrl = $"{_adoBaseUrl}/{adoOrg.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/policy/configurations?repositoryId={repositoryId}&api-version=6.0";
+            var policyResponse = await _client.GetAsync(policyUrl);
+            var policyData = JObject.Parse(policyResponse);
+
+            if (policyData["value"] is not JArray policies)
+            {
+                return false;
+            }
+
+            // Look for build validation policies that reference our pipeline
+            foreach (var policy in policies)
+            {
+                if (policy is not JObject policyObj)
+                {
+                    continue;
+                }
+
+                // Check if this is a build validation policy
+                var policyType = policyObj["type"]?["displayName"]?.ToString();
+                if (policyType != "Build")
+                {
+                    continue;
+                }
+
+                // Check if the policy is enabled
+                var isEnabled = policyObj["isEnabled"]?.Value<bool>() == true;
+                if (!isEnabled)
+                {
+                    continue;
+                }
+
+                // Check if this policy references our pipeline by ID (not by display name)
+                var buildDefinitionId = policyObj["settings"]?["buildDefinitionId"]?.ToString();
+
+                // Match by pipeline ID since display names can be different from pipeline names
+                if (buildDefinitionId != null && buildDefinitionId.Equals(pipelineId.ToString(), StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        catch (HttpRequestException)
+        {
+            // If we can't determine branch policy status due to network issues, default to false
+            return false;
+        }
+        catch (JsonException)
+        {
+            // If we can't determine branch policy status due to JSON parsing issues, default to false
+            return false;
+        }
+        catch (ArgumentException)
+        {
+            // If we can't determine branch policy status due to invalid arguments, default to false
+            return false;
+        }
+    }
+
+    private void EnhancePullRequestTrigger(JObject prTrigger)
+    {
+        // Ensure pull request validation is enabled with proper settings
+        prTrigger["isCommentRequiredForPullRequest"] = false; // Don't require comments
+        prTrigger["requireCommentsForNonTeamMembersOnly"] = false; // Don't restrict to team members only
+
+        // Ensure forks settings are configured properly (allowing forks but not secrets by default)
+        if (prTrigger["forks"] is not JObject forks)
+        {
+            forks = new JObject
+            {
+                ["enabled"] = false, // Disable fork builds by default
+                ["allowSecrets"] = false // Don't allow secrets from forks for security
+            };
+        }
+        else
+        {
+            forks["enabled"] = false; // Disable fork builds by default
+            forks["allowSecrets"] = false; // Don't allow secrets from forks for security
+        }
+        prTrigger["forks"] = forks;
+
+        // Ensure path filters allow all paths by default if not specified
+        if (prTrigger["pathFilters"] == null || !prTrigger["pathFilters"].HasValues)
+        {
+            prTrigger["pathFilters"] = new JArray(); // Empty array means no path restrictions
+        }
+
+        // Ensure branch filters include common branches if not specified
+        if (prTrigger["branchFilters"] == null || !prTrigger["branchFilters"].HasValues)
+        {
+            prTrigger["branchFilters"] = new JArray { "+refs/heads/*" }; // Allow all branches
+        }
+    }
+
+    private JObject CreatePullRequestTrigger()
+    {
+        // Create a new pull request trigger with proper validation settings enabled
+        return new JObject
+        {
+            ["triggerType"] = "pullRequest",
+            ["isCommentRequiredForPullRequest"] = false,
+            ["requireCommentsForNonTeamMembersOnly"] = false,
+            ["forks"] = new JObject
+            {
+                ["enabled"] = false, // Disable fork builds by default for security
+                ["allowSecrets"] = false // Security: don't allow secrets from forks
+            },
+            ["pathFilters"] = new JArray(), // No path restrictions
+            ["branchFilters"] = new JArray { "+refs/heads/*" } // Allow all branches
+        };
+    }
+
+    private JArray CreateYamlControlledTriggers(bool enablePullRequestValidation = false, bool enableCiBuildStatusReporting = false, bool enablePrBuildStatusReporting = false)
+    {
+        // Create triggers that are enabled but configured to use YAML definitions
+        // This enables the CI and PR validation features while letting YAML control the details
+        var ciTrigger = new JObject
+        {
+            ["triggerType"] = "continuousIntegration",
+            ["settingsSourceType"] = 2, // Use YAML definitions
+            ["branchFilters"] = new JArray(), // Empty means defer to YAML
+            ["pathFilters"] = new JArray(), // Empty means defer to YAML
+            ["batchChanges"] = false
+        };
+
+        // Add build status reporting based on original ADO setting
+        if (enableCiBuildStatusReporting)
+        {
+            ciTrigger["reportBuildStatus"] = "true";
+        }
+
+        var triggers = new JArray { ciTrigger };
+
+        // Add PR trigger if requested
+        if (enablePullRequestValidation)
+        {
+            var prTrigger = new JObject
+            {
+                ["triggerType"] = "pullRequest",
+                ["settingsSourceType"] = 2, // Use YAML definitions
+                ["isCommentRequiredForPullRequest"] = false, // Unchecked as requested
+                ["requireCommentsForNonTeamMembersOnly"] = false, // Unchecked as requested
+                ["forks"] = new JObject
+                {
+                    ["enabled"] = false, // Unchecked as requested - let YAML control
+                    ["allowSecrets"] = false
+                },
+                ["branchFilters"] = new JArray(), // Empty means defer to YAML
+                ["pathFilters"] = new JArray() // Empty means defer to YAML
+            };
+
+            // Add build status reporting based on original ADO setting
+            if (enablePrBuildStatusReporting)
+            {
+                prTrigger["reportBuildStatus"] = "true";
+            }
+
+            triggers.Add(prTrigger);
+        }
+
+        return triggers;
     }
 
     public virtual async Task<string> GetBoardsGithubRepoId(string org, string teamProject, string teamProjectId, string endpointId, string githubOrg, string githubRepo)
