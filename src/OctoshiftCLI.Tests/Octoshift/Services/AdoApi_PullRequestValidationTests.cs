@@ -37,19 +37,23 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             // Assert
             result.Should().NotBeNull();
             var triggers = result as JArray;
-            triggers.Should().HaveCount(1);
+            triggers.Should().NotBeNull();
+            triggers!.Should().HaveCount(1);
 
-            var prTrigger = triggers[0] as JObject;
-            prTrigger["triggerType"].ToString().Should().Be("pullRequest");
+            var prTrigger = triggers![0] as JObject;
+            prTrigger.Should().NotBeNull();
+            prTrigger!["triggerType"].ToString().Should().Be("pullRequest");
             prTrigger["isCommentRequiredForPullRequest"].Value<bool>().Should().BeFalse();
             prTrigger["requireCommentsForNonTeamMembersOnly"].Value<bool>().Should().BeFalse();
 
             var forks = prTrigger["forks"] as JObject;
-            forks["enabled"].Value<bool>().Should().BeTrue();
+            forks.Should().NotBeNull();
+            forks!["enabled"].Value<bool>().Should().BeFalse();
             forks["allowSecrets"].Value<bool>().Should().BeFalse();
 
             var branchFilters = prTrigger["branchFilters"] as JArray;
-            branchFilters.Select(t => t.Value<string>()).Should().Contain("+refs/heads/*");
+            branchFilters.Should().NotBeNull();
+            branchFilters!.Select(t => t.Value<string>()).Should().Contain("+refs/heads/*");
         }
 
         [Fact]
@@ -77,23 +81,26 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             // Assert
             result.Should().NotBeNull();
             var triggers = result as JArray;
-            triggers.Should().HaveCount(2); // CI + enhanced PR trigger
+            triggers.Should().NotBeNull();
+            triggers!.Should().HaveCount(2); // CI + enhanced PR trigger
 
-            var prTrigger = triggers
+            var prTrigger = triggers!
                 .OfType<JObject>()
                 .FirstOrDefault(t => t["triggerType"]?.ToString() == "pullRequest");
 
             prTrigger.Should().NotBeNull();
-            prTrigger["isCommentRequiredForPullRequest"].Value<bool>().Should().BeFalse();
+            prTrigger!["isCommentRequiredForPullRequest"].Value<bool>().Should().BeFalse();
             prTrigger["requireCommentsForNonTeamMembersOnly"].Value<bool>().Should().BeFalse();
 
             var forks = prTrigger["forks"] as JObject;
-            forks["enabled"].Value<bool>().Should().BeTrue();
+            forks.Should().NotBeNull();
+            forks!["enabled"].Value<bool>().Should().BeFalse();
             forks["allowSecrets"].Value<bool>().Should().BeFalse();
 
             // Should preserve original branch filters
             var branchFilters = prTrigger["branchFilters"] as JArray;
-            branchFilters.Select(t => t.Value<string>()).Should().Contain("+refs/heads/develop");
+            branchFilters.Should().NotBeNull();
+            branchFilters!.Select(t => t.Value<string>()).Should().Contain("+refs/heads/develop");
         }
 
         [Fact]
@@ -127,30 +134,33 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             // Assert
             result.Should().NotBeNull();
             var triggers = result as JArray;
-            triggers.Should().HaveCount(3); // CI + Schedule + new PR trigger
+            triggers.Should().NotBeNull();
+            triggers!.Should().HaveCount(3); // CI + Schedule + new PR trigger
 
             // Should preserve CI trigger
-            var ciTrigger = triggers
+            var ciTrigger = triggers!
                 .OfType<JObject>()
                 .FirstOrDefault(t => t["triggerType"]?.ToString() == "continuousIntegration");
             ciTrigger.Should().NotBeNull();
-            var ciBranchFilters = ciTrigger["branchFilters"] as JArray;
-            ciBranchFilters.Select(t => t.Value<string>()).Should().Contain("+refs/heads/main");
+            var ciBranchFilters = ciTrigger!["branchFilters"] as JArray;
+            ciBranchFilters.Should().NotBeNull();
+            ciBranchFilters!.Select(t => t.Value<string>()).Should().Contain("+refs/heads/main");
             ciBranchFilters.Select(t => t.Value<string>()).Should().Contain("+refs/heads/develop");
 
             // Should preserve schedule trigger
-            var scheduleTrigger = triggers
+            var scheduleTrigger = triggers!
                 .OfType<JObject>()
                 .FirstOrDefault(t => t["triggerType"]?.ToString() == "scheduleOnlyWithChanges");
             scheduleTrigger.Should().NotBeNull();
 
             // Should add PR trigger
-            var prTrigger = triggers
+            var prTrigger = triggers!
                 .OfType<JObject>()
                 .FirstOrDefault(t => t["triggerType"]?.ToString() == "pullRequest");
             prTrigger.Should().NotBeNull();
-            var forks = prTrigger["forks"] as JObject;
-            forks["enabled"].Value<bool>().Should().BeTrue();
+            var forks = prTrigger!["forks"] as JObject;
+            forks.Should().NotBeNull();
+            forks!["enabled"].Value<bool>().Should().BeFalse();
         }
 
         [Fact]
@@ -170,14 +180,17 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             result["requireCommentsForNonTeamMembersOnly"].Value<bool>().Should().BeFalse();
 
             var forks = result["forks"] as JObject;
-            forks["enabled"].Value<bool>().Should().BeTrue();
+            forks.Should().NotBeNull();
+            forks!["enabled"].Value<bool>().Should().BeFalse();
             forks["allowSecrets"].Value<bool>().Should().BeFalse();
 
             var pathFilters = result["pathFilters"] as JArray;
-            pathFilters.Should().BeEmpty(); // No path restrictions
+            pathFilters.Should().NotBeNull();
+            pathFilters!.Should().BeEmpty(); // No path restrictions
 
             var branchFilters = result["branchFilters"] as JArray;
-            branchFilters.Select(t => t.Value<string>()).Should().Contain("+refs/heads/*");
+            branchFilters.Should().NotBeNull();
+            branchFilters!.Select(t => t.Value<string>()).Should().Contain("+refs/heads/*");
         }
     }
 }

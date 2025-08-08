@@ -788,29 +788,23 @@ public class AdoApi
             }
 
             // Check for rich PR trigger configuration
-            if (triggerObj["triggerType"]?.ToString() == "pullRequest")
+            if (triggerObj["triggerType"]?.ToString() == "pullRequest" &&
+                (triggerObj["forks"] != null ||
+                 triggerObj["isCommentRequiredForPullRequest"] != null ||
+                 triggerObj["requireCommentsForNonTeamMembersOnly"] != null ||
+                 triggerObj["autoCancel"] != null ||
+                 triggerObj["settingsSourceType"] != null))
             {
-                // Rich PR trigger settings that indicate it should be preserved
-                if (triggerObj["forks"] != null ||
-                    triggerObj["isCommentRequiredForPullRequest"] != null ||
-                    triggerObj["requireCommentsForNonTeamMembersOnly"] != null ||
-                    triggerObj["autoCancel"] != null ||
-                    triggerObj["settingsSourceType"] != null)
-                {
-                    return true;
-                }
+                return true;
             }
 
-            // Check for rich CI trigger configuration  
-            if (triggerObj["triggerType"]?.ToString() == "continuousIntegration")
+            // Check for rich CI trigger configuration
+            if (triggerObj["triggerType"]?.ToString() == "continuousIntegration" &&
+                (triggerObj["batchChanges"] != null ||
+                 triggerObj["settingsSourceType"] != null ||
+                 triggerObj["maxConcurrentBuildsPerBranch"] != null))
             {
-                // Rich CI trigger settings that indicate it should be preserved
-                if (triggerObj["batchChanges"] != null ||
-                    triggerObj["settingsSourceType"] != null ||
-                    triggerObj["maxConcurrentBuildsPerBranch"] != null)
-                {
-                    return true;
-                }
+                return true;
             }
         }
 
@@ -825,46 +819,48 @@ public class AdoApi
         }
 
         // Look for the specified trigger type and extract its reportBuildStatus setting
-        foreach (var trigger in triggerArray)
+        var matchingTrigger = triggerArray
+            .Where(trigger => trigger is JObject triggerObj &&
+                             triggerObj["triggerType"]?.ToString() == triggerType)
+            .Cast<JObject>()
+            .FirstOrDefault();
+
+        if (matchingTrigger != null)
         {
-            if (trigger is JObject triggerObj &&
-                triggerObj["triggerType"]?.ToString() == triggerType)
+            // Return the original reportBuildStatus value, defaulting to "true" if not present
+            var reportBuildStatusToken = matchingTrigger["reportBuildStatus"];
+            if (reportBuildStatusToken == null)
             {
-                // Return the original reportBuildStatus value, defaulting to "true" if not present
-                var reportBuildStatusToken = triggerObj["reportBuildStatus"];
-                if (reportBuildStatusToken == null)
-                {
-                    return "true"; // Default to "true" when property doesn't exist
-                }
+                return "true"; // Default to "true" when property doesn't exist
+            }
 
-                // Handle both boolean and string values - normalize to string
-                if (reportBuildStatusToken.Type == JTokenType.Boolean)
-                {
-                    return reportBuildStatusToken.Value<bool>() ? "true" : "false";
-                }
-                else if (reportBuildStatusToken.Type == JTokenType.String)
-                {
-                    var stringValue = reportBuildStatusToken.ToString();
-                    // Normalize to lowercase for consistency
-                    return string.Equals(stringValue, "true", StringComparison.OrdinalIgnoreCase) ||
-                        string.Equals(stringValue, "True", StringComparison.OrdinalIgnoreCase)
-                        ? "true"
-                        : "false";
-                }
+            // Handle both boolean and string values - normalize to string
+            if (reportBuildStatusToken.Type == JTokenType.Boolean)
+            {
+                return reportBuildStatusToken.Value<bool>() ? "true" : "false";
+            }
+            else if (reportBuildStatusToken.Type == JTokenType.String)
+            {
+                var stringValue = reportBuildStatusToken.ToString();
+                // Normalize to lowercase for consistency
+                return string.Equals(stringValue, "true", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(stringValue, "True", StringComparison.OrdinalIgnoreCase)
+                    ? "true"
+                    : "false";
+            }
 
-                // Try to convert any other type to boolean, then to string
-                try
-                {
-                    return reportBuildStatusToken.ToObject<bool>() ? "true" : "false";
-                }
-                catch (JsonException)
-                {
-                    return "true"; // Default to "true" if JSON conversion fails
-                }
-                catch (InvalidOperationException)
-                {
-                    return "true"; // Default to "true" if operation is invalid
-                }
+            // Try to convert any other type to boolean, then to string
+            try
+            {
+                return reportBuildStatusToken.ToObject<bool>() ? "true" : "false";
+            }
+            catch (JsonException)
+            {
+                return "true"; // Default to "true" if JSON conversion fails
+            }
+            catch (InvalidOperationException)
+            {
+                return "true"; // Default to "true" if operation is invalid
             }
         }
 
@@ -1020,10 +1016,17 @@ public class AdoApi
         // Ensure forks settings are configured properly (allowing forks but not secrets by default)
         if (prTrigger["forks"] is not JObject forks)
         {
-            forks = [];
+            forks = new JObject
+            {
+                ["enabled"] = false, // Disable fork builds by default
+                ["allowSecrets"] = false // Don't allow secrets from forks for security
+            };
         }
-        forks["enabled"] = true; // Enable fork builds by default (user requested this to be enabled)
-        forks["allowSecrets"] = false; // Don't allow secrets from forks for security
+        else
+        {
+            forks["enabled"] = false; // Disable fork builds by default
+            forks["allowSecrets"] = false; // Don't allow secrets from forks for security
+        }
         prTrigger["forks"] = forks;
 
         // Ensure path filters allow all paths by default if not specified
@@ -1049,7 +1052,7 @@ public class AdoApi
             ["requireCommentsForNonTeamMembersOnly"] = false,
             ["forks"] = new JObject
             {
-                ["enabled"] = true, // Enable fork builds as requested
+                ["enabled"] = false, // Disable fork builds by default for security
                 ["allowSecrets"] = false // Security: don't allow secrets from forks
             },
             ["pathFilters"] = new JArray(), // No path restrictions
