@@ -26,8 +26,8 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
         _log.LogInformation($"Rewiring Pipeline to GitHub repo...");
 
         var adoPipelineId = await _adoApi.GetPipelineId(args.AdoOrg, args.AdoTeamProject, args.AdoPipeline);
-        var (defaultBranch, clean, checkoutSubmodules) = await _adoApi.GetPipeline(args.AdoOrg, args.AdoTeamProject, adoPipelineId);
-        await _adoApi.ChangePipelineRepo(args.AdoOrg, args.AdoTeamProject, adoPipelineId, defaultBranch, clean, checkoutSubmodules, args.GithubOrg, args.GithubRepo, args.ServiceConnectionId, args.TargetApiUrl);
+        var (defaultBranch, clean, checkoutSubmodules, triggers) = await _adoApi.GetPipeline(args.AdoOrg, args.AdoTeamProject, adoPipelineId);
+        await _adoApi.ChangePipelineRepo(args.AdoOrg, args.AdoTeamProject, adoPipelineId, defaultBranch, clean, checkoutSubmodules, args.GithubOrg, args.GithubRepo, args.ServiceConnectionId, triggers, args.TargetApiUrl);
 
         _log.LogSuccess("Successfully rewired pipeline");
     }

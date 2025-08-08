@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Moq;
+using Newtonsoft.Json.Linq;
 using OctoshiftCLI.AdoToGithub.Commands.RewirePipeline;
 using OctoshiftCLI.Services;
 using Xunit;
@@ -33,9 +34,10 @@ public class RewirePipelineCommandHandlerTests
         var defaultBranch = "default-branch";
         var clean = "true";
         var checkoutSubmodules = "null";
+        var triggers = new JArray(); // Mock triggers data
 
         _mockAdoApi.Setup(x => x.GetPipelineId(ADO_ORG, ADO_TEAM_PROJECT, ADO_PIPELINE).Result).Returns(pipelineId);
-        _mockAdoApi.Setup(x => x.GetPipeline(ADO_ORG, ADO_TEAM_PROJECT, pipelineId).Result).Returns((defaultBranch, clean, checkoutSubmodules));
+        _mockAdoApi.Setup(x => x.GetPipeline(ADO_ORG, ADO_TEAM_PROJECT, pipelineId).Result).Returns((defaultBranch, clean, checkoutSubmodules, triggers));
 
         var args = new RewirePipelineCommandArgs
         {
@@ -48,7 +50,7 @@ public class RewirePipelineCommandHandlerTests
         };
         await _handler.Handle(args);
 
-        _mockAdoApi.Verify(x => x.ChangePipelineRepo(ADO_ORG, ADO_TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, GITHUB_ORG, GITHUB_REPO, SERVICE_CONNECTION_ID, null));
+        _mockAdoApi.Verify(x => x.ChangePipelineRepo(ADO_ORG, ADO_TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, GITHUB_ORG, GITHUB_REPO, SERVICE_CONNECTION_ID, triggers, null));
     }
 
     [Fact]
@@ -59,9 +61,10 @@ public class RewirePipelineCommandHandlerTests
         var clean = "true";
         var checkoutSubmodules = "null";
         var targetApiUrl = "https://api.ghec.example.com";
+        var triggers = new JArray(); // Mock triggers data
 
         _mockAdoApi.Setup(x => x.GetPipelineId(ADO_ORG, ADO_TEAM_PROJECT, ADO_PIPELINE).Result).Returns(pipelineId);
-        _mockAdoApi.Setup(x => x.GetPipeline(ADO_ORG, ADO_TEAM_PROJECT, pipelineId).Result).Returns((defaultBranch, clean, checkoutSubmodules));
+        _mockAdoApi.Setup(x => x.GetPipeline(ADO_ORG, ADO_TEAM_PROJECT, pipelineId).Result).Returns((defaultBranch, clean, checkoutSubmodules, triggers));
 
         var args = new RewirePipelineCommandArgs
         {
@@ -75,6 +78,6 @@ public class RewirePipelineCommandHandlerTests
         };
         await _handler.Handle(args);
 
-        _mockAdoApi.Verify(x => x.ChangePipelineRepo(ADO_ORG, ADO_TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, GITHUB_ORG, GITHUB_REPO, SERVICE_CONNECTION_ID, targetApiUrl));
+        _mockAdoApi.Verify(x => x.ChangePipelineRepo(ADO_ORG, ADO_TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, GITHUB_ORG, GITHUB_REPO, SERVICE_CONNECTION_ID, triggers, targetApiUrl));
     }
 }
