@@ -686,11 +686,9 @@ public class AdoApi
             var originalPrReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "pullRequest");
             return CreateYamlControlledTriggers(enablePullRequestValidation: hadPullRequestTrigger, enableCiBuildStatusReporting: IsReportBuildStatusEnabled(originalCiReportBuildStatus), enablePrBuildStatusReporting: IsReportBuildStatusEnabled(originalPrReportBuildStatus));
         }
-        else
-        {
-            // Default case: Enable PR validation with build status reporting for backwards compatibility
-            return CreateYamlControlledTriggers(enablePullRequestValidation: true, enableCiBuildStatusReporting: true, enablePrBuildStatusReporting: true);
-        }
+
+        // Default case: Enable PR validation with build status reporting for backwards compatibility
+        return CreateYamlControlledTriggers(enablePullRequestValidation: true, enableCiBuildStatusReporting: true, enablePrBuildStatusReporting: true);
     }
 
     private JToken CreateFailedBranchPolicyCheckTriggers(JToken originalTriggers)
