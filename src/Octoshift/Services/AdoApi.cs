@@ -653,14 +653,11 @@ public class AdoApi
 
     private JToken DetermineTriggerConfiguration(JToken originalTriggers, bool isPipelineRequiredByBranchPolicy, bool branchPolicyCheckSucceeded)
     {
-        if (isPipelineRequiredByBranchPolicy)
-        {
-            return CreateBranchPolicyRequiredTriggers(originalTriggers);
-        }
-
-        return branchPolicyCheckSucceeded
-            ? CreateSuccessfulBranchPolicyCheckTriggers(originalTriggers)
-            : CreateFailedBranchPolicyCheckTriggers(originalTriggers);
+        return isPipelineRequiredByBranchPolicy
+            ? CreateBranchPolicyRequiredTriggers(originalTriggers)
+            : branchPolicyCheckSucceeded
+                ? CreateSuccessfulBranchPolicyCheckTriggers(originalTriggers)
+                : CreateFailedBranchPolicyCheckTriggers(originalTriggers);
     }
 
     private JToken CreateBranchPolicyRequiredTriggers(JToken originalTriggers)
