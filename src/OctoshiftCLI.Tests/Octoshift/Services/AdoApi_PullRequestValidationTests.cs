@@ -53,7 +53,7 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
 
             var branchFilters = prTrigger["branchFilters"] as JArray;
             branchFilters.Should().NotBeNull();
-            branchFilters!.Select(t => t.Value<string>()).Should().Contain("+refs/heads/*");
+            branchFilters!.Select(t => t?.Value<string>()).Should().Contain("+refs/heads/*");
         }
 
         [Fact]
@@ -100,7 +100,7 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             // Should preserve original branch filters
             var branchFilters = prTrigger["branchFilters"] as JArray;
             branchFilters.Should().NotBeNull();
-            branchFilters!.Select(t => t.Value<string>()).Should().Contain("+refs/heads/develop");
+            branchFilters!.Select(t => t?.Value<string>()).Should().Contain("+refs/heads/develop");
         }
 
         [Fact]
@@ -144,8 +144,8 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             ciTrigger.Should().NotBeNull();
             var ciBranchFilters = ciTrigger!["branchFilters"] as JArray;
             ciBranchFilters.Should().NotBeNull();
-            ciBranchFilters!.Select(t => t.Value<string>()).Should().Contain("+refs/heads/main");
-            ciBranchFilters.Select(t => t.Value<string>()).Should().Contain("+refs/heads/develop");
+            ciBranchFilters!.Select(t => t?.Value<string>()).Should().Contain("+refs/heads/main");
+            ciBranchFilters.Select(t => t?.Value<string>()).Should().Contain("+refs/heads/develop");
 
             // Should preserve schedule trigger
             var scheduleTrigger = triggers!
@@ -190,7 +190,7 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
 
             var branchFilters = result["branchFilters"] as JArray;
             branchFilters.Should().NotBeNull();
-            branchFilters!.Select(t => t.Value<string>()).Should().Contain("+refs/heads/*");
+            branchFilters!.Select(t => t?.Value<string>()).Should().Contain("+refs/heads/*");
         }
     }
 }
