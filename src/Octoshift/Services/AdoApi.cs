@@ -880,16 +880,10 @@ public class AdoApi
         }
 
         // Check if the specified trigger type exists
-        foreach (var trigger in triggerArray)
-        {
-            if (trigger is JObject triggerObj &&
-                triggerObj["triggerType"]?.ToString() == triggerType)
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return triggerArray
+            .OfType<JObject>()
+            .Where(triggerObj => triggerObj["triggerType"]?.ToString() == triggerType)
+            .Any();
     }
 
     private async Task<(bool isRequired, bool checkSucceeded)> CheckBranchPolicyRequirement(string adoOrg, string teamProject, string currentRepoName, int pipelineId)
