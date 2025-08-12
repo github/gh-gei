@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using OctoshiftCLI;
 using OctoshiftCLI.Models;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Services;
@@ -25,6 +26,17 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
             throw new ArgumentNullException(nameof(args));
         }
 
+        // Validate that either pipeline name or ID is provided
+        if (string.IsNullOrEmpty(args.AdoPipeline) && !args.AdoPipelineId.HasValue)
+        {
+            throw new OctoshiftCliException("Either --ado-pipeline or --ado-pipeline-id must be specified");
+        }
+
+        if (!string.IsNullOrEmpty(args.AdoPipeline) && args.AdoPipelineId.HasValue)
+        {
+            throw new OctoshiftCliException("Cannot specify both --ado-pipeline and --ado-pipeline-id. Please use only one.");
+        }
+
         if (args.DryRun)
         {
             await HandleDryRun(args);
@@ -39,11 +51,23 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
     {
         _log.LogInformation($"Rewiring Pipeline to GitHub repo...");
 
-        var adoPipelineId = await _adoApi.GetPipelineId(args.AdoOrg, args.AdoTeamProject, args.AdoPipeline);
+        var adoPipelineId = await GetPipelineId(args);
         var (defaultBranch, clean, checkoutSubmodules, triggers) = await _adoApi.GetPipeline(args.AdoOrg, args.AdoTeamProject, adoPipelineId);
         await _adoApi.ChangePipelineRepo(args.AdoOrg, args.AdoTeamProject, adoPipelineId, defaultBranch, clean, checkoutSubmodules, args.GithubOrg, args.GithubRepo, args.ServiceConnectionId, triggers, args.TargetApiUrl);
 
         _log.LogSuccess("Successfully rewired pipeline");
+    }
+
+    private async Task<int> GetPipelineId(RewirePipelineCommandArgs args)
+    {
+        if (args.AdoPipelineId.HasValue)
+        {
+            _log.LogInformation($"Using provided pipeline ID: {args.AdoPipelineId.Value}");
+            return args.AdoPipelineId.Value;
+        }
+        
+        _log.LogInformation($"Looking up pipeline ID for: {args.AdoPipeline}");
+        return await _adoApi.GetPipelineId(args.AdoOrg, args.AdoTeamProject, args.AdoPipeline);
     }
 
     private async Task HandleDryRun(RewirePipelineCommandArgs args)
@@ -54,7 +78,7 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
         {
             AdoOrg = args.AdoOrg,
             AdoTeamProject = args.AdoTeamProject,
-            PipelineName = args.AdoPipeline,
+            PipelineName = args.AdoPipeline ?? $"Pipeline ID {args.AdoPipelineId}",
             StartTime = DateTime.UtcNow
         };
 
@@ -70,7 +94,7 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
         {
             // Step 1: Get pipeline information and store original configuration
             _log.LogInformation("Step 1: Retrieving pipeline information...");
-            var adoPipelineId = await _adoApi.GetPipelineId(args.AdoOrg, args.AdoTeamProject, args.AdoPipeline);
+            var adoPipelineId = await GetPipelineId(args);
             testResult.PipelineId = adoPipelineId;
 
             // Get original repository information for restoration

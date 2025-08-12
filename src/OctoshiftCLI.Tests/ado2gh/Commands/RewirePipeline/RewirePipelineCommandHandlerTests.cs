@@ -80,4 +80,64 @@ public class RewirePipelineCommandHandlerTests
 
         _mockAdoApi.Verify(x => x.ChangePipelineRepo(ADO_ORG, ADO_TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, GITHUB_ORG, GITHUB_REPO, SERVICE_CONNECTION_ID, triggers, targetApiUrl));
     }
+
+    [Fact]
+    public async Task Validates_Neither_Pipeline_Name_Nor_Id_Provided()
+    {
+        var args = new RewirePipelineCommandArgs
+        {
+            AdoOrg = ADO_ORG,
+            AdoTeamProject = ADO_TEAM_PROJECT,
+            GithubOrg = GITHUB_ORG,
+            GithubRepo = GITHUB_REPO,
+            ServiceConnectionId = SERVICE_CONNECTION_ID,
+        };
+
+        await Assert.ThrowsAsync<OctoshiftCliException>(() => _handler.Handle(args));
+    }
+
+    [Fact]
+    public async Task Validates_Both_Pipeline_Name_And_Id_Provided()
+    {
+        var args = new RewirePipelineCommandArgs
+        {
+            AdoOrg = ADO_ORG,
+            AdoTeamProject = ADO_TEAM_PROJECT,
+            AdoPipeline = ADO_PIPELINE,
+            AdoPipelineId = 123,
+            GithubOrg = GITHUB_ORG,
+            GithubRepo = GITHUB_REPO,
+            ServiceConnectionId = SERVICE_CONNECTION_ID,
+        };
+
+        await Assert.ThrowsAsync<OctoshiftCliException>(() => _handler.Handle(args));
+    }
+
+    [Fact]
+    public async Task Uses_Pipeline_Id_When_Provided()
+    {
+        var pipelineId = 1234;
+        var defaultBranch = "default-branch";
+        var clean = "true";
+        var checkoutSubmodules = "null";
+        var triggers = new JArray(); // Mock triggers data
+
+        _mockAdoApi.Setup(x => x.GetPipeline(ADO_ORG, ADO_TEAM_PROJECT, pipelineId).Result).Returns((defaultBranch, clean, checkoutSubmodules, triggers));
+
+        var args = new RewirePipelineCommandArgs
+        {
+            AdoOrg = ADO_ORG,
+            AdoTeamProject = ADO_TEAM_PROJECT,
+            AdoPipelineId = pipelineId,
+            GithubOrg = GITHUB_ORG,
+            GithubRepo = GITHUB_REPO,
+            ServiceConnectionId = SERVICE_CONNECTION_ID,
+        };
+
+        await _handler.Handle(args);
+
+        // Verify that GetPipelineId is NOT called when ID is provided directly
+        _mockAdoApi.Verify(x => x.GetPipelineId(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockAdoApi.Verify(x => x.ChangePipelineRepo(ADO_ORG, ADO_TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, GITHUB_ORG, GITHUB_REPO, SERVICE_CONNECTION_ID, triggers, null));
+    }
 }

@@ -18,6 +18,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands.RewirePipeline
             AddOption(AdoOrg);
             AddOption(AdoTeamProject);
             AddOption(AdoPipeline);
+            AddOption(AdoPipelineId);
             AddOption(GithubOrg);
             AddOption(GithubRepo);
             AddOption(ServiceConnectionId);
@@ -38,8 +39,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands.RewirePipeline
         };
         public Option<string> AdoPipeline { get; } = new("--ado-pipeline")
         {
-            IsRequired = true,
-            Description = "The path and/or name of your pipeline. If the pipeline is in the root pipeline folder this can be just the name. Otherwise you need to specify the full pipeline path (E.g. \\Services\\Finance\\CI-Pipeline)"
+            IsRequired = false,
+            Description = "The path and/or name of your pipeline. If the pipeline is in the root pipeline folder this can be just the name. Otherwise you need to specify the full pipeline path (E.g. \\Services\\Finance\\CI-Pipeline). Either --ado-pipeline or --ado-pipeline-id must be specified."
+        };
+        public Option<int?> AdoPipelineId { get; } = new("--ado-pipeline-id")
+        {
+            IsRequired = false,
+            Description = "The numeric ID of the Azure DevOps build pipeline definition. Either --ado-pipeline or --ado-pipeline-id must be specified."
         };
         public Option<string> GithubOrg { get; } = new("--github-org")
         {

@@ -31,11 +31,12 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.RewirePipeline
         {
             Assert.NotNull(_command);
             Assert.Equal("rewire-pipeline", _command.Name);
-            Assert.Equal(11, _command.Options.Count);
+            Assert.Equal(12, _command.Options.Count);
 
             TestHelpers.VerifyCommandOption(_command.Options, "ado-org", true);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-team-project", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-pipeline", true);
+            TestHelpers.VerifyCommandOption(_command.Options, "ado-pipeline", false); // Made optional when ID is provided
+            TestHelpers.VerifyCommandOption(_command.Options, "ado-pipeline-id", false);
             TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(_command.Options, "github-repo", true);
             TestHelpers.VerifyCommandOption(_command.Options, "service-connection-id", true);
@@ -65,6 +66,24 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.RewirePipeline
             _command.BuildHandler(args, _serviceProvider);
 
             _mockAdoApiFactory.Verify(m => m.Create(adoPat));
+        }
+
+        [Fact]
+        public void It_Accepts_Pipeline_Id_Instead_Of_Pipeline_Name()
+        {
+            var args = new RewirePipelineCommandArgs
+            {
+                AdoOrg = "foo-org",
+                AdoTeamProject = "blah-tp",
+                AdoPipelineId = 123,
+                GithubOrg = "gh-org",
+                GithubRepo = "gh-repo",
+                ServiceConnectionId = Guid.NewGuid().ToString(),
+            };
+
+            var handler = _command.BuildHandler(args, _serviceProvider);
+
+            Assert.NotNull(handler);
         }
     }
 }
