@@ -24,6 +24,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands.RewirePipeline
             AddOption(AdoPat);
             AddOption(Verbose);
             AddOption(TargetApiUrl);
+            AddOption(DryRun);
+            AddOption(MonitorTimeoutMinutes);
         }
 
         public Option<string> AdoOrg { get; } = new("--ado-org")
@@ -56,6 +58,14 @@ namespace OctoshiftCLI.AdoToGithub.Commands.RewirePipeline
         public Option<string> TargetApiUrl { get; } = new("--target-api-url")
         {
             Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
+        };
+        public Option<bool> DryRun { get; } = new("--dry-run")
+        {
+            Description = "Test mode: Temporarily rewire pipeline to GitHub, trigger a build, monitor results, then rewire back to ADO"
+        };
+        public Option<int> MonitorTimeoutMinutes { get; } = new("--monitor-timeout-minutes")
+        {
+            Description = "Timeout in minutes for monitoring build completion in dry-run mode. Defaults to 30 minutes."
         };
 
         public override RewirePipelineCommandHandler BuildHandler(RewirePipelineCommandArgs args, IServiceProvider sp)

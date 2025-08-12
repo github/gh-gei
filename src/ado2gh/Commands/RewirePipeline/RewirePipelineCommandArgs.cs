@@ -13,5 +13,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands.RewirePipeline
         [Secret]
         public string AdoPat { get; set; }
         public string TargetApiUrl { get; set; }
+        public bool DryRun { get; set; }
+        public int MonitorTimeoutMinutes { get; set; } = 30;
     }
 }
