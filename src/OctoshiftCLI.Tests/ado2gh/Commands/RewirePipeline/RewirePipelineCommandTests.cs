@@ -11,6 +11,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.RewirePipeline
     public class RewirePipelineCommandTests
     {
         private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
+        private readonly Mock<AdoPipelineTriggerServiceFactory> _mockAdoPipelineTriggerServiceFactory = TestHelpers.CreateMock<AdoPipelineTriggerServiceFactory>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
         private readonly ServiceProvider _serviceProvider;
@@ -21,7 +22,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.RewirePipeline
             var serviceCollection = new ServiceCollection();
             serviceCollection
                 .AddSingleton(_mockOctoLogger.Object)
-                .AddSingleton(_mockAdoApiFactory.Object);
+                .AddSingleton(_mockAdoApiFactory.Object)
+                .AddSingleton(_mockAdoPipelineTriggerServiceFactory.Object);
 
             _serviceProvider = serviceCollection.BuildServiceProvider();
         }

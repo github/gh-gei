@@ -3,6 +3,7 @@ using System.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.AdoToGithub.Factories;
 using OctoshiftCLI.Commands;
+using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.AdoToGithub.Commands.RewirePipeline
@@ -73,8 +74,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands.RewirePipeline
             var log = sp.GetRequiredService<OctoLogger>();
             var adoApiFactory = sp.GetRequiredService<AdoApiFactory>();
             var adoApi = adoApiFactory.Create(args.AdoPat);
+            var pipelineTriggerServiceFactory = sp.GetRequiredService<AdoPipelineTriggerServiceFactory>();
+            var pipelineTriggerService = pipelineTriggerServiceFactory.Create(args.AdoPat);
 
-            return new RewirePipelineCommandHandler(log, adoApi);
+            return new RewirePipelineCommandHandler(log, adoApi, pipelineTriggerService);
         }
     }
 }
