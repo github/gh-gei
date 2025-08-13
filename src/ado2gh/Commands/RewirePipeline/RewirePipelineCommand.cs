@@ -3,7 +3,6 @@ using System.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.AdoToGithub.Factories;
 using OctoshiftCLI.Commands;
-using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.AdoToGithub.Commands.RewirePipeline

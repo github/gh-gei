@@ -323,29 +323,46 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             var parsedPayload = JObject.Parse(json);
 
             // Check if triggers exist and have expected configuration
-            var triggers = parsedPayload["triggers"] as JArray;
-            if (triggers == null) return false;
+            if (parsedPayload["triggers"] is not JArray triggers)
+            {
+                return false;
+            }
 
-            var ciTrigger = triggers.FirstOrDefault(t => t["triggerType"]?.ToString() == "continuousIntegration") as JObject;
             var prTrigger = triggers.FirstOrDefault(t => t["triggerType"]?.ToString() == "pullRequest") as JObject;
 
             // Verify CI trigger exists
-            if (ciTrigger == null) return false;
+            if (triggers.FirstOrDefault(t => t["triggerType"]?.ToString() == "continuousIntegration") is not JObject ciTrigger)
+            {
+                return false;
+            }
 
             // Verify PR trigger exists if expected
-            if (enablePullRequestValidation && prTrigger == null) return false;
-            if (!enablePullRequestValidation && prTrigger != null) return false;
+            if (enablePullRequestValidation && prTrigger == null)
+            {
+                return false;
+            }
+
+            if (!enablePullRequestValidation && prTrigger != null)
+            {
+                return false;
+            }
 
             // Verify build status reporting if expected
             if (enableBuildStatusReporting)
             {
                 var ciReportStatus = ciTrigger["reportBuildStatus"]?.ToString();
-                if (ciReportStatus != "true") return false;
+                if (ciReportStatus != "true")
+                {
+                    return false;
+                }
 
                 if (prTrigger != null)
                 {
                     var prReportStatus = prTrigger["reportBuildStatus"]?.ToString();
-                    if (prReportStatus != "true") return false;
+                    if (prReportStatus != "true")
+                    {
+                        return false;
+                    }
                 }
             }
 

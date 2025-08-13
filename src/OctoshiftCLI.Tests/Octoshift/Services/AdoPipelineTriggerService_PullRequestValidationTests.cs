@@ -1,7 +1,4 @@
-using System;
 using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using Newtonsoft.Json.Linq;
@@ -248,22 +245,31 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
         private static bool VerifyPullRequestTriggerIncluded(object payload)
         {
             var json = JObject.FromObject(payload);
-            var triggers = json["triggers"] as JArray;
 
-            if (triggers == null) return false;
+            if (json["triggers"] is not JArray triggers)
+            {
+                return false;
+            }
 
             // Should have a pull request trigger since pipeline is required by branch policy
-            var prTrigger = triggers.FirstOrDefault(t => t["triggerType"]?.ToString() == "pullRequest") as JObject;
-            if (prTrigger == null) return false;
+            if (triggers.FirstOrDefault(t => t["triggerType"]?.ToString() == "pullRequest") is not JObject prTrigger)
+            {
+                return false;
+            }
 
             // Verify PR trigger configuration
             var isCommentRequired = prTrigger["isCommentRequiredForPullRequest"]?.Value<bool>();
             var requireCommentsForNonTeamMembers = prTrigger["requireCommentsForNonTeamMembersOnly"]?.Value<bool>();
 
-            if (isCommentRequired != false || requireCommentsForNonTeamMembers != false) return false;
+            if (isCommentRequired != false || requireCommentsForNonTeamMembers != false)
+            {
+                return false;
+            }
 
-            var forks = prTrigger["forks"] as JObject;
-            if (forks == null) return false;
+            if (prTrigger["forks"] is not JObject forks)
+            {
+                return false;
+            }
 
             var forksEnabled = forks["enabled"]?.Value<bool>();
             var allowSecrets = forks["allowSecrets"]?.Value<bool>();

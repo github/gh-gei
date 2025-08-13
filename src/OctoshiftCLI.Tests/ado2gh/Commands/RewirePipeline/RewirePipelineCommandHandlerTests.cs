@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 using Moq;
 using Newtonsoft.Json.Linq;
@@ -8,27 +7,28 @@ using Xunit;
 
 namespace OctoshiftCLI.Tests.AdoToGithub.Commands.RewirePipeline;
 
-    public class RewirePipelineCommandHandlerTests
+public class RewirePipelineCommandHandlerTests
+{
+    private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
+    private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
+    private readonly Mock<AdoPipelineTriggerService> _mockAdoPipelineTriggerService;
+
+    private readonly RewirePipelineCommandHandler _handler;
+
+    private const string ADO_ORG = "FooOrg";
+    private const string ADO_TEAM_PROJECT = "BlahTeamProject";
+    private const string ADO_PIPELINE = "foo-pipeline";
+    private const string GITHUB_ORG = "foo-gh-org";
+    private const string GITHUB_REPO = "foo-gh-repo";
+    private const string SERVICE_CONNECTION_ID = "service-connection-123";
+    private const string ADO_SERVICE_URL = "https://dev.azure.com";
+
+    public RewirePipelineCommandHandlerTests()
     {
-        private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
-        private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
-        private readonly Mock<AdoPipelineTriggerService> _mockAdoPipelineTriggerService;
-
-        private readonly RewirePipelineCommandHandler _handler;
-
-        private const string ADO_ORG = "FooOrg";
-        private const string ADO_TEAM_PROJECT = "BlahTeamProject";
-        private const string ADO_PIPELINE = "foo-pipeline";
-        private const string GITHUB_ORG = "foo-gh-org";
-        private const string GITHUB_REPO = "foo-gh-repo";
-        private const string SERVICE_CONNECTION_ID = "service-connection-123";
-        private const string ADO_SERVICE_URL = "https://dev.azure.com";
-
-        public RewirePipelineCommandHandlerTests()
-        {
-            _mockAdoPipelineTriggerService = new Mock<AdoPipelineTriggerService>(_mockAdoApi.Object, _mockOctoLogger.Object, "https://dev.azure.com");
-            _handler = new RewirePipelineCommandHandler(_mockOctoLogger.Object, _mockAdoApi.Object, _mockAdoPipelineTriggerService.Object);
-        }    [Fact]
+        _mockAdoPipelineTriggerService = new Mock<AdoPipelineTriggerService>(_mockAdoApi.Object, _mockOctoLogger.Object, "https://dev.azure.com");
+        _handler = new RewirePipelineCommandHandler(_mockOctoLogger.Object, _mockAdoApi.Object, _mockAdoPipelineTriggerService.Object);
+    }
+    [Fact]
     public async Task Happy_Path()
     {
         var pipelineId = 1234;
