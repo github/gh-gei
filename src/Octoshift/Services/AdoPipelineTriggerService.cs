@@ -356,7 +356,7 @@ public class AdoPipelineTriggerService
                 ["requireCommentsForNonTeamMembersOnly"] = false,
                 ["forks"] = new JObject
                 {
-                    ["enabled"] = false,  - let YAML control
+                    ["enabled"] = false, // Let YAML control
                     ["allowSecrets"] = false
                 },
                 ["branchFilters"] = new JArray(), // Empty means defer to YAML

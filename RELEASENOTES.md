@@ -1,1 +1,1 @@
-- **ado2gh rewire-pipeline**: Enhanced Azure DevOps pipeline trigger preservation to properly enable both CI and PR triggers with YAML control settings, ensuring triggers appear as enabled in ADO UI while deferring to YAML definitions
+- **ado2gh rewire-pipeline**: Migration now preserves all original trigger configurations (pullRequest, continuousIntegration, etc.) from Azure DevOps pipelines.

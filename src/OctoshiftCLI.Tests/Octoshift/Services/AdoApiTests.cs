@@ -35,7 +35,7 @@ public class AdoApiTests
 
     public AdoApiTests()
     {
-        sut = new AdoApi(_mockAdoClient.Object, ADO_SERVICE_URL, _mockOctoLogger.Object);
+        sut = new AdoApi(client: _mockAdoClient.Object, adoServerUrl: ADO_SERVICE_URL, log: _mockOctoLogger.Object);
     }
 
     [Fact]
@@ -501,7 +501,7 @@ public class AdoApiTests
             new { name = ADO_REPO, id = repoId }
         };
 
-        _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Throws(new HttpRequestException(null, null, HttpStatusCode.NotFound));
+        _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Throws(new HttpRequestException(message: null, inner: null, statusCode: HttpStatusCode.NotFound));
         _mockAdoClient.Setup(x => x.GetWithPagingAsync(allReposEndpoint).Result).Returns(JArray.Parse(response.ToJson()));
 
         var result = await sut.GetRepoId(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO);
@@ -521,7 +521,7 @@ public class AdoApiTests
             new { name = ADO_REPO, id = Guid.NewGuid().ToString() }
         };
 
-        _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Throws(new HttpRequestException(null, null, HttpStatusCode.NotFound));
+        _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Throws(new HttpRequestException(message: null, inner: null, statusCode: HttpStatusCode.NotFound));
         _mockAdoClient.Setup(x => x.GetWithPagingAsync(allReposEndpoint).Result).Returns(JArray.Parse(response.ToJson()));
 
         var result = await sut.GetRepoId(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO);
@@ -546,7 +546,7 @@ public class AdoApiTests
     public async Task GetLastPushDate_Should_Return_LastPushDate()
     {
         var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{ADO_REPO.EscapeDataString()}/pushes?$top=1&api-version=7.1-preview.2";
-        var expectedDate = new DateTime(2022, 2, 14);
+        var expectedDate = new DateTime(year: 2022, month: 2, day: 14);
 
         var response = new
         {
@@ -581,7 +581,7 @@ public class AdoApiTests
     public async Task GetLastPushDate_Should_Be_Locale_Independent()
     {
         var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{ADO_REPO.EscapeDataString()}/pushes?$top=1&api-version=7.1-preview.2";
-        var expectedDate = new DateTime(2016, 4, 22);
+        var expectedDate = new DateTime(year: 2016, month: 4, day: 22);
 
         var response = new
         {
@@ -593,7 +593,7 @@ public class AdoApiTests
 
         _mockAdoClient.Setup(x => x.GetAsync(endpoint)).ReturnsAsync(response.ToJson());
 
-        CultureInfo.CurrentCulture = new CultureInfo("en-AT"); // Austrian culture has reversed datetime format
+        CultureInfo.CurrentCulture = new CultureInfo(name: "en-AT"); // Austrian culture has reversed datetime format
 
         var result = await sut.GetLastPushDate(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO);
 
@@ -603,7 +603,7 @@ public class AdoApiTests
     [Fact]
     public async Task GetCommitCountSince_Should_Return_Commit_Count()
     {
-        var fromDate = new DateTime(2022, 2, 14);
+        var fromDate = new DateTime(year: 2022, month: 2, day: 14);
         var fromDateIso = "02/14/2022";
         var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{ADO_REPO.EscapeDataString()}/commits?searchCriteria.fromDate={fromDateIso}&api-version=7.1-preview.1";
         var expectedCount = 12;
@@ -618,14 +618,14 @@ public class AdoApiTests
     [Fact]
     public async Task GetCommitCountSince_Should_Be_Locale_Independent()
     {
-        var fromDate = new DateTime(2022, 2, 14);
+        var fromDate = new DateTime(year: 2022, month: 2, day: 14);
         var fromDateIso = "02/14/2022";
         var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{ADO_REPO.EscapeDataString()}/commits?searchCriteria.fromDate={fromDateIso}&api-version=7.1-preview.1";
         var expectedCount = 12;
 
         _mockAdoClient.Setup(x => x.GetCountUsingSkip(endpoint)).ReturnsAsync(expectedCount);
 
-        CultureInfo.CurrentCulture = new CultureInfo("en-AT"); // Austrian culture has reversed datetime format
+        CultureInfo.CurrentCulture = new CultureInfo(name: "en-AT"); // Austrian culture has reversed datetime format
 
         var result = await sut.GetCommitCountSince(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO, fromDate);
 
@@ -635,7 +635,7 @@ public class AdoApiTests
     [Fact]
     public async Task GetPushersSince_Should_Return_Pushers()
     {
-        var fromDate = new DateTime(2022, 2, 14);
+        var fromDate = new DateTime(year: 2022, month: 2, day: 14);
         var fromDateIso = "02/14/2022";
         var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{ADO_REPO.EscapeDataString()}/pushes?searchCriteria.fromDate={fromDateIso}&api-version=7.1-preview.1";
         var pusher1DisplayName = "Dylan";
@@ -669,7 +669,7 @@ public class AdoApiTests
     [Fact]
     public async Task GetPushersSince_Should_Be_Locale_Independent()
     {
-        var fromDate = new DateTime(2022, 2, 14);
+        var fromDate = new DateTime(year: 2022, month: 2, day: 14);
         var fromDateIso = "02/14/2022";
         var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{ADO_REPO.EscapeDataString()}/pushes?searchCriteria.fromDate={fromDateIso}&api-version=7.1-preview.1";
         var pusher1DisplayName = "Dylan";
@@ -694,7 +694,7 @@ public class AdoApiTests
         _mockAdoClient.Setup(x => x.GetWithPagingTopSkipAsync(endpoint, It.IsAny<Func<JToken, string>>()))
             .ReturnsAsync((string url, Func<JToken, string> selector) => responseArray.Select(selector));
 
-        CultureInfo.CurrentCulture = new CultureInfo("en-AT"); // Austrian culture has reversed datetime format
+        CultureInfo.CurrentCulture = new CultureInfo(name: "en-AT"); // Austrian culture has reversed datetime format
 
         var result = await sut.GetPushersSince(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO, fromDate);
 
