@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Octoshift.Models;
 using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.Services;
@@ -50,11 +51,11 @@ public class AdoPipelineTriggerService
 
         var newRepo = CreateGitHubRepositoryConfiguration(githubOrg, githubRepo, defaultBranch, clean, checkoutSubmodules, connectedServiceId, targetApiUrl);
         var currentRepoName = data["repository"]?["name"]?.ToString();
-        var (isPipelineRequiredByBranchPolicy, branchPolicyCheckSucceeded) = await CheckBranchPolicyRequirement(adoOrg, teamProject, currentRepoName, pipelineId);
+        var isPipelineRequiredByBranchPolicy = await IsPipelineRequiredByBranchPolicy(adoOrg, teamProject, currentRepoName, pipelineId);
 
-        LogBranchPolicyCheckResults(pipelineId, isPipelineRequiredByBranchPolicy, branchPolicyCheckSucceeded);
+        LogBranchPolicyCheckResults(pipelineId, isPipelineRequiredByBranchPolicy);
 
-        var payload = BuildPipelinePayload(data, newRepo, originalTriggers, isPipelineRequiredByBranchPolicy, branchPolicyCheckSucceeded);
+        var payload = BuildPipelinePayload(data, newRepo, originalTriggers, isPipelineRequiredByBranchPolicy);
 
         await _adoApi.PutAsync(url, payload.ToObject(typeof(object)));
     }
@@ -64,6 +65,12 @@ public class AdoPipelineTriggerService
     /// </summary>
     public async Task<bool> IsPipelineRequiredByBranchPolicy(string adoOrg, string teamProject, string repoName, int pipelineId)
     {
+        if (string.IsNullOrEmpty(repoName))
+        {
+            _log.LogWarning($"Branch policy check skipped for pipeline {pipelineId} - repository name not available. Pipeline trigger configuration may not preserve branch policy requirements.");
+            return false;
+        }
+
         try
         {
             // Get repository information first
@@ -81,129 +88,75 @@ public class AdoPipelineTriggerService
             // Get branch policies for the repository
             var policyUrl = $"{_adoBaseUrl}/{adoOrg.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/policy/configurations?repositoryId={repositoryId}&api-version=6.0";
             var policyResponse = await _adoApi.GetAsync(policyUrl);
-            var policyData = JObject.Parse(policyResponse);
+            var policyData = JsonConvert.DeserializeObject<AdoBranchPolicyResponse>(policyResponse);
 
-            if (policyData["value"] is not JArray policies)
+            if (policyData?.Value == null || policyData.Value.Count == 0)
             {
                 _log.LogVerbose($"No branch policies found for repository {adoOrg}/{teamProject}/{repoName}. ADO Pipeline ID = {pipelineId} is not required by branch policy.");
                 return false;
             }
 
-            // Look for build validation policies that reference our pipeline
-            foreach (var policy in policies)
+            // Look for enabled build validation policies that reference our pipeline
+            var isPipelineRequired = policyData.Value.Any(policy =>
+                policy.Type?.DisplayName == "Build" &&
+                policy.IsEnabled &&
+                policy.Settings?.BuildDefinitionId == pipelineId.ToString());
+
+            if (isPipelineRequired)
             {
-                if (policy is not JObject policyObj)
-                {
-                    continue;
-                }
-
-                // Check if this is a build validation policy
-                var policyType = policyObj["type"]?["displayName"]?.ToString();
-                if (policyType != "Build")
-                {
-                    continue;
-                }
-
-                // Check if the policy is enabled
-                var isEnabled = policyObj["isEnabled"]?.Value<bool>() == true;
-                if (!isEnabled)
-                {
-                    continue;
-                }
-
-                // Check if this policy references our pipeline by ID (not by display name)
-                var buildDefinitionId = policyObj["settings"]?["buildDefinitionId"]?.ToString();
-
-                // Match by pipeline ID since display names can be different from pipeline names
-                if (buildDefinitionId != null && buildDefinitionId.Equals(pipelineId.ToString(), StringComparison.OrdinalIgnoreCase))
-                {
-                    _log.LogVerbose($"ADO Pipeline ID = {pipelineId} is required by branch policy in {adoOrg}/{teamProject}/{repoName}. Build status reporting will be enabled to support branch protection.");
-                    return true;
-                }
+                _log.LogVerbose($"ADO Pipeline ID = {pipelineId} is required by branch policy in {adoOrg}/{teamProject}/{repoName}. Build status reporting will be enabled to support branch protection.");
+            }
+            else
+            {
+                _log.LogVerbose($"ADO Pipeline ID = {pipelineId} is not required by any branch policies in {adoOrg}/{teamProject}/{repoName}.");
             }
 
-            _log.LogVerbose($"ADO Pipeline ID = {pipelineId} is not required by any branch policies in {adoOrg}/{teamProject}/{repoName}.");
-            return false;
+            return isPipelineRequired;
         }
         catch (HttpRequestException ex)
         {
             // If we can't determine branch policy status due to network issues, default to false
-            _log.LogWarning($"HTTP error during branch policy check for pipeline {pipelineId} in {adoOrg}/{teamProject}/{repoName}: {ex.Message}");
+            _log.LogWarning($"HTTP error during branch policy check for pipeline {pipelineId} in {adoOrg}/{teamProject}/{repoName}: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
+            return false;
+        }
+        catch (TaskCanceledException ex)
+        {
+            // If branch policy checking times out, consider check failed
+            _log.LogWarning($"Branch policy check timed out for pipeline {pipelineId} in {adoOrg}/{teamProject}/{repoName}: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
             return false;
         }
         catch (JsonException ex)
         {
             // If we can't determine branch policy status due to JSON parsing issues, default to false
-            _log.LogWarning($"JSON parsing error during branch policy check for pipeline {pipelineId} in {adoOrg}/{teamProject}/{repoName}: {ex.Message}");
+            _log.LogWarning($"JSON parsing error during branch policy check for pipeline {pipelineId} in {adoOrg}/{teamProject}/{repoName}: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
             return false;
         }
         catch (ArgumentException ex)
         {
             // If we can't determine branch policy status due to invalid arguments, default to false
-            _log.LogWarning($"Invalid argument error during branch policy check for pipeline {pipelineId} in {adoOrg}/{teamProject}/{repoName}: {ex.Message}");
+            _log.LogWarning($"Invalid argument error during branch policy check for pipeline {pipelineId} in {adoOrg}/{teamProject}/{repoName}: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
+            return false;
+        }
+        catch (InvalidOperationException ex)
+        {
+            // If branch policy checking fails due to invalid state, consider check failed
+            _log.LogWarning($"Invalid operation error during branch policy check for pipeline {pipelineId} in {adoOrg}/{teamProject}/{repoName}: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
             return false;
         }
     }
 
     #region Private Helper Methods - Trigger Configuration Logic
 
-    private async Task<(bool isRequired, bool checkSucceeded)> CheckBranchPolicyRequirement(string adoOrg, string teamProject, string currentRepoName, int pipelineId)
-    {
-        if (string.IsNullOrEmpty(currentRepoName))
-        {
-            _log.LogWarning($"Branch policy check skipped for pipeline {pipelineId} - repository name not available. Pipeline trigger configuration may not preserve branch policy requirements.");
-            return (false, false);
-        }
-
-        try
-        {
-            var isRequired = await IsPipelineRequiredByBranchPolicy(adoOrg, teamProject, currentRepoName, pipelineId);
-            return (isRequired, true);
-        }
-        catch (HttpRequestException ex)
-        {
-            // If branch policy checking fails due to network/HTTP issues, consider check failed
-            _log.LogWarning($"Branch policy check failed for pipeline {pipelineId} in {adoOrg}/{teamProject}/{currentRepoName} due to network/HTTP error: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
-            return (false, false);
-        }
-        catch (TaskCanceledException ex)
-        {
-            // If branch policy checking times out, consider check failed
-            _log.LogWarning($"Branch policy check timed out for pipeline {pipelineId} in {adoOrg}/{teamProject}/{currentRepoName}: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
-            return (false, false);
-        }
-        catch (JsonException ex)
-        {
-            // If branch policy checking fails due to JSON parsing issues, consider check failed
-            _log.LogWarning($"Branch policy check failed for pipeline {pipelineId} in {adoOrg}/{teamProject}/{currentRepoName} due to JSON parsing error: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
-            return (false, false);
-        }
-        catch (ArgumentException ex)
-        {
-            // If branch policy checking fails due to invalid arguments, consider check failed
-            _log.LogWarning($"Branch policy check failed for pipeline {pipelineId} in {adoOrg}/{teamProject}/{currentRepoName} due to invalid arguments: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
-            return (false, false);
-        }
-        catch (InvalidOperationException ex)
-        {
-            // If branch policy checking fails due to invalid state, consider check failed
-            _log.LogWarning($"Branch policy check failed for pipeline {pipelineId} in {adoOrg}/{teamProject}/{currentRepoName} due to invalid operation: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
-            return (false, false);
-        }
-    }
-
-    private void LogBranchPolicyCheckResults(int pipelineId, bool isPipelineRequiredByBranchPolicy, bool branchPolicyCheckSucceeded)
+    private void LogBranchPolicyCheckResults(int pipelineId, bool isPipelineRequiredByBranchPolicy)
     {
         var branchPolicyMessage = isPipelineRequiredByBranchPolicy
             ? $"ADO Pipeline ID = {pipelineId} IS required by branch policy - enabling build status reporting to support branch protection"
-            : branchPolicyCheckSucceeded
-                ? $"ADO Pipeline ID = {pipelineId} is NOT required by branch policy - preserving original trigger configuration"
-                : $"Branch policy check FAILED for ADO Pipeline ID = {pipelineId} - using fallback trigger configuration";
+            : $"ADO Pipeline ID = {pipelineId} is NOT required by branch policy - preserving original trigger configuration";
 
         _log.LogInformation(branchPolicyMessage);
     }
 
-    private JObject BuildPipelinePayload(JObject data, object newRepo, JToken originalTriggers, bool isPipelineRequiredByBranchPolicy, bool branchPolicyCheckSucceeded)
+    private JObject BuildPipelinePayload(JObject data, object newRepo, JToken originalTriggers, bool isPipelineRequiredByBranchPolicy)
     {
         var payload = new JObject();
 
@@ -215,14 +168,14 @@ public class AdoPipelineTriggerService
             }
             else if (prop.Name == "triggers")
             {
-                prop.Value = DetermineTriggerConfiguration(originalTriggers, isPipelineRequiredByBranchPolicy, branchPolicyCheckSucceeded);
+                prop.Value = DetermineTriggerConfiguration(originalTriggers, isPipelineRequiredByBranchPolicy);
             }
 
             payload.Add(prop.Name, prop.Value);
         }
 
         // Add triggers if no triggers property exists
-        payload["triggers"] ??= DetermineTriggerConfiguration(originalTriggers, isPipelineRequiredByBranchPolicy, branchPolicyCheckSucceeded);
+        payload["triggers"] ??= DetermineTriggerConfiguration(originalTriggers, isPipelineRequiredByBranchPolicy);
 
         // Use YAML definitions instead of UI override settings
         // settingsSourceType: 2 = Use YAML definitions, 1 = Override from UI
@@ -262,13 +215,11 @@ public class AdoPipelineTriggerService
         };
     }
 
-    private JToken DetermineTriggerConfiguration(JToken originalTriggers, bool isPipelineRequiredByBranchPolicy, bool branchPolicyCheckSucceeded)
+    private JToken DetermineTriggerConfiguration(JToken originalTriggers, bool isPipelineRequiredByBranchPolicy)
     {
         return isPipelineRequiredByBranchPolicy
             ? CreateBranchPolicyRequiredTriggers(originalTriggers)
-            : branchPolicyCheckSucceeded
-                ? CreateSuccessfulBranchPolicyCheckTriggers(originalTriggers)
-                : CreateFailedBranchPolicyCheckTriggers(originalTriggers);
+            : CreateStandardTriggers(originalTriggers);
     }
 
     private JToken CreateBranchPolicyRequiredTriggers(JToken originalTriggers)
@@ -278,50 +229,24 @@ public class AdoPipelineTriggerService
         var originalCiReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "continuousIntegration");
         var originalPrReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "pullRequest");
         // For branch policy scenarios, enable reportBuildStatus if it was originally enabled OR if no original setting exists
-        var enableCiBuildStatus = IsReportBuildStatusEnabled(originalCiReportBuildStatus) || originalTriggers == null || !HasTriggerType(originalTriggers, "continuousIntegration");
-        var enablePrBuildStatus = IsReportBuildStatusEnabled(originalPrReportBuildStatus) || originalTriggers == null || !HasTriggerType(originalTriggers, "pullRequest");
+        var enableCiBuildStatus = originalCiReportBuildStatus || originalTriggers == null || !HasTriggerType(originalTriggers, "continuousIntegration");
+        var enablePrBuildStatus = originalPrReportBuildStatus || originalTriggers == null || !HasTriggerType(originalTriggers, "pullRequest");
         return CreateYamlControlledTriggers(enablePullRequestValidation: true, enableCiBuildStatusReporting: enableCiBuildStatus, enablePrBuildStatusReporting: enablePrBuildStatus);
     }
 
-    private JToken CreateSuccessfulBranchPolicyCheckTriggers(JToken originalTriggers)
+    private JToken CreateStandardTriggers(JToken originalTriggers)
     {
-        // Scenario 2a: Pipeline NOT required by branch policy, but check was successful
-        // Preserve existing triggers regardless of complexity
+        // When pipeline is NOT required by branch policy, preserve existing trigger configuration
         if (originalTriggers != null)
         {
             var hadPullRequestTrigger = HasPullRequestTrigger(originalTriggers);
             var originalCiReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "continuousIntegration");
             var originalPrReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "pullRequest");
-            return CreateYamlControlledTriggers(enablePullRequestValidation: hadPullRequestTrigger, enableCiBuildStatusReporting: IsReportBuildStatusEnabled(originalCiReportBuildStatus), enablePrBuildStatusReporting: IsReportBuildStatusEnabled(originalPrReportBuildStatus));
+            return CreateYamlControlledTriggers(enablePullRequestValidation: hadPullRequestTrigger, enableCiBuildStatusReporting: originalCiReportBuildStatus, enablePrBuildStatusReporting: originalPrReportBuildStatus);
         }
 
         // Default case: Enable PR validation with build status reporting for backwards compatibility
         return CreateYamlControlledTriggers(enablePullRequestValidation: true, enableCiBuildStatusReporting: true, enablePrBuildStatusReporting: true);
-    }
-
-    private JToken CreateFailedBranchPolicyCheckTriggers(JToken originalTriggers)
-    {
-        if (originalTriggers != null && HasCompleteTriggerSet(originalTriggers))
-        {
-            // Scenario 2b: Branch policy check failed/not performed, but has rich trigger configuration
-            // Preserve existing rich triggers with proper UI structure
-            var hadPullRequestTrigger = HasPullRequestTrigger(originalTriggers);
-            var originalCiReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "continuousIntegration");
-            var originalPrReportBuildStatus = GetOriginalReportBuildStatus(originalTriggers, "pullRequest");
-            return CreateYamlControlledTriggers(enablePullRequestValidation: hadPullRequestTrigger, enableCiBuildStatusReporting: IsReportBuildStatusEnabled(originalCiReportBuildStatus), enablePrBuildStatusReporting: IsReportBuildStatusEnabled(originalPrReportBuildStatus));
-        }
-        else if (originalTriggers != null)
-        {
-            // Scenario 2c: Branch policy check failed/not performed, has minimal trigger configuration
-            // Use YAML-only approach (empty triggers array) to let YAML completely control triggers
-            return new JArray();
-        }
-        else
-        {
-            // Default case: No original triggers and branch policy check failed
-            // For basic rewiring scenarios (backwards compatibility), enable both PR validation and build status reporting
-            return CreateYamlControlledTriggers(enablePullRequestValidation: true, enableCiBuildStatusReporting: true, enablePrBuildStatusReporting: true);
-        }
     }
 
     private JArray CreateYamlControlledTriggers(bool enablePullRequestValidation = false, bool enableCiBuildStatusReporting = false, bool enablePrBuildStatusReporting = false)
@@ -429,11 +354,11 @@ public class AdoPipelineTriggerService
         return false;
     }
 
-    private string GetOriginalReportBuildStatus(JToken originalTriggers, string triggerType)
+    private bool GetOriginalReportBuildStatus(JToken originalTriggers, string triggerType)
     {
         if (originalTriggers is not JArray triggerArray)
         {
-            return "true"; // Default to "true" when no original triggers exist
+            return true; // Default to true when no original triggers exist
         }
 
         // Look for the specified trigger type and extract its reportBuildStatus setting
@@ -445,49 +370,43 @@ public class AdoPipelineTriggerService
 
         if (matchingTrigger != null)
         {
-            // Return the original reportBuildStatus value, defaulting to "true" if not present
+            // Return the original reportBuildStatus value, defaulting to true if not present
             var reportBuildStatusToken = matchingTrigger["reportBuildStatus"];
             if (reportBuildStatusToken == null)
             {
-                return "true"; // Default to "true" when property doesn't exist
+                return true; // Default to true when property doesn't exist
             }
 
-            // Handle both boolean and string values - normalize to string
-            if (reportBuildStatusToken.Type == JTokenType.Boolean)
+            // Handle different JSON token types directly to boolean
+            return reportBuildStatusToken.Type switch
             {
-                return reportBuildStatusToken.Value<bool>() ? "true" : "false";
-            }
-            else if (reportBuildStatusToken.Type == JTokenType.String)
-            {
-                var stringValue = reportBuildStatusToken.ToString();
-                // Normalize to lowercase for consistency
-                return string.Equals(stringValue, "true", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(stringValue, "True", StringComparison.OrdinalIgnoreCase)
-                    ? "true"
-                    : "false";
-            }
-
-            // Try to convert any other type to boolean, then to string
-            try
-            {
-                return reportBuildStatusToken.ToObject<bool>() ? "true" : "false";
-            }
-            catch (JsonException)
-            {
-                return "true"; // Default to "true" if JSON conversion fails
-            }
-            catch (InvalidOperationException)
-            {
-                return "true"; // Default to "true" if operation is invalid
-            }
+                JTokenType.Boolean => reportBuildStatusToken.Value<bool>(),
+                JTokenType.String => string.Equals(reportBuildStatusToken.ToString(), "true", StringComparison.OrdinalIgnoreCase),
+                _ => TryConvertToBool(reportBuildStatusToken)
+            };
         }
 
-        return "true"; // Default to "true" when trigger type not found in original triggers
+        return true; // Default to true when trigger type not found in original triggers
     }
 
-    private static bool IsReportBuildStatusEnabled(string reportBuildStatusValue)
+    private static bool TryConvertToBool(JToken token)
     {
-        return string.Equals(reportBuildStatusValue, "true", StringComparison.OrdinalIgnoreCase);
+        try
+        {
+            return token.ToObject<bool>();
+        }
+        catch (JsonException)
+        {
+            return true; // Default to true if JSON conversion fails
+        }
+        catch (InvalidOperationException)
+        {
+            return true; // Default to true if operation is invalid
+        }
+        catch (Exception)
+        {
+            return true; // Default to true for any other conversion errors
+        }
     }
 
     private bool HasTriggerType(JToken originalTriggers, string triggerType)
