@@ -11,6 +11,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.RewirePipeline
     {
         private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
+        private readonly Mock<AdoPipelineTriggerService> _mockAdoPipelineTriggerService;
 
         private readonly RewirePipelineCommandHandler _handler;
 
@@ -23,7 +24,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.RewirePipeline
 
         public RewirePipelineCommandHandler_TriggerPreservationTests()
         {
-            _handler = new RewirePipelineCommandHandler(_mockOctoLogger.Object, _mockAdoApi.Object);
+            _mockAdoPipelineTriggerService = new Mock<AdoPipelineTriggerService>(_mockAdoApi.Object, _mockOctoLogger.Object, "https://dev.azure.com");
+            _handler = new RewirePipelineCommandHandler(_mockOctoLogger.Object, _mockAdoApi.Object, _mockAdoPipelineTriggerService.Object);
         }
 
         [Fact]
@@ -68,7 +70,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.RewirePipeline
             await _handler.Handle(args);
 
             // Assert
-            _mockAdoApi.Verify(x => x.ChangePipelineRepo(
+            _mockAdoPipelineTriggerService.Verify(x => x.RewirePipelineToGitHub(
                 ADO_ORG,
                 ADO_TEAM_PROJECT,
                 pipelineId,
@@ -109,7 +111,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.RewirePipeline
             await _handler.Handle(args);
 
             // Assert
-            _mockAdoApi.Verify(x => x.ChangePipelineRepo(
+            _mockAdoPipelineTriggerService.Verify(x => x.RewirePipelineToGitHub(
                 ADO_ORG,
                 ADO_TEAM_PROJECT,
                 pipelineId,

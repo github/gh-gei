@@ -35,7 +35,7 @@ public class AdoApiTests
 
     public AdoApiTests()
     {
-        sut = new AdoApi(_mockAdoClient.Object, ADO_SERVICE_URL, _mockOctoLogger.Object);
+        sut = new AdoApi(client: _mockAdoClient.Object, adoServerUrl: ADO_SERVICE_URL, log: _mockOctoLogger.Object);
     }
 
     [Fact]
@@ -501,7 +501,7 @@ public class AdoApiTests
             new { name = ADO_REPO, id = repoId }
         };
 
-        _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Throws(new HttpRequestException(null, null, HttpStatusCode.NotFound));
+        _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Throws(new HttpRequestException(message: null, inner: null, statusCode: HttpStatusCode.NotFound));
         _mockAdoClient.Setup(x => x.GetWithPagingAsync(allReposEndpoint).Result).Returns(JArray.Parse(response.ToJson()));
 
         var result = await sut.GetRepoId(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO);
@@ -521,7 +521,7 @@ public class AdoApiTests
             new { name = ADO_REPO, id = Guid.NewGuid().ToString() }
         };
 
-        _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Throws(new HttpRequestException(null, null, HttpStatusCode.NotFound));
+        _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Throws(new HttpRequestException(message: null, inner: null, statusCode: HttpStatusCode.NotFound));
         _mockAdoClient.Setup(x => x.GetWithPagingAsync(allReposEndpoint).Result).Returns(JArray.Parse(response.ToJson()));
 
         var result = await sut.GetRepoId(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO);
@@ -546,7 +546,7 @@ public class AdoApiTests
     public async Task GetLastPushDate_Should_Return_LastPushDate()
     {
         var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{ADO_REPO.EscapeDataString()}/pushes?$top=1&api-version=7.1-preview.2";
-        var expectedDate = new DateTime(2022, 2, 14);
+        var expectedDate = new DateTime(year: 2022, month: 2, day: 14);
 
         var response = new
         {
@@ -581,7 +581,7 @@ public class AdoApiTests
     public async Task GetLastPushDate_Should_Be_Locale_Independent()
     {
         var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{ADO_REPO.EscapeDataString()}/pushes?$top=1&api-version=7.1-preview.2";
-        var expectedDate = new DateTime(2016, 4, 22);
+        var expectedDate = new DateTime(year: 2016, month: 4, day: 22);
 
         var response = new
         {
@@ -593,7 +593,7 @@ public class AdoApiTests
 
         _mockAdoClient.Setup(x => x.GetAsync(endpoint)).ReturnsAsync(response.ToJson());
 
-        CultureInfo.CurrentCulture = new CultureInfo("en-AT"); // Austrian culture has reversed datetime format
+        CultureInfo.CurrentCulture = new CultureInfo(name: "en-AT"); // Austrian culture has reversed datetime format
 
         var result = await sut.GetLastPushDate(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO);
 
@@ -603,7 +603,7 @@ public class AdoApiTests
     [Fact]
     public async Task GetCommitCountSince_Should_Return_Commit_Count()
     {
-        var fromDate = new DateTime(2022, 2, 14);
+        var fromDate = new DateTime(year: 2022, month: 2, day: 14);
         var fromDateIso = "02/14/2022";
         var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{ADO_REPO.EscapeDataString()}/commits?searchCriteria.fromDate={fromDateIso}&api-version=7.1-preview.1";
         var expectedCount = 12;
@@ -618,14 +618,14 @@ public class AdoApiTests
     [Fact]
     public async Task GetCommitCountSince_Should_Be_Locale_Independent()
     {
-        var fromDate = new DateTime(2022, 2, 14);
+        var fromDate = new DateTime(year: 2022, month: 2, day: 14);
         var fromDateIso = "02/14/2022";
         var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{ADO_REPO.EscapeDataString()}/commits?searchCriteria.fromDate={fromDateIso}&api-version=7.1-preview.1";
         var expectedCount = 12;
 
         _mockAdoClient.Setup(x => x.GetCountUsingSkip(endpoint)).ReturnsAsync(expectedCount);
 
-        CultureInfo.CurrentCulture = new CultureInfo("en-AT"); // Austrian culture has reversed datetime format
+        CultureInfo.CurrentCulture = new CultureInfo(name: "en-AT"); // Austrian culture has reversed datetime format
 
         var result = await sut.GetCommitCountSince(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO, fromDate);
 
@@ -635,7 +635,7 @@ public class AdoApiTests
     [Fact]
     public async Task GetPushersSince_Should_Return_Pushers()
     {
-        var fromDate = new DateTime(2022, 2, 14);
+        var fromDate = new DateTime(year: 2022, month: 2, day: 14);
         var fromDateIso = "02/14/2022";
         var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{ADO_REPO.EscapeDataString()}/pushes?searchCriteria.fromDate={fromDateIso}&api-version=7.1-preview.1";
         var pusher1DisplayName = "Dylan";
@@ -669,7 +669,7 @@ public class AdoApiTests
     [Fact]
     public async Task GetPushersSince_Should_Be_Locale_Independent()
     {
-        var fromDate = new DateTime(2022, 2, 14);
+        var fromDate = new DateTime(year: 2022, month: 2, day: 14);
         var fromDateIso = "02/14/2022";
         var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{ADO_REPO.EscapeDataString()}/pushes?searchCriteria.fromDate={fromDateIso}&api-version=7.1-preview.1";
         var pusher1DisplayName = "Dylan";
@@ -694,7 +694,7 @@ public class AdoApiTests
         _mockAdoClient.Setup(x => x.GetWithPagingTopSkipAsync(endpoint, It.IsAny<Func<JToken, string>>()))
             .ReturnsAsync((string url, Func<JToken, string> selector) => responseArray.Select(selector));
 
-        CultureInfo.CurrentCulture = new CultureInfo("en-AT"); // Austrian culture has reversed datetime format
+        CultureInfo.CurrentCulture = new CultureInfo(name: "en-AT"); // Austrian culture has reversed datetime format
 
         var result = await sut.GetPushersSince(ADO_ORG, ADO_TEAM_PROJECT, ADO_REPO, fromDate);
 
@@ -959,395 +959,6 @@ public class AdoApiTests
         Clean.Should().Be("true");
         CheckoutSubmodules.Should().Be("null");
         Triggers.Should().NotBeNull();
-    }
-
-    [Fact]
-    public async Task ChangePipelineRepo_Should_Send_Correct_Payload()
-    {
-        var githubRepo = "foo-repo";
-        var serviceConnectionId = Guid.NewGuid().ToString();
-        var defaultBranch = "foo-branch";
-        var pipelineId = 123;
-        var clean = "true";
-        var checkoutSubmodules = "false";
-
-        var oldJson = new
-        {
-            something = "foo",
-            somethingElse = new
-            {
-                blah = "foo",
-                repository = "blah"
-            },
-            repository = new
-            {
-                testing = true,
-                moreTesting = default(string)
-            },
-            oneLastThing = false
-        };
-
-        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
-
-        var newJson = new
-        {
-            something = "foo",
-            somethingElse = new
-            {
-                blah = "foo",
-                repository = "blah"
-            },
-            repository = new
-            {
-                properties = new
-                {
-                    apiUrl = $"https://api.github.com/repos/{GITHUB_ORG}/{githubRepo}",
-                    branchesUrl = $"https://api.github.com/repos/{GITHUB_ORG}/{githubRepo}/branches",
-                    cloneUrl = $"https://github.com/{GITHUB_ORG}/{githubRepo}.git",
-                    connectedServiceId = serviceConnectionId,
-                    defaultBranch,
-                    fullName = $"{GITHUB_ORG}/{githubRepo}",
-                    manageUrl = $"https://github.com/{GITHUB_ORG}/{githubRepo}",
-                    orgName = GITHUB_ORG,
-                    refsUrl = $"https://api.github.com/repos/{GITHUB_ORG}/{githubRepo}/git/refs",
-                    safeRepository = $"{GITHUB_ORG}/{githubRepo}",
-                    shortName = githubRepo,
-                    reportBuildStatus = "true"
-                },
-                id = $"{GITHUB_ORG}/{githubRepo}",
-                type = "GitHub",
-                name = $"{GITHUB_ORG}/{githubRepo}",
-                url = $"https://github.com/{GITHUB_ORG}/{githubRepo}.git",
-                defaultBranch,
-                clean,
-                checkoutSubmodules
-            },
-            oneLastThing = false,
-            triggers = new object[]
-            {
-                new
-                {
-                    triggerType = "continuousIntegration",
-                    settingsSourceType = 2,
-                    branchFilters = Array.Empty<object>(),
-                    pathFilters = Array.Empty<object>(),
-                    batchChanges = false,
-                    reportBuildStatus = "true"
-                },
-                new
-                {
-                    triggerType = "pullRequest",
-                    settingsSourceType = 2,
-                    isCommentRequiredForPullRequest = false,
-                    requireCommentsForNonTeamMembersOnly = false,
-                    forks = new
-                    {
-                        enabled = false,
-                        allowSecrets = false
-                    },
-                    branchFilters = Array.Empty<object>(),
-                    pathFilters = Array.Empty<object>(),
-                    reportBuildStatus = "true"
-                }
-            },
-            settingsSourceType = 2 // Use YAML definitions
-        };
-
-        _mockAdoClient.Setup(m => m.GetAsync(endpoint).Result).Returns(oldJson.ToJson());
-        await sut.ChangePipelineRepo(ADO_ORG, ADO_TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, GITHUB_ORG, githubRepo, serviceConnectionId, null, null);
-
-        _mockAdoClient.Verify(m => m.PutAsync(endpoint, It.Is<object>(y => y.ToJson() == newJson.ToJson())));
-    }
-
-    [Fact]
-    public async Task ChangePipelineRepo_Should_Send_Correct_Payload_With_TargetApiUrl()
-    {
-        var githubRepo = "foo-repo";
-        var serviceConnectionId = Guid.NewGuid().ToString();
-        var defaultBranch = "foo-branch";
-        var pipelineId = 123;
-        var clean = "true";
-        var checkoutSubmodules = "false";
-        var targetApiUrl = "https://custom.api.githubenterprise.com";
-
-        var oldJson = new
-        {
-            something = "foo",
-            somethingElse = new
-            {
-                blah = "foo",
-                repository = "blah"
-            },
-            repository = new
-            {
-                testing = true,
-                moreTesting = default(string)
-            },
-            oneLastThing = false
-        };
-
-        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
-
-        var apiUri = new Uri(targetApiUrl.TrimEnd('/'));
-        var webHost = apiUri.Host.StartsWith("api.") ? apiUri.Host[4..] : apiUri.Host;
-        var webScheme = apiUri.Scheme;
-        var webBase = $"{webScheme}://{webHost}";
-        var apiUrl = $"{targetApiUrl.TrimEnd('/')}/repos/{GITHUB_ORG}/{githubRepo}";
-        var webUrl = $"{webBase}/{GITHUB_ORG}/{githubRepo}";
-        var cloneUrl = $"{webBase}/{GITHUB_ORG}/{githubRepo}.git";
-        var branchesUrl = $"{targetApiUrl.TrimEnd('/')}/repos/{GITHUB_ORG}/{githubRepo}/branches";
-        var refsUrl = $"{targetApiUrl.TrimEnd('/')}/repos/{GITHUB_ORG}/{githubRepo}/git/refs";
-        var manageUrl = webUrl;
-
-        var newJson = new
-        {
-            something = "foo",
-            somethingElse = new
-            {
-                blah = "foo",
-                repository = "blah"
-            },
-            repository = new
-            {
-                properties = new
-                {
-                    apiUrl,
-                    branchesUrl,
-                    cloneUrl,
-                    connectedServiceId = serviceConnectionId,
-                    defaultBranch,
-                    fullName = $"{GITHUB_ORG}/{githubRepo}",
-                    manageUrl,
-                    orgName = GITHUB_ORG,
-                    refsUrl,
-                    safeRepository = $"{GITHUB_ORG}/{githubRepo}",
-                    shortName = githubRepo,
-                    reportBuildStatus = "true"
-                },
-                id = $"{GITHUB_ORG}/{githubRepo}",
-                type = "GitHub",
-                name = $"{GITHUB_ORG}/{githubRepo}",
-                url = cloneUrl,
-                defaultBranch,
-                clean,
-                checkoutSubmodules
-            },
-            oneLastThing = false,
-            triggers = new object[]
-            {
-                new
-                {
-                    triggerType = "continuousIntegration",
-                    settingsSourceType = 2,
-                    branchFilters = Array.Empty<object>(),
-                    pathFilters = Array.Empty<object>(),
-                    batchChanges = false,
-                    reportBuildStatus = "true"
-                },
-                new
-                {
-                    triggerType = "pullRequest",
-                    settingsSourceType = 2,
-                    isCommentRequiredForPullRequest = false,
-                    requireCommentsForNonTeamMembersOnly = false,
-                    forks = new
-                    {
-                        enabled = false,
-                        allowSecrets = false
-                    },
-                    branchFilters = Array.Empty<object>(),
-                    pathFilters = Array.Empty<object>(),
-                    reportBuildStatus = "true"
-                }
-            },
-            settingsSourceType = 2 // Use YAML definitions
-        };
-
-        _mockAdoClient.Setup(m => m.GetAsync(endpoint).Result).Returns(oldJson.ToJson());
-        await sut.ChangePipelineRepo(ADO_ORG, ADO_TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, GITHUB_ORG, githubRepo, serviceConnectionId, null, targetApiUrl);
-
-        _mockAdoClient.Verify(m => m.PutAsync(endpoint, It.Is<object>(y => y.ToJson() == newJson.ToJson())));
-    }
-
-    [Fact]
-    public async Task ChangePipelineRepo_Should_Preserve_Triggers()
-    {
-        var githubRepo = "foo-repo";
-        var serviceConnectionId = Guid.NewGuid().ToString();
-        var defaultBranch = "foo-branch";
-        var pipelineId = 123;
-        var clean = "true";
-        var checkoutSubmodules = "false";
-
-        var originalTriggers = JArray.Parse(@"[
-            {
-                'triggerType': 'pullRequest',
-                'forks': {
-                    'enabled': true,
-                    'allowSecrets': false
-                },
-                'branchFilters': ['+refs/heads/*']
-            }
-        ]");
-
-        var oldJson = new
-        {
-            something = "foo",
-            repository = new
-            {
-                testing = true
-            },
-            triggers = new[]
-            {
-                new
-                {
-                    triggerType = "continuousIntegration",
-                    branchFilters = new[] { "+refs/heads/main" }
-                }
-            },
-            oneLastThing = false
-        };
-
-        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
-
-        var newJson = new
-        {
-            something = "foo",
-            repository = new
-            {
-                properties = new
-                {
-                    apiUrl = $"https://api.github.com/repos/{GITHUB_ORG}/{githubRepo}",
-                    branchesUrl = $"https://api.github.com/repos/{GITHUB_ORG}/{githubRepo}/branches",
-                    cloneUrl = $"https://github.com/{GITHUB_ORG}/{githubRepo}.git",
-                    connectedServiceId = serviceConnectionId,
-                    defaultBranch,
-                    fullName = $"{GITHUB_ORG}/{githubRepo}",
-                    manageUrl = $"https://github.com/{GITHUB_ORG}/{githubRepo}",
-                    orgName = GITHUB_ORG,
-                    refsUrl = $"https://api.github.com/repos/{GITHUB_ORG}/{githubRepo}/git/refs",
-                    safeRepository = $"{GITHUB_ORG}/{githubRepo}",
-                    shortName = githubRepo,
-                    reportBuildStatus = "true"  // String to match other tests
-                },
-                id = $"{GITHUB_ORG}/{githubRepo}",
-                type = "GitHub",
-                name = $"{GITHUB_ORG}/{githubRepo}",
-                url = $"https://github.com/{GITHUB_ORG}/{githubRepo}.git",
-                defaultBranch,
-                clean,
-                checkoutSubmodules
-            },
-            triggers = new object[]
-            {
-                new
-                {
-                    triggerType = "continuousIntegration",
-                    settingsSourceType = 2,
-                    branchFilters = Array.Empty<object>(),
-                    pathFilters = Array.Empty<object>(),
-                    batchChanges = false,
-                    reportBuildStatus = "true"
-                },
-                new
-                {
-                    triggerType = "pullRequest",
-                    settingsSourceType = 2,
-                    isCommentRequiredForPullRequest = false,
-                    requireCommentsForNonTeamMembersOnly = false,
-                    forks = new
-                    {
-                        enabled = false,
-                        allowSecrets = false
-                    },
-                    branchFilters = Array.Empty<object>(),
-                    pathFilters = Array.Empty<object>(),
-                    reportBuildStatus = "true"
-                }
-            },
-            oneLastThing = false,
-            settingsSourceType = 2 // Use YAML definitions instead of UI override
-        };
-
-        _mockAdoClient.Setup(m => m.GetAsync(endpoint).Result).Returns(oldJson.ToJson());
-        await sut.ChangePipelineRepo(ADO_ORG, ADO_TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, GITHUB_ORG, githubRepo, serviceConnectionId, originalTriggers, null);
-
-        _mockAdoClient.Verify(m => m.PutAsync(endpoint, It.Is<object>(y => y.ToJson() == newJson.ToJson())));
-    }
-
-    [Fact]
-    public async Task ChangePipelineRepo_Should_Enhance_PullRequest_Validation()
-    {
-        var githubRepo = "foo-repo";
-        var serviceConnectionId = Guid.NewGuid().ToString();
-        var defaultBranch = "foo-branch";
-        var pipelineId = 123;
-        var clean = "true";
-        var checkoutSubmodules = "false";
-
-        // Original triggers with minimal PR trigger
-        var originalTriggers = JArray.Parse(@"[
-            {
-                'triggerType': 'continuousIntegration',
-                'branchFilters': ['+refs/heads/main']
-            },
-            {
-                'triggerType': 'pullRequest',
-                'branchFilters': ['+refs/heads/develop']
-            }
-        ]");
-
-        var oldJson = new
-        {
-            something = "foo",
-            repository = new
-            {
-                testing = true
-            },
-            triggers = new[]
-            {
-                new
-                {
-                    triggerType = "continuousIntegration",
-                    branchFilters = new[] { "+refs/heads/main" }
-                },
-                new
-                {
-                    triggerType = "pullRequest",
-                    branchFilters = new[] { "+refs/heads/develop" }
-                }
-            },
-            oneLastThing = false
-        };
-
-        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
-
-        _mockAdoClient.Setup(m => m.GetAsync(endpoint).Result).Returns(oldJson.ToJson());
-        await sut.ChangePipelineRepo(ADO_ORG, ADO_TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, GITHUB_ORG, githubRepo, serviceConnectionId, originalTriggers, null);
-
-        // Verify the PUT call was made with enhanced triggers
-        _mockAdoClient.Verify(m => m.PutAsync(endpoint, It.Is<object>(payload =>
-            VerifyEnhancedPullRequestTriggers(payload))), Times.Once);
-    }
-
-    private static bool VerifyEnhancedPullRequestTriggers(object payload)
-    {
-        var json = JObject.Parse(payload.ToJson());
-
-        // Verify settingsSourceType is set to use YAML (2) instead of UI override (1)
-        if (json["settingsSourceType"]?.Value<int>() != 2)
-        {
-            return false;
-        }
-
-        if (json["triggers"] is not JArray triggers)
-        {
-            return false;
-        }
-
-        // For YAML-only approach, triggers should be empty array
-        // This ensures "Override the YAML pull request trigger from here" is unchecked
-        return triggers.Count == 0;
     }
 
     [Fact]

@@ -10,7 +10,7 @@ using Xunit;
 
 namespace OctoshiftCLI.Tests.Octoshift.Services
 {
-    public class AdoApi_BranchPolicyTests
+    public class AdoPipelineTriggerService_BranchPolicyTests
     {
         private const string ADO_ORG = "foo-org";
         private const string TEAM_PROJECT = "foo-project";
@@ -20,12 +20,12 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
         private const string ADO_SERVICE_URL = "https://dev.azure.com";
 
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
-        private readonly Mock<AdoClient> _mockAdoClient = TestHelpers.CreateMock<AdoClient>();
-        private readonly AdoApi _adoApi;
+        private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
+        private readonly AdoPipelineTriggerService _triggerService;
 
-        public AdoApi_BranchPolicyTests()
+        public AdoPipelineTriggerService_BranchPolicyTests()
         {
-            _adoApi = new AdoApi(_mockAdoClient.Object, ADO_SERVICE_URL, _mockOctoLogger.Object);
+            _triggerService = new AdoPipelineTriggerService(_mockAdoApi.Object, _mockOctoLogger.Object, ADO_SERVICE_URL);
         }
 
         [Fact]
@@ -63,14 +63,14 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
                 }
             }.ToJson();
 
-            var repoUrl = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{REPO_NAME.EscapeDataString()}?api-version=6.0";
-            var policyUrl = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/policy/configurations?repositoryId={repositoryId}&api-version=6.0";
+            var repoUrl = $"{ADO_SERVICE_URL}/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{REPO_NAME.EscapeDataString()}?api-version=6.0";
+            var policyUrl = $"{ADO_SERVICE_URL}/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/policy/configurations?repositoryId={repositoryId}&api-version=6.0";
 
-            _mockAdoClient.Setup(m => m.GetAsync(repoUrl)).ReturnsAsync(repoResponse);
-            _mockAdoClient.Setup(m => m.GetAsync(policyUrl)).ReturnsAsync(policyResponse);
+            _mockAdoApi.Setup(m => m.GetAsync(repoUrl)).ReturnsAsync(repoResponse);
+            _mockAdoApi.Setup(m => m.GetAsync(policyUrl)).ReturnsAsync(policyResponse);
 
             // Act
-            var result = await _adoApi.IsPipelineRequiredByBranchPolicy(ADO_ORG, TEAM_PROJECT, REPO_NAME, PIPELINE_ID);
+            var result = await _triggerService.IsPipelineRequiredByBranchPolicy(ADO_ORG, TEAM_PROJECT, REPO_NAME, PIPELINE_ID);
 
             // Assert
             result.Should().BeTrue();
@@ -103,22 +103,22 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
                         isEnabled = true,
                         settings = new
                         {
-                            buildDefinitionId = 456, // Different pipeline
-                            displayName = "Different Pipeline",
+                            buildDefinitionId = 999, // Different pipeline ID
+                            displayName = "Other Pipeline",
                             validDuration = 0
                         }
                     }
                 }
             }.ToJson();
 
-            var repoUrl = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{REPO_NAME.EscapeDataString()}?api-version=6.0";
-            var policyUrl = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/policy/configurations?repositoryId={repositoryId}&api-version=6.0";
+            var repoUrl = $"{ADO_SERVICE_URL}/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{REPO_NAME.EscapeDataString()}?api-version=6.0";
+            var policyUrl = $"{ADO_SERVICE_URL}/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/policy/configurations?repositoryId={repositoryId}&api-version=6.0";
 
-            _mockAdoClient.Setup(m => m.GetAsync(repoUrl)).ReturnsAsync(repoResponse);
-            _mockAdoClient.Setup(m => m.GetAsync(policyUrl)).ReturnsAsync(policyResponse);
+            _mockAdoApi.Setup(m => m.GetAsync(repoUrl)).ReturnsAsync(repoResponse);
+            _mockAdoApi.Setup(m => m.GetAsync(policyUrl)).ReturnsAsync(policyResponse);
 
             // Act
-            var result = await _adoApi.IsPipelineRequiredByBranchPolicy(ADO_ORG, TEAM_PROJECT, REPO_NAME, PIPELINE_ID);
+            var result = await _triggerService.IsPipelineRequiredByBranchPolicy(ADO_ORG, TEAM_PROJECT, REPO_NAME, PIPELINE_ID);
 
             // Assert
             result.Should().BeFalse();
@@ -159,14 +159,14 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
                 }
             }.ToJson();
 
-            var repoUrl = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{REPO_NAME.EscapeDataString()}?api-version=6.0";
-            var policyUrl = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/policy/configurations?repositoryId={repositoryId}&api-version=6.0";
+            var repoUrl = $"/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{REPO_NAME.EscapeDataString()}?api-version=6.0";
+            var policyUrl = $"/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/policy/configurations?repositoryId={repositoryId}&api-version=6.0";
 
-            _mockAdoClient.Setup(m => m.GetAsync(repoUrl)).ReturnsAsync(repoResponse);
-            _mockAdoClient.Setup(m => m.GetAsync(policyUrl)).ReturnsAsync(policyResponse);
+            _mockAdoApi.Setup(m => m.GetAsync(repoUrl)).ReturnsAsync(repoResponse);
+            _mockAdoApi.Setup(m => m.GetAsync(policyUrl)).ReturnsAsync(policyResponse);
 
             // Act
-            var result = await _adoApi.IsPipelineRequiredByBranchPolicy(ADO_ORG, TEAM_PROJECT, REPO_NAME, PIPELINE_ID);
+            var result = await _triggerService.IsPipelineRequiredByBranchPolicy(ADO_ORG, TEAM_PROJECT, REPO_NAME, PIPELINE_ID);
 
             // Assert
             result.Should().BeFalse();
@@ -189,21 +189,21 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
                 value = Array.Empty<object>()
             }.ToJson();
 
-            var repoUrl = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{REPO_NAME.EscapeDataString()}?api-version=6.0";
-            var policyUrl = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/policy/configurations?repositoryId={repositoryId}&api-version=6.0";
+            var repoUrl = $"/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{REPO_NAME.EscapeDataString()}?api-version=6.0";
+            var policyUrl = $"/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/policy/configurations?repositoryId={repositoryId}&api-version=6.0";
 
-            _mockAdoClient.Setup(m => m.GetAsync(repoUrl)).ReturnsAsync(repoResponse);
-            _mockAdoClient.Setup(m => m.GetAsync(policyUrl)).ReturnsAsync(policyResponse);
+            _mockAdoApi.Setup(m => m.GetAsync(repoUrl)).ReturnsAsync(repoResponse);
+            _mockAdoApi.Setup(m => m.GetAsync(policyUrl)).ReturnsAsync(policyResponse);
 
             // Act
-            var result = await _adoApi.IsPipelineRequiredByBranchPolicy(ADO_ORG, TEAM_PROJECT, REPO_NAME, PIPELINE_ID);
+            var result = await _triggerService.IsPipelineRequiredByBranchPolicy(ADO_ORG, TEAM_PROJECT, REPO_NAME, PIPELINE_ID);
 
             // Assert
             result.Should().BeFalse();
         }
 
         [Fact]
-        public async Task ChangePipelineRepo_WhenPipelineNotRequiredByBranchPolicy_ShouldPreserveExistingTriggers()
+        public async Task RewirePipelineToGitHub_WhenPipelineNotRequiredByBranchPolicy_ShouldPreserveExistingTriggers()
         {
             // Arrange - Scenario 1: Pipeline NOT required by branch policy, preserve existing triggers
             var githubRepo = "test-repo";
@@ -236,7 +236,7 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             // Mock repository lookup - return valid repository
             var repositoryId = "repo-123";
             var repoResponse = new { id = repositoryId, name = REPO_NAME }.ToJson();
-            var repoUrl = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{REPO_NAME.EscapeDataString()}?api-version=6.0";
+            var repoUrl = $"/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{REPO_NAME.EscapeDataString()}?api-version=6.0";
 
             // Mock branch policies - return empty policies (not required by branch policy)
             var policies = new
@@ -244,25 +244,25 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
                 count = 0,
                 value = Array.Empty<object>()
             }.ToJson();
-            var policyUrl = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/policy/configurations?repositoryId={repositoryId}&api-version=6.0";
+            var policyUrl = $"/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/policy/configurations?repositoryId={repositoryId}&api-version=6.0";
 
-            var pipelineUrl = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
+            var pipelineUrl = $"{ADO_SERVICE_URL}/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
 
-            _mockAdoClient.Setup(m => m.GetAsync(pipelineUrl)).ReturnsAsync(existingPipelineData.ToJson());
-            _mockAdoClient.Setup(m => m.GetAsync(repoUrl)).ReturnsAsync(repoResponse);
-            _mockAdoClient.Setup(m => m.GetAsync(policyUrl)).ReturnsAsync(policies);
+            _mockAdoApi.Setup(m => m.GetAsync(pipelineUrl)).ReturnsAsync(existingPipelineData.ToJson());
+            _mockAdoApi.Setup(m => m.GetAsync(repoUrl)).ReturnsAsync(repoResponse);
+            _mockAdoApi.Setup(m => m.GetAsync(policyUrl)).ReturnsAsync(policies);
 
             // Act
-            await _adoApi.ChangePipelineRepo(ADO_ORG, TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, "github-org", githubRepo, serviceConnectionId, originalTriggers);
+            await _triggerService.RewirePipelineToGitHub(ADO_ORG, TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, "github-org", githubRepo, serviceConnectionId, originalTriggers, null);
 
             // Assert - Should preserve original triggers (both CI and PR, with build status reporting)
-            _mockAdoClient.Verify(m => m.PutAsync(pipelineUrl, It.Is<object>(payload =>
+            _mockAdoApi.Verify(m => m.PutAsync(pipelineUrl, It.Is<object>(payload =>
                 VerifyTriggersPreserved(payload, true, true)
             )), Times.Once);
         }
 
         [Fact]
-        public async Task ChangePipelineRepo_WhenPipelineRequiredByBranchPolicy_ShouldEnableTriggersWithBuildStatus()
+        public async Task RewirePipelineToGitHub_WhenPipelineRequiredByBranchPolicy_ShouldEnableTriggersWithBuildStatus()
         {
             // Arrange - Scenario 2: Pipeline IS required by branch policy, enable CI + PR + build status
             var githubRepo = "test-repo";
@@ -283,7 +283,7 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             // Mock repository lookup - return valid repository
             var repositoryId = "repo-123";
             var repoResponse = new { id = repositoryId, name = REPO_NAME }.ToJson();
-            var repoUrl = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{REPO_NAME.EscapeDataString()}?api-version=6.0";
+            var repoUrl = $"/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{REPO_NAME.EscapeDataString()}?api-version=6.0";
 
             // Mock branch policies - return policy that requires this pipeline
             var policies = new
@@ -300,66 +300,69 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
                     }
                 }
             }.ToJson();
-            var policyUrl = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/policy/configurations?repositoryId={repositoryId}&api-version=6.0";
+            var policyUrl = $"/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/policy/configurations?repositoryId={repositoryId}&api-version=6.0";
 
-            var pipelineUrl = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
+            var pipelineUrl = $"{ADO_SERVICE_URL}/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
 
-            _mockAdoClient.Setup(m => m.GetAsync(pipelineUrl)).ReturnsAsync(existingPipelineData.ToJson());
-            _mockAdoClient.Setup(m => m.GetAsync(repoUrl)).ReturnsAsync(repoResponse);
-            _mockAdoClient.Setup(m => m.GetAsync(policyUrl)).ReturnsAsync(policies);
+            _mockAdoApi.Setup(m => m.GetAsync(pipelineUrl)).ReturnsAsync(existingPipelineData.ToJson());
+            _mockAdoApi.Setup(m => m.GetAsync(repoUrl)).ReturnsAsync(repoResponse);
+            _mockAdoApi.Setup(m => m.GetAsync(policyUrl)).ReturnsAsync(policies);
 
             // Act
-            await _adoApi.ChangePipelineRepo(ADO_ORG, TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, "github-org", githubRepo, serviceConnectionId, null);
+            await _triggerService.RewirePipelineToGitHub(ADO_ORG, TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, "github-org", githubRepo, serviceConnectionId, null, null);
 
             // Assert - Should enable both CI and PR triggers WITH build status reporting
-            _mockAdoClient.Verify(m => m.PutAsync(pipelineUrl, It.Is<object>(payload =>
+            _mockAdoApi.Verify(m => m.PutAsync(pipelineUrl, It.Is<object>(payload =>
                 VerifyTriggersPreserved(payload, true, true)
             )), Times.Once);
         }
 
         private static bool VerifyTriggersPreserved(object payload, bool enablePullRequestValidation, bool enableBuildStatusReporting)
         {
-            var json = JObject.Parse(payload.ToJson());
+            var json = payload.ToJson();
+            var parsedPayload = JObject.Parse(json);
 
-            if (json["triggers"] is not JArray triggers)
+            // Check if triggers exist and have expected configuration
+            if (parsedPayload["triggers"] is not JArray triggers)
             {
                 return false;
             }
 
-            // Should always have CI trigger
+            var prTrigger = triggers.FirstOrDefault(t => t["triggerType"]?.ToString() == "pullRequest") as JObject;
+
+            // Verify CI trigger exists
             if (triggers.FirstOrDefault(t => t["triggerType"]?.ToString() == "continuousIntegration") is not JObject ciTrigger)
             {
                 return false;
             }
 
-            // Check CI trigger build status reporting
-            var ciHasBuildStatus = ciTrigger["reportBuildStatus"]?.ToString() == "true";
-            if (ciHasBuildStatus != enableBuildStatusReporting)
+            // Verify PR trigger exists if expected
+            if (enablePullRequestValidation && prTrigger == null)
             {
                 return false;
             }
 
-            // Check PR trigger presence
-            var prTrigger = triggers.FirstOrDefault(t => t["triggerType"]?.ToString() == "pullRequest") as JObject;
-            if (enablePullRequestValidation)
+            if (!enablePullRequestValidation && prTrigger != null)
             {
-                if (prTrigger == null)
+                return false;
+            }
+
+            // Verify build status reporting if expected
+            if (enableBuildStatusReporting)
+            {
+                var ciReportStatus = ciTrigger["reportBuildStatus"]?.ToString();
+                if (ciReportStatus != "true")
                 {
                     return false;
                 }
 
-                // Check PR trigger build status reporting
-                var prHasBuildStatus = prTrigger["reportBuildStatus"]?.ToString() == "true";
-                if (prHasBuildStatus != enableBuildStatusReporting)
-                {
-                    return false;
-                }
-            }
-            else
-            {
                 if (prTrigger != null)
                 {
-                    return false;
+                    var prReportStatus = prTrigger["reportBuildStatus"]?.ToString();
+                    if (prReportStatus != "true")
+                    {
+                        return false;
+                    }
                 }
             }
 

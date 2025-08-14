@@ -10,13 +10,21 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
 {
     private readonly OctoLogger _log;
     private readonly AdoApi _adoApi;
+<<<<<<< HEAD
     private readonly PipelineTestService _pipelineTestService;
+=======
+    private readonly AdoPipelineTriggerService _pipelineTriggerService;
+>>>>>>> origin/main
 
-    public RewirePipelineCommandHandler(OctoLogger log, AdoApi adoApi)
+    public RewirePipelineCommandHandler(OctoLogger log, AdoApi adoApi, AdoPipelineTriggerService pipelineTriggerService)
     {
         _log = log;
         _adoApi = adoApi;
+<<<<<<< HEAD
         _pipelineTestService = new PipelineTestService(log, adoApi);
+=======
+        _pipelineTriggerService = pipelineTriggerService;
+>>>>>>> origin/main
     }
 
     public async Task Handle(RewirePipelineCommandArgs args)
@@ -40,9 +48,23 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
     {
         _log.LogInformation($"Rewiring Pipeline to GitHub repo...");
 
+        // Use AdoApi for simple API calls
         var adoPipelineId = await _adoApi.GetPipelineId(args.AdoOrg, args.AdoTeamProject, args.AdoPipeline);
         var (defaultBranch, clean, checkoutSubmodules, triggers) = await _adoApi.GetPipeline(args.AdoOrg, args.AdoTeamProject, adoPipelineId);
-        await _adoApi.ChangePipelineRepo(args.AdoOrg, args.AdoTeamProject, adoPipelineId, defaultBranch, clean, checkoutSubmodules, args.GithubOrg, args.GithubRepo, args.ServiceConnectionId, triggers, args.TargetApiUrl);
+
+        // Use the specialized service for complex trigger logic
+        await _pipelineTriggerService.RewirePipelineToGitHub(
+            args.AdoOrg,
+            args.AdoTeamProject,
+            adoPipelineId,
+            defaultBranch,
+            clean,
+            checkoutSubmodules,
+            args.GithubOrg,
+            args.GithubRepo,
+            args.ServiceConnectionId,
+            triggers,
+            args.TargetApiUrl);
 
         _log.LogSuccess("Successfully rewired pipeline");
     }
