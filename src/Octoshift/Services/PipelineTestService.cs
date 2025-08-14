@@ -137,7 +137,7 @@ namespace OctoshiftCLI.Services
             while (DateTime.UtcNow - startTime < timeout)
             {
                 var (status, result, _) = await _adoApi.GetBuildStatus(org, teamProject, buildId);
-                
+
                 if (!string.IsNullOrEmpty(result))
                 {
                     return (status, result); // Build completed
