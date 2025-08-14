@@ -35,10 +35,14 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             var triggers = result;
             triggers.Should().HaveCount(2); // CI trigger + PR trigger
 
-            // Find the PR trigger
-            var prTrigger = triggers.FirstOrDefault(t => t["triggerType"]?.ToString() == "pullRequest") as JObject;
-            prTrigger.Should().NotBeNull();
-            prTrigger!["triggerType"].ToString().Should().Be("pullRequest");
+            // Find the PR trigger using pattern matching
+            if (triggers.FirstOrDefault(t => t["triggerType"]?.ToString() == "pullRequest") is not JObject prTrigger)
+            {
+                Assert.Fail("PR trigger should exist when enablePullRequestValidation is true");
+                return; // This won't be reached, but helps with null analysis
+            }
+
+            prTrigger["triggerType"].ToString().Should().Be("pullRequest");
             prTrigger["isCommentRequiredForPullRequest"].Value<bool>().Should().BeFalse();
             prTrigger["requireCommentsForNonTeamMembersOnly"].Value<bool>().Should().BeFalse();
 
@@ -91,19 +95,21 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             triggers.Should().HaveCount(2);
 
             // Should have CI trigger
-            var ciTrigger = triggers
-                .OfType<JObject>()
-                .FirstOrDefault(t => t["triggerType"]?.ToString() == "continuousIntegration");
-            ciTrigger.Should().NotBeNull();
+            if (triggers.OfType<JObject>().FirstOrDefault(t => t["triggerType"]?.ToString() == "continuousIntegration") is not JObject ciTrigger)
+            {
+                Assert.Fail("CI trigger should exist");
+                return; // This won't be reached, but helps with null analysis
+            }
 
             // Should have PR trigger
-            var prTrigger = triggers
-                .OfType<JObject>()
-                .FirstOrDefault(t => t["triggerType"]?.ToString() == "pullRequest");
-            prTrigger.Should().NotBeNull();
+            if (triggers.OfType<JObject>().FirstOrDefault(t => t["triggerType"]?.ToString() == "pullRequest") is not JObject prTrigger)
+            {
+                Assert.Fail("PR trigger should exist when enablePullRequestValidation is true");
+                return; // This won't be reached, but helps with null analysis
+            }
 
             // Verify PR trigger configuration
-            prTrigger!["isCommentRequiredForPullRequest"].Value<bool>().Should().BeFalse();
+            prTrigger["isCommentRequiredForPullRequest"].Value<bool>().Should().BeFalse();
             prTrigger["requireCommentsForNonTeamMembersOnly"].Value<bool>().Should().BeFalse();
 
             var forks = (JObject)prTrigger["forks"];
