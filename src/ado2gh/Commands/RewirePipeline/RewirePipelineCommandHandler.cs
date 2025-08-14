@@ -65,7 +65,7 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
             _log.LogInformation($"Using provided pipeline ID: {args.AdoPipelineId.Value}");
             return args.AdoPipelineId.Value;
         }
-        
+
         _log.LogInformation($"Looking up pipeline ID for: {args.AdoPipeline}");
         var pipelineId = await _adoApi.GetPipelineId(args.AdoOrg, args.AdoTeamProject, args.AdoPipeline);
         _log.LogInformation($"Using resolved pipeline ID: {pipelineId}");
