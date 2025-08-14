@@ -11,11 +11,13 @@ namespace OctoshiftCLI.Services
     {
         private readonly OctoLogger _log;
         private readonly AdoApi _adoApi;
+        private readonly AdoPipelineTriggerService _pipelineTriggerService;
 
-        public PipelineTestService(OctoLogger log, AdoApi adoApi)
+        public PipelineTestService(OctoLogger log, AdoApi adoApi, AdoPipelineTriggerService pipelineTriggerService = null)
         {
             _log = log;
             _adoApi = adoApi;
+            _pipelineTriggerService = pipelineTriggerService ?? (adoApi != null ? new AdoPipelineTriggerService(adoApi, log, "https://dev.azure.com") : null);
         }
 
         /// <summary>
@@ -67,7 +69,7 @@ namespace OctoshiftCLI.Services
                 originalTriggers = triggers;
 
                 // Step 2: Rewire to GitHub
-                await _adoApi.ChangePipelineRepo(args.AdoOrg, args.AdoTeamProject, args.PipelineId.Value,
+                await _pipelineTriggerService.RewirePipelineToGitHub(args.AdoOrg, args.AdoTeamProject, args.PipelineId.Value,
                     defaultBranch, clean, checkoutSubmodules, args.GithubOrg, args.GithubRepo,
                     args.ServiceConnectionId, originalTriggers, args.TargetApiUrl);
                 testResult.RewiredSuccessfully = true;

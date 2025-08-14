@@ -12,6 +12,7 @@ namespace OctoshiftCLI.Tests.Services
     {
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<AdoApi> _mockAdoApi = TestHelpers.CreateMock<AdoApi>();
+        private readonly Mock<AdoPipelineTriggerService> _mockPipelineTriggerService;
         private readonly PipelineTestService _service;
 
         private const string ADO_ORG = "test-org";
@@ -24,7 +25,8 @@ namespace OctoshiftCLI.Tests.Services
 
         public PipelineTestServiceTests()
         {
-            _service = new PipelineTestService(_mockOctoLogger.Object, _mockAdoApi.Object);
+            _mockPipelineTriggerService = new Mock<AdoPipelineTriggerService>(_mockAdoApi.Object, _mockOctoLogger.Object, "https://dev.azure.com");
+            _service = new PipelineTestService(_mockOctoLogger.Object, _mockAdoApi.Object, _mockPipelineTriggerService.Object);
         }
 
         [Fact]
@@ -98,7 +100,7 @@ namespace OctoshiftCLI.Tests.Services
             // Verify the workflow steps
             _mockAdoApi.Verify(x => x.GetPipelineRepository(ADO_ORG, ADO_TEAM_PROJECT, PIPELINE_ID), Times.Once);
             _mockAdoApi.Verify(x => x.GetPipeline(ADO_ORG, ADO_TEAM_PROJECT, PIPELINE_ID), Times.Once);
-            _mockAdoApi.Verify(x => x.ChangePipelineRepo(ADO_ORG, ADO_TEAM_PROJECT, PIPELINE_ID,
+            _mockPipelineTriggerService.Verify(x => x.RewirePipelineToGitHub(ADO_ORG, ADO_TEAM_PROJECT, PIPELINE_ID,
                 defaultBranch, clean, checkoutSubmodules, GITHUB_ORG, GITHUB_REPO, SERVICE_CONNECTION_ID, triggers, null), Times.Once);
             _mockAdoApi.Verify(x => x.QueueBuild(ADO_ORG, ADO_TEAM_PROJECT, PIPELINE_ID, $"refs/heads/{defaultBranch}"), Times.Once);
             _mockAdoApi.Verify(x => x.RestorePipelineToAdoRepo(ADO_ORG, ADO_TEAM_PROJECT, PIPELINE_ID,
