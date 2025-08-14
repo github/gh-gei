@@ -34,7 +34,7 @@ namespace OctoshiftCLI.Models
 
     public class PipelineTestSummary
     {
-        private readonly List<PipelineTestResult> _results = new List<PipelineTestResult>();
+        private readonly List<PipelineTestResult> _results = [];
 
         public int TotalPipelines { get; set; }
         public int SuccessfulBuilds { get; set; }

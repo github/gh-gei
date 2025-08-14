@@ -5,8 +5,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using OctoshiftCLI.Models;
 using OctoshiftCLI.Commands;
+using OctoshiftCLI.Models;
 using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.AdoToGithub.Commands.TestPipelines
@@ -15,11 +15,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands.TestPipelines
     {
         private readonly OctoLogger _log;
         private readonly AdoApi _adoApi;
+        private readonly PipelineTestService _pipelineTestService;
 
         public TestPipelinesCommandHandler(OctoLogger log, AdoApi adoApi)
         {
             _log = log;
             _adoApi = adoApi;
+            _pipelineTestService = new PipelineTestService(log, adoApi);
         }
 
         public async Task Handle(TestPipelinesCommandArgs args)
@@ -127,13 +129,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands.TestPipelines
                             var pipelineId = await _adoApi.GetPipelineId(args.AdoOrg, args.AdoTeamProject, pipelineName);
                             pipelines.Add((pipelineName, pipelineId));
                         }
-                        catch (Exception ex)
+                        catch (Exception ex) when (ex is not OctoshiftCliException)
                         {
                             _log.LogWarning($"Could not get ID for pipeline '{pipelineName}': {ex.Message}");
                         }
                     }
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ex is not OctoshiftCliException)
                 {
                     _log.LogWarning($"Could not get pipelines for repository '{repo.Name}': {ex.Message}");
                 }
@@ -146,7 +148,9 @@ namespace OctoshiftCLI.AdoToGithub.Commands.TestPipelines
         {
             // Simple wildcard matching
             if (string.IsNullOrEmpty(pattern) || pattern == "*")
+            {
                 return true;
+            }
 
             // Convert wildcard pattern to regex
             var regex = "^" + System.Text.RegularExpressions.Regex.Escape(pattern)
@@ -158,114 +162,22 @@ namespace OctoshiftCLI.AdoToGithub.Commands.TestPipelines
 
         private async Task<PipelineTestResult> TestSinglePipeline(TestPipelinesCommandArgs args, (string name, int id) pipeline)
         {
-            var testResult = new PipelineTestResult
+            _log.LogInformation($"Testing pipeline: {pipeline.name} (ID: {pipeline.id})");
+
+            var testArgs = new PipelineTestArgs
             {
                 AdoOrg = args.AdoOrg,
                 AdoTeamProject = args.AdoTeamProject,
                 PipelineName = pipeline.name,
                 PipelineId = pipeline.id,
-                StartTime = DateTime.UtcNow,
-                PipelineUrl = $"https://dev.azure.com/{args.AdoOrg}/{args.AdoTeamProject}/_build/definition?definitionId={pipeline.id}"
+                GithubOrg = args.GithubOrg,
+                GithubRepo = args.GithubRepo,
+                ServiceConnectionId = args.ServiceConnectionId,
+                TargetApiUrl = args.TargetApiUrl,
+                MonitorTimeoutMinutes = args.MonitorTimeoutMinutes
             };
 
-            // Store original pipeline configuration
-            string originalRepoName = null;
-            string originalRepoId = null;
-            string originalDefaultBranch = null;
-            string originalClean = null;
-            string originalCheckoutSubmodules = null;
-            Newtonsoft.Json.Linq.JToken originalTriggers = null;
-
-            try
-            {
-                _log.LogInformation($"Testing pipeline: {pipeline.name} (ID: {pipeline.id})");
-
-                // Get original repository information
-                (originalRepoName, originalRepoId, originalDefaultBranch, originalClean, originalCheckoutSubmodules) =
-                    await _adoApi.GetPipelineRepository(args.AdoOrg, args.AdoTeamProject, pipeline.id);
-                testResult.AdoRepoName = originalRepoName;
-
-                var (defaultBranch, clean, checkoutSubmodules, triggers) =
-                    await _adoApi.GetPipeline(args.AdoOrg, args.AdoTeamProject, pipeline.id);
-                originalTriggers = triggers;
-
-                // Rewire to GitHub
-                await _adoApi.ChangePipelineRepo(args.AdoOrg, args.AdoTeamProject, pipeline.id,
-                    defaultBranch, clean, checkoutSubmodules, args.GithubOrg, args.GithubRepo,
-                    args.ServiceConnectionId, originalTriggers, args.TargetApiUrl);
-                testResult.RewiredSuccessfully = true;
-
-                // Queue build
-                var buildId = await _adoApi.QueueBuild(args.AdoOrg, args.AdoTeamProject, pipeline.id, $"refs/heads/{defaultBranch}");
-                testResult.BuildId = buildId;
-
-                var (_, _, buildUrl) = await _adoApi.GetBuildStatus(args.AdoOrg, args.AdoTeamProject, buildId);
-                testResult.BuildUrl = buildUrl;
-
-                // Restore to ADO immediately after queuing build
-                try
-                {
-                    await _adoApi.RestorePipelineToAdoRepo(args.AdoOrg, args.AdoTeamProject, pipeline.id,
-                        originalRepoName, originalDefaultBranch, originalClean, originalCheckoutSubmodules, originalTriggers);
-                    testResult.RestoredSuccessfully = true;
-                }
-                catch (Exception ex)
-                {
-                    testResult.ErrorMessage = $"Failed to restore: {ex.Message}";
-                    testResult.RestoredSuccessfully = false;
-                    _log.LogError($"Failed to restore pipeline {pipeline.name}: {ex.Message}");
-                }
-
-                // Monitor build progress
-                await MonitorBuildProgress(testResult, args.AdoOrg, args.AdoTeamProject, buildId, args.MonitorTimeoutMinutes);
-            }
-            catch (Exception ex)
-            {
-                testResult.ErrorMessage = ex.Message;
-                _log.LogError($"Error testing pipeline {pipeline.name}: {ex.Message}");
-
-                // Attempt restoration only if pipeline was rewired but not yet restored
-                if (originalRepoName != null && testResult.RewiredSuccessfully && !testResult.RestoredSuccessfully)
-                {
-                    try
-                    {
-                        await _adoApi.RestorePipelineToAdoRepo(args.AdoOrg, args.AdoTeamProject, pipeline.id,
-                            originalRepoName, originalDefaultBranch, originalClean, originalCheckoutSubmodules, originalTriggers);
-                        testResult.RestoredSuccessfully = true;
-                    }
-                    catch
-                    {
-                        testResult.RestoredSuccessfully = false;
-                        _log.LogError($"MANUAL RESTORATION REQUIRED for pipeline {pipeline.name} (ID: {pipeline.id})");
-                    }
-                }
-            }
-
-            testResult.EndTime = DateTime.UtcNow;
-            return testResult;
-        }
-
-        private async Task MonitorBuildProgress(PipelineTestResult testResult, string org, string teamProject, int buildId, int timeoutMinutes)
-        {
-            var timeout = TimeSpan.FromMinutes(timeoutMinutes);
-            var startTime = DateTime.UtcNow;
-            var pollInterval = TimeSpan.FromSeconds(30);
-
-            while (DateTime.UtcNow - startTime < timeout)
-            {
-                var (status, result, _) = await _adoApi.GetBuildStatus(org, teamProject, buildId);
-                testResult.Status = status;
-                testResult.Result = result;
-
-                if (!string.IsNullOrEmpty(result))
-                {
-                    return; // Build completed
-                }
-
-                await Task.Delay(pollInterval);
-            }
-
-            testResult.Status = "timedOut";
+            return await _pipelineTestService.TestPipeline(testArgs);
         }
 
         private void GenerateConsoleSummary(PipelineTestSummary summary)

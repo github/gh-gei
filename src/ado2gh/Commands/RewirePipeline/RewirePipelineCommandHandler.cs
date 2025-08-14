@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
-using OctoshiftCLI.Models;
 using OctoshiftCLI.Commands;
+using OctoshiftCLI.Models;
 using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.AdoToGithub.Commands.RewirePipeline;
@@ -11,11 +10,13 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
 {
     private readonly OctoLogger _log;
     private readonly AdoApi _adoApi;
+    private readonly PipelineTestService _pipelineTestService;
 
     public RewirePipelineCommandHandler(OctoLogger log, AdoApi adoApi)
     {
         _log = log;
         _adoApi = adoApi;
+        _pipelineTestService = new PipelineTestService(log, adoApi);
     }
 
     public async Task Handle(RewirePipelineCommandArgs args)
@@ -50,147 +51,101 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
     {
         _log.LogInformation("Starting dry-run mode: Testing pipeline rewiring to GitHub...");
 
-        var testResult = new PipelineTestResult
+        var testArgs = new PipelineTestArgs
         {
             AdoOrg = args.AdoOrg,
             AdoTeamProject = args.AdoTeamProject,
             PipelineName = args.AdoPipeline,
-            StartTime = DateTime.UtcNow
+            GithubOrg = args.GithubOrg,
+            GithubRepo = args.GithubRepo,
+            ServiceConnectionId = args.ServiceConnectionId,
+            TargetApiUrl = args.TargetApiUrl,
+            MonitorTimeoutMinutes = args.MonitorTimeoutMinutes
         };
-
-        // Store original pipeline configuration for restoration
-        string originalRepoName = null;
-        string originalRepoId = null;
-        string originalDefaultBranch = null;
-        string originalClean = null;
-        string originalCheckoutSubmodules = null;
-        Newtonsoft.Json.Linq.JToken originalTriggers = null;
 
         try
         {
             // Step 1: Get pipeline information and store original configuration
             _log.LogInformation("Step 1: Retrieving pipeline information...");
             var adoPipelineId = await _adoApi.GetPipelineId(args.AdoOrg, args.AdoTeamProject, args.AdoPipeline);
-            testResult.PipelineId = adoPipelineId;
-
-            // Get original repository information for restoration
-            (originalRepoName, originalRepoId, originalDefaultBranch, originalClean, originalCheckoutSubmodules) = await _adoApi.GetPipelineRepository(args.AdoOrg, args.AdoTeamProject, adoPipelineId);
-            testResult.AdoRepoName = originalRepoName;
-
-            var (defaultBranch, clean, checkoutSubmodules, triggers) = await _adoApi.GetPipeline(args.AdoOrg, args.AdoTeamProject, adoPipelineId);
-            originalTriggers = triggers;
-
-            // Generate pipeline URLs
-            var pipelineUrl = $"https://dev.azure.com/{args.AdoOrg}/{args.AdoTeamProject}/_build/definition?definitionId={adoPipelineId}";
-            testResult.PipelineUrl = pipelineUrl;
+            testArgs.PipelineId = adoPipelineId;
 
             _log.LogInformation($"Pipeline ID: {adoPipelineId}");
+
+            // Get original repository information for display
+            var (originalRepoName, _, originalDefaultBranch, _, _) = await _adoApi.GetPipelineRepository(args.AdoOrg, args.AdoTeamProject, adoPipelineId);
+            var (defaultBranch, _, _, _) = await _adoApi.GetPipeline(args.AdoOrg, args.AdoTeamProject, adoPipelineId);
+
             _log.LogInformation($"Original ADO Repository: {originalRepoName}");
             _log.LogInformation($"Default branch: {defaultBranch}");
 
             // Step 2: Rewire to GitHub
             _log.LogInformation("Step 2: Temporarily rewiring pipeline to GitHub...");
-            await _adoApi.ChangePipelineRepo(args.AdoOrg, args.AdoTeamProject, adoPipelineId, defaultBranch, clean, checkoutSubmodules, args.GithubOrg, args.GithubRepo, args.ServiceConnectionId, originalTriggers, args.TargetApiUrl);
-            testResult.RewiredSuccessfully = true;
-            _log.LogSuccess("Pipeline successfully rewired to GitHub");
 
             // Step 3: Queue a build
             _log.LogInformation("Step 3: Queuing a test build...");
-            var buildId = await _adoApi.QueueBuild(args.AdoOrg, args.AdoTeamProject, adoPipelineId, $"refs/heads/{defaultBranch}");
-            testResult.BuildId = buildId;
 
-            var (_, _, buildUrl) = await _adoApi.GetBuildStatus(args.AdoOrg, args.AdoTeamProject, buildId);
-            testResult.BuildUrl = buildUrl;
-
-            _log.LogInformation($"Build queued with ID: {buildId}");
-            _log.LogInformation($"Build URL: {buildUrl}");
-
-            // Step 4: Rewire back to ADO immediately after queuing build
+            // Step 4: Restore to ADO immediately after queuing build
             _log.LogInformation("Step 4: Restoring pipeline back to original ADO repository...");
-            try
-            {
-                await _adoApi.RestorePipelineToAdoRepo(args.AdoOrg, args.AdoTeamProject, adoPipelineId, originalRepoName, originalDefaultBranch, originalClean, originalCheckoutSubmodules, originalTriggers);
-                testResult.RestoredSuccessfully = true;
-                _log.LogSuccess("Pipeline successfully restored to original ADO repository");
-            }
-            catch (Exception ex)
-            {
-                _log.LogError($"Failed to restore pipeline to ADO: {ex.Message}");
-                testResult.ErrorMessage = $"Failed to restore: {ex.Message}";
-                testResult.RestoredSuccessfully = false;
-
-                // Log detailed information for manual restoration
-                _log.LogError("MANUAL RESTORATION REQUIRED:");
-                _log.LogError($"  Pipeline ID: {adoPipelineId}");
-                _log.LogError($"  Original Repository: {originalRepoName}");
-                _log.LogError($"  Pipeline URL: {pipelineUrl}");
-            }
 
             // Step 5: Monitor build progress
             _log.LogInformation($"Step 5: Monitoring build progress (timeout: {args.MonitorTimeoutMinutes} minutes)...");
-            await MonitorBuildProgress(testResult, args.AdoOrg, args.AdoTeamProject, buildId, args.MonitorTimeoutMinutes);
 
-            // Step 6: Generate report
-            testResult.EndTime = DateTime.UtcNow;
+            // Use the shared service to perform the actual test
+            var testResult = await _pipelineTestService.TestPipeline(testArgs);
+
+            // Log detailed status messages
+            if (testResult.RewiredSuccessfully)
+            {
+                _log.LogSuccess("Pipeline successfully rewired to GitHub");
+            }
+
+            if (testResult.BuildId.HasValue)
+            {
+                _log.LogInformation($"Build queued with ID: {testResult.BuildId}");
+                _log.LogInformation($"Build URL: {testResult.BuildUrl}");
+            }
+
+            if (testResult.RestoredSuccessfully)
+            {
+                _log.LogSuccess("Pipeline successfully restored to original ADO repository");
+            }
+            else if (!string.IsNullOrEmpty(testResult.ErrorMessage) && testResult.ErrorMessage.Contains("Failed to restore"))
+            {
+                _log.LogError($"Failed to restore pipeline to ADO: {testResult.ErrorMessage}");
+                _log.LogError("MANUAL RESTORATION REQUIRED:");
+                _log.LogError($"  Pipeline ID: {testResult.PipelineId}");
+                _log.LogError($"  Original Repository: {originalRepoName}");
+                _log.LogError($"  Pipeline URL: {testResult.PipelineUrl}");
+            }
+
+            _log.LogInformation("Monitoring build progress...");
+            if (!string.IsNullOrEmpty(testResult.Result))
+            {
+                _log.LogInformation($"Build completed with result: {testResult.Result}");
+            }
+            else if (testResult.Status == "timedOut")
+            {
+                _log.LogWarning($"Build monitoring timed out after {args.MonitorTimeoutMinutes} minutes");
+            }
+
+            // Generate report
             GenerateReport(testResult);
+
+            if (!testResult.RestoredSuccessfully)
+            {
+                throw new OctoshiftCliException("Pipeline was not properly restored to ADO repository. Manual intervention may be required.");
+            }
+        }
+        catch (OctoshiftCliException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
-            testResult.EndTime = DateTime.UtcNow;
-            testResult.ErrorMessage = ex.Message;
             _log.LogError($"Dry-run failed: {ex.Message}");
-
-            // Attempt restoration only if pipeline was rewired but not yet restored
-            if (originalRepoName != null && testResult.RewiredSuccessfully && !testResult.RestoredSuccessfully)
-            {
-                _log.LogWarning("Attempting to restore pipeline to ADO after error...");
-                try
-                {
-                    await _adoApi.RestorePipelineToAdoRepo(args.AdoOrg, args.AdoTeamProject, testResult.PipelineId, originalRepoName, originalDefaultBranch, originalClean, originalCheckoutSubmodules, originalTriggers);
-                    testResult.RestoredSuccessfully = true;
-                    _log.LogSuccess("Pipeline restored to ADO after error");
-                }
-                catch (Exception restoreEx)
-                {
-                    _log.LogError($"Failed to restore pipeline after error: {restoreEx.Message}");
-                    _log.LogError($"MANUAL RESTORATION REQUIRED for Pipeline ID: {testResult.PipelineId}");
-                }
-            }
-
-            GenerateReport(testResult);
-            throw;
+            throw new OctoshiftCliException($"Pipeline dry-run test failed: {ex.Message}", ex);
         }
-    }
-
-    private async Task MonitorBuildProgress(PipelineTestResult testResult, string org, string teamProject, int buildId, int timeoutMinutes)
-    {
-        var timeout = TimeSpan.FromMinutes(timeoutMinutes);
-        var startTime = DateTime.UtcNow;
-        var pollInterval = TimeSpan.FromSeconds(30);
-
-        _log.LogInformation("Monitoring build progress...");
-
-        while (DateTime.UtcNow - startTime < timeout)
-        {
-            var (status, result, _) = await _adoApi.GetBuildStatus(org, teamProject, buildId);
-            testResult.Status = status;
-            testResult.Result = result;
-
-            _log.LogInformation($"Build status: {status}, Result: {result ?? "N/A"}");
-
-            if (!string.IsNullOrEmpty(result))
-            {
-                // Build completed
-                _log.LogInformation($"Build completed with result: {result}");
-                return;
-            }
-
-            await Task.Delay(pollInterval);
-        }
-
-        // Timeout reached
-        _log.LogWarning($"Build monitoring timed out after {timeoutMinutes} minutes");
-        testResult.Status = "timedOut";
     }
 
     private void GenerateReport(PipelineTestResult result)
