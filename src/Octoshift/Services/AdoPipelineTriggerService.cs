@@ -315,45 +315,6 @@ public class AdoPipelineTriggerService
             triggerObj["triggerType"]?.ToString() == "pullRequest");
     }
 
-    private bool HasCompleteTriggerSet(JToken originalTriggers)
-    {
-        if (originalTriggers is not JArray triggerArray)
-        {
-            return false;
-        }
-
-        // Check if any trigger has rich configuration that should be preserved
-        foreach (var trigger in triggerArray)
-        {
-            if (trigger is not JObject triggerObj)
-            {
-                continue;
-            }
-
-            // Check for rich PR trigger configuration
-            if (triggerObj["triggerType"]?.ToString() == "pullRequest" &&
-                (triggerObj["forks"] != null ||
-                 triggerObj["isCommentRequiredForPullRequest"] != null ||
-                 triggerObj["requireCommentsForNonTeamMembersOnly"] != null ||
-                 triggerObj["autoCancel"] != null ||
-                 triggerObj["settingsSourceType"] != null))
-            {
-                return true;
-            }
-
-            // Check for rich CI trigger configuration
-            if (triggerObj["triggerType"]?.ToString() == "continuousIntegration" &&
-                (triggerObj["batchChanges"] != null ||
-                 triggerObj["settingsSourceType"] != null ||
-                 triggerObj["maxConcurrentBuildsPerBranch"] != null))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     private bool GetOriginalReportBuildStatus(JToken originalTriggers, string triggerType)
     {
         if (originalTriggers is not JArray triggerArray)
@@ -382,6 +343,22 @@ public class AdoPipelineTriggerService
             {
                 JTokenType.Boolean => reportBuildStatusToken.Value<bool>(),
                 JTokenType.String => string.Equals(reportBuildStatusToken.ToString(), "true", StringComparison.OrdinalIgnoreCase),
+                JTokenType.None => throw new NotImplementedException(),
+                JTokenType.Object => throw new NotImplementedException(),
+                JTokenType.Array => throw new NotImplementedException(),
+                JTokenType.Constructor => throw new NotImplementedException(),
+                JTokenType.Property => throw new NotImplementedException(),
+                JTokenType.Comment => throw new NotImplementedException(),
+                JTokenType.Integer => throw new NotImplementedException(),
+                JTokenType.Float => throw new NotImplementedException(),
+                JTokenType.Null => throw new NotImplementedException(),
+                JTokenType.Undefined => throw new NotImplementedException(),
+                JTokenType.Date => throw new NotImplementedException(),
+                JTokenType.Raw => throw new NotImplementedException(),
+                JTokenType.Bytes => throw new NotImplementedException(),
+                JTokenType.Guid => throw new NotImplementedException(),
+                JTokenType.Uri => throw new NotImplementedException(),
+                JTokenType.TimeSpan => throw new NotImplementedException(),
                 _ => TryConvertToBool(reportBuildStatusToken)
             };
         }
@@ -403,9 +380,13 @@ public class AdoPipelineTriggerService
         {
             return true; // Default to true if operation is invalid
         }
-        catch (Exception)
+        catch (ArgumentException)
         {
-            return true; // Default to true for any other conversion errors
+            return true; // Default to true if argument is invalid
+        }
+        catch (FormatException)
+        {
+            return true; // Default to true if format is invalid
         }
     }
 

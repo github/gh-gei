@@ -38,8 +38,7 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             // Find the PR trigger
             var prTrigger = triggers.FirstOrDefault(t => t["triggerType"]?.ToString() == "pullRequest") as JObject;
             prTrigger.Should().NotBeNull();
-
-            prTrigger["triggerType"].ToString().Should().Be("pullRequest");
+            prTrigger!["triggerType"].ToString().Should().Be("pullRequest");
             prTrigger["isCommentRequiredForPullRequest"].Value<bool>().Should().BeFalse();
             prTrigger["requireCommentsForNonTeamMembersOnly"].Value<bool>().Should().BeFalse();
 
