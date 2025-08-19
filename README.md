@@ -61,6 +61,18 @@ Refer to the [official documentation](https://docs.github.com/en/migrations/usin
 
 Refer to the [official documentation](https://docs.github.com/en/migrations/using-github-enterprise-importer/migrating-repositories-with-github-enterprise-importer/migrating-repositories-from-azure-devops-to-github-enterprise-cloud) for more details.
 
+#### Cleaning Status Checks during Migration
+When migrating from Azure DevOps, both branch policies and status checks are transferred to GitHub. However, many ADO status checks are not supported in GitHub. To clean status checks from GitHub branch protection rules after migration, use the `--clean-status-checks` option:
+
+>`gh ado2gh migrate-repo --ado-org ORGNAME --ado-team-project PROJECTNAME --ado-repo REPONAME --github-org ORGNAME --github-repo REPONAME --clean-status-checks`
+
+This option will:
+- Complete the normal migration process (including transferring all branch policies)
+- After migration completion, automatically remove status checks from all GitHub branch protection rules
+- Preserve other branch protection settings like required reviewers, admin enforcement, etc.
+
+**Note:** This is a post-migration cleanup step, so it only affects the final GitHub repository state and does not impact the migration data transfer itself.
+
 ### Bitbucket Server and Data Center to GitHub Usage
 1. Create Personal Access Token for the target GitHub org (for more details on scopes needed refer to our [official documentation](https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer)).
 
@@ -89,11 +101,11 @@ Refer to the [official documentation](https://docs.github.com/en/migrations/usin
 
 ### Skipping version checks
 
-When the CLI is launched, it logs if a newer version of the CLI is available. You can skip this check by setting the `GEI_SKIP_VERSION_CHECK` environment variable to `true`. 
+When the CLI is launched, it logs if a newer version of the CLI is available. You can skip this check by setting the `GEI_SKIP_VERSION_CHECK` environment variable to `true`.
 
 ### Skipping GitHub status checks
 
-When the CLI is launched, it logs a warning if there are any ongoing [GitHub incidents](https://www.githubstatus.com/) that might affect your use of the CLI. You can skip this check by setting the `GEI_SKIP_STATUS_CHECK` environment variable to `true`. 
+When the CLI is launched, it logs a warning if there are any ongoing [GitHub incidents](https://www.githubstatus.com/) that might affect your use of the CLI. You can skip this check by setting the `GEI_SKIP_STATUS_CHECK` environment variable to `true`.
 
 ## Contributions
 

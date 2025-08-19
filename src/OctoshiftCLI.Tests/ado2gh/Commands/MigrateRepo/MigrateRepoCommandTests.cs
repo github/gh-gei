@@ -35,7 +35,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.MigrateRepo
         {
             _command.Should().NotBeNull();
             _command.Name.Should().Be("migrate-repo");
-            _command.Options.Count.Should().Be(12);
+            _command.Options.Count.Should().Be(13);
 
             TestHelpers.VerifyCommandOption(_command.Options, "ado-org", true);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-team-project", true);
@@ -49,6 +49,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.MigrateRepo
             TestHelpers.VerifyCommandOption(_command.Options, "github-pat", false);
             TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
             TestHelpers.VerifyCommandOption(_command.Options, "target-api-url", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "clean-status-checks", false);
         }
 
         [Fact]
@@ -94,6 +95,37 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.MigrateRepo
             _command.BuildHandler(args, _serviceProvider);
 
             _mockGithubApiFactory.Verify(m => m.Create(targetApiUrl, It.IsAny<string>(), githubPat));
+        }
+
+        [Fact]
+        public void Should_Include_Disable_Status_Checks_In_Args()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                AdoOrg = "foo-org",
+                AdoTeamProject = "blah-tp",
+                AdoRepo = "some-repo",
+                GithubOrg = "gh-org",
+                GithubRepo = "gh-repo",
+                CleanStatusChecks = true
+            };
+
+            args.CleanStatusChecks.Should().BeTrue();
+        }
+
+        [Fact]
+        public void Should_Default_Disable_Status_Checks_To_False()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                AdoOrg = "foo-org",
+                AdoTeamProject = "blah-tp",
+                AdoRepo = "some-repo",
+                GithubOrg = "gh-org",
+                GithubRepo = "gh-repo"
+            };
+
+            args.CleanStatusChecks.Should().BeFalse();
         }
     }
 }

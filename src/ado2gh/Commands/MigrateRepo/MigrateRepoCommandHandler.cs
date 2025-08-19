@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Net.Http;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
@@ -95,6 +97,12 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
         _warningsCountLogger.LogWarningsCount(warningsCount);
         _log.LogInformation(migrationLogAvailableMessage);
+
+        // Clean status checks if requested
+        if (args.CleanStatusChecks)
+        {
+            await CleanStatusChecksFromBranchProtection(args.GithubOrg, args.GithubRepo);
+        }
     }
 
     private string GetAdoRepoUrl(string org, string project, string repo, string serverUrl)
@@ -102,4 +110,110 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         serverUrl = serverUrl.HasValue() ? serverUrl.TrimEnd('/') : "https://dev.azure.com";
         return $"{serverUrl}/{org.EscapeDataString()}/{project.EscapeDataString()}/_git/{repo.EscapeDataString()}";
     }
+
+    private async Task CleanStatusChecksFromBranchProtection(string org, string repo)
+    {
+        try
+        {
+            _log.LogInformation("Cleaning status checks from default branch protection...");
+
+            // Get only the default branch to optimize performance
+            var defaultBranch = await _githubApi.GetDefaultBranch(org, repo);
+
+            if (string.IsNullOrEmpty(defaultBranch))
+            {
+                _log.LogInformation("No default branch found, skipping status check cleanup");
+                return;
+            }
+
+            _log.LogInformation($"Processing default branch: {defaultBranch}");
+
+            try
+            {
+                var protection = await _githubApi.GetBranchProtection(org, repo, defaultBranch);
+
+                if (protection != null)
+                {
+                    await CleanStatusChecksFromProtection(org, repo, defaultBranch, protection);
+                }
+                else
+                {
+                    _log.LogInformation($"No branch protection found for default branch '{defaultBranch}', skipping");
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                _log.LogWarning($"Failed to process branch protection for default branch '{defaultBranch}': {ex.Message}");
+            }
+            catch (OctoshiftCliException ex)
+            {
+                _log.LogWarning($"Failed to process branch protection for default branch '{defaultBranch}': {ex.Message}");
+            }
+
+            _log.LogSuccess("Successfully cleaned status checks from default branch protection");
+        }
+        catch (HttpRequestException ex)
+        {
+            _log.LogWarning($"Failed to clean status checks: {ex.Message}");
+        }
+        catch (OctoshiftCliException ex)
+        {
+            _log.LogWarning($"Failed to clean status checks: {ex.Message}");
+        }
+    }
+
+    private async Task CleanStatusChecksFromProtection(string org, string repo, string branch, JObject protection)
+    {
+        // Check if required_status_checks exists and clean the check list while keeping the requirement enabled
+        if (protection["required_status_checks"] != null && protection["required_status_checks"].Type != JTokenType.Null)
+        {
+            _log.LogInformation($"Cleaning status checks for branch '{branch}'");
+
+            // Keep "Require status checks to pass before merging" enabled but clean the status check list
+            // GitHub API requires contexts array to be present (can be empty)
+            var statusChecksSettings = new
+            {
+                strict = ExtractBooleanValue(protection["required_status_checks"]?["strict"]) || true, // Default to true if not set
+                contexts = Array.Empty<string>() // Empty array as per GitHub API documentation examples
+            };
+
+            // Create a proper update payload that conforms to GitHub API schema
+            var updatePayload = new
+            {
+                required_status_checks = statusChecksSettings, // Keep enabled but with no specific checks
+                enforce_admins = ExtractBooleanValue(protection["enforce_admins"]),
+                required_pull_request_reviews = ExtractPullRequestReviewsSettings(protection["required_pull_request_reviews"]),
+                restrictions = ExtractRestrictionsSettings(protection["restrictions"]),
+                required_linear_history = ExtractBooleanValue(protection["required_linear_history"]),
+                allow_force_pushes = ExtractBooleanValue(protection["allow_force_pushes"]),
+                allow_deletions = ExtractBooleanValue(protection["allow_deletions"]),
+                block_creations = ExtractBooleanValue(protection["block_creations"]),
+                required_conversation_resolution = ExtractBooleanValue(protection["required_conversation_resolution"]),
+                lock_branch = ExtractBooleanValue(protection["lock_branch"]),
+                allow_fork_syncing = ExtractBooleanValue(protection["allow_fork_syncing"])
+            };
+
+            await _githubApi.UpdateBranchProtection(org, repo, branch, updatePayload);
+        }
+        else
+        {
+            _log.LogInformation($"No status checks found for branch '{branch}', skipping");
+        }
+    }
+
+    private static bool ExtractBooleanValue(JToken token) =>
+        token switch
+        {
+            null => false,
+            { Type: JTokenType.Null } => false,
+            { Type: JTokenType.Boolean } => (bool)token,
+            { Type: JTokenType.Object } => token["enabled"]?.Value<bool>() ?? false,
+            _ => false
+        };
+
+    private static object ExtractPullRequestReviewsSettings(JToken token) =>
+        token?.Type == JTokenType.Null ? null : token?.DeepClone();
+
+    private static object ExtractRestrictionsSettings(JToken token) =>
+        token?.Type == JTokenType.Null ? null : token?.DeepClone();
 }
