@@ -4028,7 +4028,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         var expectedUrl = $"https://api.github.com/repos/{org}/{repo}/branches/{branch}/protection";
         var protection = new
         {
-            required_status_checks = (object)null,
+            required_status_checks = default(object),
             enforce_admins = true,
             required_pull_request_reviews = new { required_approving_review_count = 2 }
         };
