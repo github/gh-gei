@@ -68,7 +68,7 @@ When migrating from Azure DevOps, both branch policies and status checks are tra
 
 This option will:
 - Complete the normal migration process (including transferring all branch policies)
-- After migration completion, automatically remove status checks from all GitHub branch protection rules
+- After migration completion, automatically remove status checks from the default branch's protection rule
 - Preserve other branch protection settings like required reviewers, admin enforcement, etc.
 
 **Note:** This is a post-migration cleanup step, so it only affects the final GitHub repository state and does not impact the migration data transfer itself.
