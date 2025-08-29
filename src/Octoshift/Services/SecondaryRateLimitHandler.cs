@@ -1,3 +1,4 @@
+// src/Octoshift/Services/SecondaryRateLimitHandler.cs
 using System;
 using System.Linq;
 using System.Net;
@@ -36,6 +37,11 @@ namespace OctoshiftCLI.Services
             HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
+            if (request is null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
             var attempt = 0;
             var delay = _initialBackoff;
 
@@ -91,15 +97,7 @@ namespace OctoshiftCLI.Services
                 var jitterMs = RandomNumberGenerator.GetInt32(0, 1000);
                 var totalDelay = delay + TimeSpan.FromMilliseconds(jitterMs);
 
-                try
-                {
-                    await Task.Delay(totalDelay, cancellationToken).ConfigureAwait(false);
-                }
-                catch (TaskCanceledException)
-                {
-                    // Respect cancellation.
-                    throw;
-                }
+                await Task.Delay(totalDelay, cancellationToken).ConfigureAwait(false);
 
                 // Exponential backoff, capped.
                 var nextSeconds = Math.Min(delay.TotalSeconds * 2, _maxBackoff.TotalSeconds);
@@ -142,7 +140,6 @@ namespace OctoshiftCLI.Services
                 clone.Content = content;
             }
 
-            // Properties / Options
 #if NET6_0_OR_GREATER
             foreach (var opt in original.Options)
             {
