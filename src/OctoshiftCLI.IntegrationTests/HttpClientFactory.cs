@@ -6,21 +6,38 @@ namespace OctoshiftCLI.IntegrationTests
 {
     internal static class HttpClientFactory
     {
-        // HttpClient(disposeHandler: true) disposes both handlers; we suppress CA2000 here once.
+        // Handlers are disposed by HttpClient(disposeHandler: true); suppress CA2000 here once.
         [SuppressMessage(
             "Reliability",
             "CA2000:Dispose objects before losing scope",
             Justification = "Ownership transferred to HttpClient via disposeHandler: true")]
         internal static HttpClient CreateSrlClient()
         {
-            var inner = new HttpClientHandler();
-            var srl = new SecondaryRateLimitHandler(
-                inner,
-                maxAttempts: 8,            // be more patient in Integration Tests
-                initialBackoffSeconds: 30, // we'll honor Retry-After when provided
-                maxBackoffSeconds: 900     // 15 minutes cap
-            );
-            return new HttpClient(srl, disposeHandler: true);
+#if NET6_0_OR_GREATER
+            var sockets = new SocketsHttpHandler
+            {
+                AutomaticDecompression = System.Net.DecompressionMethods.Deflate | System.Net.DecompressionMethods.GZip,
+                PooledConnectionLifetime = System.TimeSpan.FromMinutes(5),
+                MaxConnectionsPerServer = 2,   // keep concurrency low to avoid bursty 403s
+                UseCookies = false
+            };
+            var srl = new SecondaryRateLimitHandler(sockets);
+#else
+            var inner = new HttpClientHandler
+            {
+                AutomaticDecompression = System.Net.DecompressionMethods.Deflate | System.Net.DecompressionMethods.GZip
+            };
+            var srl = new SecondaryRateLimitHandler(inner);
+#endif
+            var client = new HttpClient(srl, disposeHandler: true);
+
+            // Ensure we always send a UA (GitHub requires it) — your GithubClient also sets one, but this is harmless.
+            if (!client.DefaultRequestHeaders.UserAgent.TryParseAdd("octoshift-cli-integration-tests"))
+            {
+                client.DefaultRequestHeaders.Add("User-Agent", "octoshift-cli-integration-tests");
+            }
+
+            return client;
         }
     }
 }

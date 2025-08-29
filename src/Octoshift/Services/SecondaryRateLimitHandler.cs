@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -7,6 +8,12 @@ using System.Threading.Tasks;
 
 namespace OctoshiftCLI.Services
 {
+    /// <summary>
+    /// Handles GitHub secondary rate-limit / abuse-detection 403s by
+    /// respecting Retry-After (when present) and otherwise using
+    /// exponential backoff with jitter. Clones the request to safely
+    /// resend POSTs with content.
+    /// </summary>
     public sealed class SecondaryRateLimitHandler : DelegatingHandler
     {
         private readonly int _maxAttempts;
@@ -15,9 +22,9 @@ namespace OctoshiftCLI.Services
 
         public SecondaryRateLimitHandler(
             HttpMessageHandler innerHandler,
-            int maxAttempts = 5,
-            int initialBackoffSeconds = 60,
-            int maxBackoffSeconds = 1800)
+            int maxAttempts = 6,
+            int initialBackoffSeconds = 15,
+            int maxBackoffSeconds = 900)
             : base(innerHandler)
         {
             _maxAttempts = maxAttempts;
@@ -32,52 +39,118 @@ namespace OctoshiftCLI.Services
             var attempt = 0;
             var delay = _initialBackoff;
 
+            // Buffer original content (if any) so we can safely clone the request for retries.
+            byte[]? bufferedContent = null;
+            string? contentType = null;
+
+            if (request.Content is not null)
+            {
+                bufferedContent = await request.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+                contentType = request.Content.Headers.ContentType?.ToString();
+            }
+
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var response = await base.SendAsync(request, cancellationToken);
+                using var cloned = CloneRequest(request, bufferedContent, contentType);
+                var response = await base.SendAsync(cloned, cancellationToken).ConfigureAwait(false);
 
-                var isSecondary403 = response.StatusCode == HttpStatusCode.Forbidden;
-                var is429 = response.StatusCode == (HttpStatusCode)429;
-
-                if (!(isSecondary403 || is429))
+                if (response.StatusCode != HttpStatusCode.Forbidden)
                 {
                     return response;
                 }
 
-                var body = await response.Content.ReadAsStringAsync(cancellationToken);
+                // Look for known secondary rate limit / abuse messages in body.
+                var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
                 var looksLikeSecondary =
-                        body.Contains("secondary rate limit", StringComparison.OrdinalIgnoreCase) ||
-                        body.Contains("rate limit", StringComparison.OrdinalIgnoreCase);
+                    body.Contains("secondary rate limit", StringComparison.OrdinalIgnoreCase) ||
+                    body.Contains("abuse detection", StringComparison.OrdinalIgnoreCase) ||
+                    body.Contains("rate limit", StringComparison.OrdinalIgnoreCase);
 
-                // Only retry when it's clearly rate limiting.
-                if (!(is429 || looksLikeSecondary))
+                if (!looksLikeSecondary)
                 {
-                    return response; // some other 403
+                    return response; // Some other 403 — don't loop.
                 }
 
                 attempt++;
                 if (attempt >= _maxAttempts)
                 {
-                    return response;
+                    return response; // Give up; caller/policy will surface it.
                 }
 
-                // Respect Retry-After if present.
+                // Prefer server-provided delay if present.
                 if (response.Headers.TryGetValues("Retry-After", out var values) &&
-                    int.TryParse(System.Linq.Enumerable.FirstOrDefault(values), out var secs) &&
+                    int.TryParse(values.FirstOrDefault(), out var secs) &&
                     secs > 0)
                 {
                     delay = TimeSpan.FromSeconds(secs);
                 }
 
-                // Cryptographically secure jitter to avoid thundering herd.
-                var jitterMs = RandomNumberGenerator.GetInt32(250, 1250);
-                await Task.Delay(delay + TimeSpan.FromMilliseconds(jitterMs), cancellationToken);
+                // Add secure jitter (0–1000ms) to spread retries.
+                var jitterMs = RandomNumberGenerator.GetInt32(0, 1000);
+                var totalDelay = delay + TimeSpan.FromMilliseconds(jitterMs);
+
+                try
+                {
+                    await Task.Delay(totalDelay, cancellationToken).ConfigureAwait(false);
+                }
+                catch (TaskCanceledException)
+                {
+                    // Respect cancellation.
+                    throw;
+                }
 
                 // Exponential backoff, capped.
-                delay = TimeSpan.FromSeconds(Math.Min(delay.TotalSeconds * 2, _maxBackoff.TotalSeconds));
+                var nextSeconds = Math.Min(delay.TotalSeconds * 2, _maxBackoff.TotalSeconds);
+                delay = TimeSpan.FromSeconds(nextSeconds);
+                // Loop and retry with a freshly cloned request.
             }
+        }
+
+        private static HttpRequestMessage CloneRequest(HttpRequestMessage original, byte[]? bufferedContent, string? contentType)
+        {
+            var clone = new HttpRequestMessage(original.Method, original.RequestUri)
+            {
+                Version = original.Version,
+                VersionPolicy = original.VersionPolicy
+            };
+
+            // Copy headers
+            foreach (var header in original.Headers)
+            {
+                clone.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            }
+
+            // Copy content
+            if (bufferedContent is not null)
+            {
+                var content = new ByteArrayContent(bufferedContent);
+                if (!string.IsNullOrEmpty(contentType))
+                {
+                    content.Headers.TryAddWithoutValidation("Content-Type", contentType);
+                }
+
+                foreach (var h in original.Content!.Headers)
+                {
+                    if (!string.Equals(h.Key, "Content-Type", StringComparison.OrdinalIgnoreCase))
+                    {
+                        content.Headers.TryAddWithoutValidation(h.Key, h.Value);
+                    }
+                }
+
+                clone.Content = content;
+            }
+
+            // Properties / Options
+#if NET6_0_OR_GREATER
+            foreach (var opt in original.Options)
+            {
+                clone.Options.Set(new(opt.Key), opt.Value);
+            }
+#endif
+
+            return clone;
         }
     }
 }
