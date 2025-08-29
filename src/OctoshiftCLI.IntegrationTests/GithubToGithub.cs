@@ -31,9 +31,18 @@ namespace OctoshiftCLI.IntegrationTests
             var githubToken = Environment.GetEnvironmentVariable("GHEC_PAT");
             _tokens = new Dictionary<string, string> { ["GH_PAT"] = githubToken };
 
-            _githubHttpClient = new HttpClient();
+
+            _githubHttpClient = new HttpClient(new SecondaryRateLimitHandler(new HttpClientHandler()), disposeHandler: true);
+
             _versionClient = new HttpClient();
-            _githubClient = new GithubClient(logger, _githubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), githubToken);
+            _githubClient = new GithubClient(
+                logger,
+                _githubHttpClient,
+                new VersionChecker(_versionClient, logger),
+                new RetryPolicy(logger),
+                new DateTimeProvider(),
+                githubToken);
+
             _githubApi = new GithubApi(_githubClient, "https://api.github.com", new RetryPolicy(logger), null);
 
             _helper = new TestHelper(_output, _githubApi, _githubClient);
@@ -58,7 +67,9 @@ namespace OctoshiftCLI.IntegrationTests
                 await _helper.CreateGithubRepo(githubSourceOrg, repo2);
             });
 
-            await _helper.RunGeiCliMigration($"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --download-migration-logs", _tokens);
+            await _helper.RunGeiCliMigration(
+                $"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --download-migration-logs",
+                _tokens);
 
             _helper.AssertNoErrorInLogs(_startTime);
 

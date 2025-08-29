@@ -58,7 +58,7 @@ public sealed class BbsToGithub : IDisposable
         _sourceBbsHttpClient = new HttpClient();
         _sourceBbsClient = new BbsClient(_logger, _sourceBbsHttpClient, new VersionChecker(_versionClient, _logger), new RetryPolicy(_logger), sourceBbsUsername, sourceBbsPassword);
 
-        _targetGithubHttpClient = new HttpClient();
+        _targetGithubHttpClient = new HttpClient(new SecondaryRateLimitHandler(new HttpClientHandler()), disposeHandler: true);
         _targetGithubClient = new GithubClient(_logger, _targetGithubHttpClient, new VersionChecker(_versionClient, _logger), new RetryPolicy(_logger), new DateTimeProvider(), targetGithubToken);
         var retryPolicy = new RetryPolicy(_logger);
         _archiveUploader = new ArchiveUploader(_targetGithubClient, UPLOADS_URL, _logger, retryPolicy);
@@ -153,7 +153,6 @@ public sealed class BbsToGithub : IDisposable
 
         var sshKey = Environment.GetEnvironmentVariable(GetSshKeyName(bbsServer));
         await File.WriteAllTextAsync(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
-
 
         var retryPolicy = new RetryPolicy(null);
         await retryPolicy.Retry(async () =>

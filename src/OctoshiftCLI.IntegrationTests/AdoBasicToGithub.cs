@@ -1,4 +1,6 @@
+using System.Net.Http;
 using System.Threading.Tasks;
+using OctoshiftCLI.Services;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -7,8 +9,10 @@ namespace OctoshiftCLI.IntegrationTests
     [Collection("Integration Tests")]
     public class AdoBasicToGithub : AdoToGithub
     {
-        public AdoBasicToGithub(ITestOutputHelper output) : base(output)
+        public AdoBasicToGithub(ITestOutputHelper output) : base(output) { }
+        protected override HttpClient CreateGithubHttpClient()
         {
+            return new HttpClient(new SecondaryRateLimitHandler(new HttpClientHandler()), disposeHandler: true);
         }
 
         [Fact]
@@ -39,7 +43,9 @@ namespace OctoshiftCLI.IntegrationTests
                 await Helper.CreatePipeline(adoOrg, teamProject2, adoRepo2, pipeline2, commitId);
             });
 
-            await Helper.RunAdoToGithubCliMigration($"generate-script --github-org {githubOrg} --ado-org {adoOrg} --all", Tokens);
+            await Helper.RunAdoToGithubCliMigration(
+                $"generate-script --github-org {githubOrg} --ado-org {adoOrg} --all",
+                Tokens);
 
             Helper.AssertNoErrorInLogs(StartTime);
 
