@@ -37,7 +37,7 @@ namespace OctoshiftCLI.Services
             HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
-            if (request is null)
+            if (request == null)
             {
                 throw new ArgumentNullException(nameof(request));
             }
@@ -46,10 +46,10 @@ namespace OctoshiftCLI.Services
             var delay = _initialBackoff;
 
             // Buffer original content (if any) so we can safely clone the request for retries.
-            byte[]? bufferedContent = null;
-            string? contentType = null;
+            byte[] bufferedContent = null;
+            string contentType = null;
 
-            if (request.Content is not null)
+            if (request.Content != null)
             {
                 bufferedContent = await request.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
                 contentType = request.Content.Headers.ContentType?.ToString();
@@ -106,7 +106,7 @@ namespace OctoshiftCLI.Services
             }
         }
 
-        private static HttpRequestMessage CloneRequest(HttpRequestMessage original, byte[]? bufferedContent, string? contentType)
+        private static HttpRequestMessage CloneRequest(HttpRequestMessage original, byte[] bufferedContent, string contentType)
         {
             var clone = new HttpRequestMessage(original.Method, original.RequestUri)
             {
@@ -121,7 +121,7 @@ namespace OctoshiftCLI.Services
             }
 
             // Copy content
-            if (bufferedContent is not null)
+            if (bufferedContent != null)
             {
                 var content = new ByteArrayContent(bufferedContent);
                 if (!string.IsNullOrEmpty(contentType))
@@ -129,11 +129,14 @@ namespace OctoshiftCLI.Services
                     content.Headers.TryAddWithoutValidation("Content-Type", contentType);
                 }
 
-                foreach (var h in original.Content!.Headers)
+                if (original.Content != null)
                 {
-                    if (!string.Equals(h.Key, "Content-Type", StringComparison.OrdinalIgnoreCase))
+                    foreach (var h in original.Content.Headers)
                     {
-                        content.Headers.TryAddWithoutValidation(h.Key, h.Value);
+                        if (!string.Equals(h.Key, "Content-Type", StringComparison.OrdinalIgnoreCase))
+                        {
+                            content.Headers.TryAddWithoutValidation(h.Key, h.Value);
+                        }
                     }
                 }
 
