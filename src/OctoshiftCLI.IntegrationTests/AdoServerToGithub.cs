@@ -10,11 +10,9 @@ namespace OctoshiftCLI.IntegrationTests
         private const string ADO_SERVER_URL = "http://octoshift-ado-server-2022.eastus.cloudapp.azure.com/";
 
         public AdoServerToGithub(ITestOutputHelper output)
-            : base(output,
-                HttpClientFactory.CreateSrlClient(),
-                ADO_SERVER_URL,
-                "ADO_SERVER_PAT")
-        { }
+            : base(output, adoServerUrl: ADO_SERVER_URL, adoPatEnvVar: "ADO_SERVER_PAT")
+        {
+        }
 
         [Fact(Skip = "ADO Server is not a supported feature in GEI")]
         public async Task Basic()
@@ -39,14 +37,15 @@ namespace OctoshiftCLI.IntegrationTests
                 var commitId = await Helper.InitializeAdoRepo(adoOrg, teamProject1, adoRepo1, ADO_SERVER_URL);
                 await Helper.CreatePipeline(adoOrg, teamProject1, adoRepo1, pipeline1, commitId, ADO_SERVER_URL);
 
+                // tiny pause to smooth bursts
+                await Task.Delay(500);
+
                 await Helper.CreateTeamProject(adoOrg, teamProject2, ADO_SERVER_URL);
                 commitId = await Helper.InitializeAdoRepo(adoOrg, teamProject2, adoRepo2, ADO_SERVER_URL);
                 await Helper.CreatePipeline(adoOrg, teamProject2, adoRepo2, pipeline2, commitId, ADO_SERVER_URL);
             });
 
-            await Helper.RunAdoToGithubCliMigration(
-                $"generate-script --github-org {githubOrg} --ado-org {adoOrg} --ado-server-url {ADO_SERVER_URL} --download-migration-logs --create-teams --link-idp-groups",
-                Tokens);
+            await Helper.RunAdoToGithubCliMigration($"generate-script --github-org {githubOrg} --ado-org {adoOrg} --ado-server-url {ADO_SERVER_URL} --download-migration-logs --create-teams --link-idp-groups", Tokens);
 
             Helper.AssertNoErrorInLogs(StartTime);
 

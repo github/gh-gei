@@ -31,10 +31,8 @@ namespace OctoshiftCLI.IntegrationTests
             var githubToken = Environment.GetEnvironmentVariable("GHEC_PAT");
             _tokens = new Dictionary<string, string> { ["GH_PAT"] = githubToken };
 
-
             _githubHttpClient = HttpClientFactory.CreateSrlClient();
-
-            _versionClient = new HttpClient();
+            _versionClient = HttpClientFactory.CreateSrlClient();
             _githubClient = new GithubClient(
                 logger,
                 _githubHttpClient,
@@ -64,6 +62,10 @@ namespace OctoshiftCLI.IntegrationTests
                 await _helper.ResetGithubTestEnvironment(githubTargetOrg);
 
                 await _helper.CreateGithubRepo(githubSourceOrg, repo1);
+
+                // tiny pause to smooth bursts
+                await Task.Delay(500);
+
                 await _helper.CreateGithubRepo(githubSourceOrg, repo2);
             });
 
@@ -98,7 +100,6 @@ namespace OctoshiftCLI.IntegrationTests
 
         public void Dispose()
         {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }

@@ -7,9 +7,9 @@ namespace OctoshiftCLI.IntegrationTests
     [Collection("Integration Tests")]
     public class AdoBasicToGithub : AdoToGithub
     {
-        public AdoBasicToGithub(ITestOutputHelper output)
-            : base(output, HttpClientFactory.CreateSrlClient())
-        { }
+        public AdoBasicToGithub(ITestOutputHelper output) : base(output)
+        {
+        }
 
         [Fact]
         public async Task Basic()
@@ -34,14 +34,15 @@ namespace OctoshiftCLI.IntegrationTests
                 var commitId = await Helper.InitializeAdoRepo(adoOrg, teamProject1, adoRepo1);
                 await Helper.CreatePipeline(adoOrg, teamProject1, adoRepo1, pipeline1, commitId);
 
+                // tiny pause to smooth bursts
+                await Task.Delay(500);
+
                 await Helper.CreateTeamProject(adoOrg, teamProject2);
                 commitId = await Helper.InitializeAdoRepo(adoOrg, teamProject2, adoRepo2);
                 await Helper.CreatePipeline(adoOrg, teamProject2, adoRepo2, pipeline2, commitId);
             });
 
-            await Helper.RunAdoToGithubCliMigration(
-                $"generate-script --github-org {githubOrg} --ado-org {adoOrg} --all",
-                Tokens);
+            await Helper.RunAdoToGithubCliMigration($"generate-script --github-org {githubOrg} --ado-org {adoOrg} --all", Tokens);
 
             Helper.AssertNoErrorInLogs(StartTime);
 

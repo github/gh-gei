@@ -26,7 +26,7 @@ namespace OctoshiftCLI.IntegrationTests
 
             var logger = new OctoLogger(x => { }, x => _output.WriteLine(x), x => { }, x => { });
 
-            _versionClient = new HttpClient();
+            _versionClient = HttpClientFactory.CreateSrlClient();
             var adoToken = Environment.GetEnvironmentVariable(adoPatEnvVar);
             _adoHttpClient = new HttpClient();
             var retryPolicy = new RetryPolicy(logger);
@@ -34,7 +34,7 @@ namespace OctoshiftCLI.IntegrationTests
             var adoApi = new AdoApi(adoClient, adoServerUrl, logger);
 
             var githubToken = Environment.GetEnvironmentVariable("GHEC_PAT");
-            _githubHttpClient = githubHttpClient ?? new HttpClient();
+            _githubHttpClient = githubHttpClient ?? HttpClientFactory.CreateSrlClient();
 
             var githubClient = new GithubClient(logger, _githubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), githubToken);
             var githubApi = new GithubApi(githubClient, "https://api.github.com", new RetryPolicy(logger), null);

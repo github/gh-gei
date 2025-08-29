@@ -53,7 +53,7 @@ public sealed class BbsToGithub : IDisposable
             ["GH_PAT"] = targetGithubToken
         };
 
-        _versionClient = new HttpClient();
+        _versionClient = HttpClientFactory.CreateSrlClient();
 
         _sourceBbsHttpClient = new HttpClient();
         _sourceBbsClient = new BbsClient(_logger, _sourceBbsHttpClient, new VersionChecker(_versionClient, _logger), new RetryPolicy(_logger), sourceBbsUsername, sourceBbsPassword);
@@ -97,6 +97,10 @@ public sealed class BbsToGithub : IDisposable
             await sourceHelper.CreateBbsProject(bbsProjectKey);
             await sourceHelper.CreateBbsRepo(bbsProjectKey, repo1);
             await sourceHelper.InitializeBbsRepo(bbsProjectKey, repo1);
+
+            // tiny pause to smooth bursts
+            await Task.Delay(500);
+
             await sourceHelper.CreateBbsRepo(bbsProjectKey, repo2);
             await sourceHelper.InitializeBbsRepo(bbsProjectKey, repo2);
         });

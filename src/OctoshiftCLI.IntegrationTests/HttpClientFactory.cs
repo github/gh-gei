@@ -14,7 +14,12 @@ namespace OctoshiftCLI.IntegrationTests
         internal static HttpClient CreateSrlClient()
         {
             var inner = new HttpClientHandler();
-            var srl = new SecondaryRateLimitHandler(inner);
+            var srl = new SecondaryRateLimitHandler(
+                inner,
+                maxAttempts: 8,            // be more patient in Integration Tests
+                initialBackoffSeconds: 30, // we'll honor Retry-After when provided
+                maxBackoffSeconds: 900     // 15 minutes cap
+            );
             return new HttpClient(srl, disposeHandler: true);
         }
     }

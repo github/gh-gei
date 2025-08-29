@@ -47,8 +47,9 @@ public sealed class GhesToGithub : IDisposable
             ["GH_PAT"] = targetGithubToken,
         };
 
-        _versionClient = new HttpClient();
+        _versionClient = HttpClientFactory.CreateSrlClient();
         var retryPolicy = new RetryPolicy(logger);
+        _archiveUploader = new ArchiveUploader(_targetGithubClient, UPLOADS_URL, logger, retryPolicy);
 
         // Source GitHub client (GHES)
         _sourceGithubHttpClient = HttpClientFactory.CreateSrlClient();
@@ -95,10 +96,13 @@ public sealed class GhesToGithub : IDisposable
             await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
 
             await _sourceHelper.CreateGithubRepo(githubSourceOrg, repo1);
+
+            // tiny pause to smooth bursts
+            await Task.Delay(500);
+
             await _sourceHelper.CreateGithubRepo(githubSourceOrg, repo2);
         });
 
-        // Build the command with conditional option
         var command = $"generate-script --github-source-org {githubSourceOrg} --github-target-org {githubTargetOrg} --ghes-api-url {GHES_API_URL} --download-migration-logs";
         if (useGithubStorage)
         {

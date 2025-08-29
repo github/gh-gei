@@ -27,7 +27,7 @@ namespace OctoshiftCLI.Services
 
         protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
-            CancellationToken cancellationToken) // renamed for CA1725
+            CancellationToken cancellationToken)
         {
             var attempt = 0;
             var delay = _initialBackoff;
@@ -38,13 +38,21 @@ namespace OctoshiftCLI.Services
 
                 var response = await base.SendAsync(request, cancellationToken);
 
-                if (response.StatusCode != HttpStatusCode.Forbidden)
+                var isSecondary403 = response.StatusCode == HttpStatusCode.Forbidden;
+                var is429 = response.StatusCode == (HttpStatusCode)429;
+
+                if (!(isSecondary403 || is429))
                 {
                     return response;
                 }
 
                 var body = await response.Content.ReadAsStringAsync(cancellationToken);
-                if (!body.Contains("secondary rate limit", StringComparison.OrdinalIgnoreCase))
+                var looksLikeSecondary =
+                        body.Contains("secondary rate limit", StringComparison.OrdinalIgnoreCase) ||
+                        body.Contains("rate limit", StringComparison.OrdinalIgnoreCase);
+
+                // Only retry when it's clearly rate limiting.
+                if (!(is429 || looksLikeSecondary))
                 {
                     return response; // some other 403
                 }
@@ -55,7 +63,7 @@ namespace OctoshiftCLI.Services
                     return response;
                 }
 
-                // Respect Retry-After if present
+                // Respect Retry-After if present.
                 if (response.Headers.TryGetValues("Retry-After", out var values) &&
                     int.TryParse(System.Linq.Enumerable.FirstOrDefault(values), out var secs) &&
                     secs > 0)
@@ -63,10 +71,11 @@ namespace OctoshiftCLI.Services
                     delay = TimeSpan.FromSeconds(secs);
                 }
 
-                // Secure jitter for CA5394
-                var jitterMs = RandomNumberGenerator.GetInt32(0, 1000);
+                // Cryptographically secure jitter to avoid thundering herd.
+                var jitterMs = RandomNumberGenerator.GetInt32(250, 1250);
                 await Task.Delay(delay + TimeSpan.FromMilliseconds(jitterMs), cancellationToken);
 
+                // Exponential backoff, capped.
                 delay = TimeSpan.FromSeconds(Math.Min(delay.TotalSeconds * 2, _maxBackoff.TotalSeconds));
             }
         }
