@@ -1,6 +1,7 @@
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,10 +13,11 @@ namespace OctoshiftCLI.Services
         private readonly TimeSpan _initialBackoff;
         private readonly TimeSpan _maxBackoff;
 
-        public SecondaryRateLimitHandler(HttpMessageHandler innerHandler,
-                                         int maxAttempts = 5,
-                                         int initialBackoffSeconds = 60,
-                                         int maxBackoffSeconds = 1800)
+        public SecondaryRateLimitHandler(
+            HttpMessageHandler innerHandler,
+            int maxAttempts = 5,
+            int initialBackoffSeconds = 60,
+            int maxBackoffSeconds = 1800)
             : base(innerHandler)
         {
             _maxAttempts = maxAttempts;
@@ -23,36 +25,48 @@ namespace OctoshiftCLI.Services
             _maxBackoff = TimeSpan.FromSeconds(maxBackoffSeconds);
         }
 
-        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken) // renamed for CA1725
         {
             var attempt = 0;
             var delay = _initialBackoff;
 
             while (true)
             {
-                ct.ThrowIfCancellationRequested();
-                var resp = await base.SendAsync(request, ct);
+                cancellationToken.ThrowIfCancellationRequested();
 
-                if (resp.StatusCode != HttpStatusCode.Forbidden)
-                    return resp;
+                var response = await base.SendAsync(request, cancellationToken);
 
-                var body = await resp.Content.ReadAsStringAsync(ct);
+                if (response.StatusCode != HttpStatusCode.Forbidden)
+                {
+                    return response;
+                }
+
+                var body = await response.Content.ReadAsStringAsync(cancellationToken);
                 if (!body.Contains("secondary rate limit", StringComparison.OrdinalIgnoreCase))
-                    return resp;
+                {
+                    return response; // some other 403
+                }
 
                 attempt++;
                 if (attempt >= _maxAttempts)
-                    return resp;
+                {
+                    return response;
+                }
 
-                if (resp.Headers.TryGetValues("Retry-After", out var vals) &&
-                    int.TryParse(System.Linq.Enumerable.FirstOrDefault(vals), out var secs) &&
+                // Respect Retry-After if present
+                if (response.Headers.TryGetValues("Retry-After", out var values) &&
+                    int.TryParse(System.Linq.Enumerable.FirstOrDefault(values), out var secs) &&
                     secs > 0)
                 {
                     delay = TimeSpan.FromSeconds(secs);
                 }
 
-                var jitter = TimeSpan.FromMilliseconds(Random.Shared.Next(0, 1000));
-                await Task.Delay(delay + jitter, ct);
+                // Secure jitter for CA5394
+                var jitterMs = RandomNumberGenerator.GetInt32(0, 1000);
+                await Task.Delay(delay + TimeSpan.FromMilliseconds(jitterMs), cancellationToken);
+
                 delay = TimeSpan.FromSeconds(Math.Min(delay.TotalSeconds * 2, _maxBackoff.TotalSeconds));
             }
         }
