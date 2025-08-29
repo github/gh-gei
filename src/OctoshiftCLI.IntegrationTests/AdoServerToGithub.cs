@@ -1,6 +1,4 @@
-using System.Net.Http;
 using System.Threading.Tasks;
-using OctoshiftCLI.Services;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -13,9 +11,9 @@ namespace OctoshiftCLI.IntegrationTests
 
         public AdoServerToGithub(ITestOutputHelper output)
             : base(output,
-                   new HttpClient(new SecondaryRateLimitHandler(new HttpClientHandler()), disposeHandler: true),
-                   ADO_SERVER_URL,
-                   "ADO_SERVER_PAT")
+                HttpClientFactory.CreateSrlClient(),
+                ADO_SERVER_URL,
+                "ADO_SERVER_PAT")
         { }
 
         [Fact(Skip = "ADO Server is not a supported feature in GEI")]

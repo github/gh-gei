@@ -51,13 +51,13 @@ public sealed class GhesToGithub : IDisposable
         var retryPolicy = new RetryPolicy(logger);
 
         // Source GitHub client (GHES)
-        _sourceGithubHttpClient = new HttpClient(new SecondaryRateLimitHandler(new HttpClientHandler()), disposeHandler: true);
+        _sourceGithubHttpClient = HttpClientFactory.CreateSrlClient();
         _sourceGithubClient = new GithubClient(logger, _sourceGithubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), sourceGithubToken);
         _archiveUploader = new ArchiveUploader(_sourceGithubClient, UPLOADS_URL, logger, retryPolicy);
         _sourceGithubApi = new GithubApi(_sourceGithubClient, GHES_API_URL, new RetryPolicy(logger), _archiveUploader);
 
         // Target GitHub client (GHEC)
-        _targetGithubHttpClient = new HttpClient(new SecondaryRateLimitHandler(new HttpClientHandler()), disposeHandler: true);
+        _targetGithubHttpClient = HttpClientFactory.CreateSrlClient();
         _targetGithubClient = new GithubClient(logger, _targetGithubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), targetGithubToken);
         _targetGithubApi = new GithubApi(_targetGithubClient, "https://api.github.com", new RetryPolicy(logger), _archiveUploader);
 

@@ -1,6 +1,4 @@
-using System.Net.Http;
 using System.Threading.Tasks;
-using OctoshiftCLI.Services;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -10,7 +8,7 @@ namespace OctoshiftCLI.IntegrationTests
     public class AdoCsvToGithub : AdoToGithub
     {
         public AdoCsvToGithub(ITestOutputHelper output)
-            : base(output, new HttpClient(new SecondaryRateLimitHandler(new HttpClientHandler()), disposeHandler: true))
+            : base(output, HttpClientFactory.CreateSrlClient())
         { }
 
         [Fact]

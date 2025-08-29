@@ -32,7 +32,7 @@ namespace OctoshiftCLI.IntegrationTests
             _tokens = new Dictionary<string, string> { ["GH_PAT"] = githubToken };
 
 
-            _githubHttpClient = new HttpClient(new SecondaryRateLimitHandler(new HttpClientHandler()), disposeHandler: true);
+            _githubHttpClient = HttpClientFactory.CreateSrlClient();
 
             _versionClient = new HttpClient();
             _githubClient = new GithubClient(
