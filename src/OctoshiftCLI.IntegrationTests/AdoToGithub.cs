@@ -18,9 +18,8 @@ namespace OctoshiftCLI.IntegrationTests
         protected Dictionary<string, string> Tokens { get; }
         protected DateTime StartTime { get; }
 
-        protected virtual HttpClient CreateGithubHttpClient() => new HttpClient();
 
-        protected AdoToGithub(ITestOutputHelper output, string adoServerUrl = "https://dev.azure.com", string adoPatEnvVar = "ADO_PAT")
+        protected AdoToGithub(ITestOutputHelper output, HttpClient githubHttpClient, string adoServerUrl = "https://dev.azure.com", string adoPatEnvVar = "ADO_PAT")
         {
             StartTime = DateTime.Now;
             _output = output;
@@ -35,7 +34,7 @@ namespace OctoshiftCLI.IntegrationTests
             var adoApi = new AdoApi(adoClient, adoServerUrl, logger);
 
             var githubToken = Environment.GetEnvironmentVariable("GHEC_PAT");
-            _githubHttpClient = CreateGithubHttpClient();
+            _githubHttpClient = githubHttpClient ?? new HttpClient();
 
             var githubClient = new GithubClient(logger, _githubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), githubToken);
             var githubApi = new GithubApi(githubClient, "https://api.github.com", new RetryPolicy(logger), null);
@@ -47,6 +46,11 @@ namespace OctoshiftCLI.IntegrationTests
             };
 
             Helper = new TestHelper(_output, adoApi, githubApi, adoClient, githubClient);
+        }
+
+        protected AdoToGithub(ITestOutputHelper output, string adoServerUrl = "https://dev.azure.com", string adoPatEnvVar = "ADO_PAT")
+            : this(output, githubHttpClient: null, adoServerUrl: adoServerUrl, adoPatEnvVar: adoPatEnvVar)
+        {
         }
 
         protected virtual void Dispose(bool disposing)
@@ -66,7 +70,6 @@ namespace OctoshiftCLI.IntegrationTests
 
         public void Dispose()
         {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }

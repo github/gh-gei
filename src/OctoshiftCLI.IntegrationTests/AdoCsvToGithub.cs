@@ -9,12 +9,9 @@ namespace OctoshiftCLI.IntegrationTests
     [Collection("Integration Tests")]
     public class AdoCsvToGithub : AdoToGithub
     {
-        public AdoCsvToGithub(ITestOutputHelper output) : base(output) { }
-
-        protected override HttpClient CreateGithubHttpClient()
-        {
-            return new HttpClient(new SecondaryRateLimitHandler(new HttpClientHandler()), disposeHandler: true);
-        }
+        public AdoCsvToGithub(ITestOutputHelper output)
+            : base(output, new HttpClient(new SecondaryRateLimitHandler(new HttpClientHandler()), disposeHandler: true))
+        { }
 
         [Fact]
         public async Task With_Inventory_Report_Csv()

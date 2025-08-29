@@ -9,11 +9,9 @@ namespace OctoshiftCLI.IntegrationTests
     [Collection("Integration Tests")]
     public class AdoBasicToGithub : AdoToGithub
     {
-        public AdoBasicToGithub(ITestOutputHelper output) : base(output) { }
-        protected override HttpClient CreateGithubHttpClient()
-        {
-            return new HttpClient(new SecondaryRateLimitHandler(new HttpClientHandler()), disposeHandler: true);
-        }
+        public AdoBasicToGithub(ITestOutputHelper output)
+            : base(output, new HttpClient(new SecondaryRateLimitHandler(new HttpClientHandler()), disposeHandler: true))
+        { }
 
         [Fact]
         public async Task Basic()

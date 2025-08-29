@@ -11,11 +11,12 @@ namespace OctoshiftCLI.IntegrationTests
     {
         private const string ADO_SERVER_URL = "http://octoshift-ado-server-2022.eastus.cloudapp.azure.com/";
 
-        public AdoServerToGithub(ITestOutputHelper output) : base(output, ADO_SERVER_URL, "ADO_SERVER_PAT") { }
-        protected override HttpClient CreateGithubHttpClient()
-        {
-            return new HttpClient(new SecondaryRateLimitHandler(new HttpClientHandler()), disposeHandler: true);
-        }
+        public AdoServerToGithub(ITestOutputHelper output)
+            : base(output,
+                   new HttpClient(new SecondaryRateLimitHandler(new HttpClientHandler()), disposeHandler: true),
+                   ADO_SERVER_URL,
+                   "ADO_SERVER_PAT")
+        { }
 
         [Fact(Skip = "ADO Server is not a supported feature in GEI")]
         public async Task Basic()
