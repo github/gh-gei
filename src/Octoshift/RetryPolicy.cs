@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -19,7 +20,6 @@ namespace OctoshiftCLI
         {
             _log = log;
         }
-
 
         public async Task<HttpResponseMessage> HttpRetry(Func<Task<HttpResponseMessage>> func)
         {
@@ -82,7 +82,22 @@ namespace OctoshiftCLI
                     {
                         var r = outcome.Result;
                         string body = null;
-                        try { body = r.Content != null ? await r.Content.ReadAsStringAsync() : null; } catch { /* ignore */ }
+                        try
+                        {
+                            body = r.Content != null ? await r.Content.ReadAsStringAsync() : null;
+                        }
+                        catch (IOException)
+                        {
+                            // ignored
+                        }
+                        catch (ObjectDisposedException)
+                        {
+                            // ignored
+                        }
+                        catch (InvalidOperationException)
+                        {
+                            // ignored
+                        }
 
                         _log?.LogVerbose(
                             $"Secondary rate limit (HTTP {(int)r.StatusCode}). " +
