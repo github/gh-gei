@@ -20,23 +20,29 @@ namespace OctoshiftCLI
             _log = log;
         }
 
-        /// <summary>
-        /// NEW: Minimal overload for HTTP calls that returns HttpResponseMessage so we can
-        /// honor Retry-After and X-RateLimit-* headers for secondary rate limits.
-        /// Usage: var resp = await _retryPolicy.HttpRetry(() => _httpClient.SendAsync(request));
-        /// </summary>
+
         public async Task<HttpResponseMessage> HttpRetry(Func<Task<HttpResponseMessage>> func)
         {
             var policy = Policy
                 .HandleResult<HttpResponseMessage>(r =>
                 {
                     var sc = (int)r.StatusCode;
-                    if (sc != 403 && sc != 429) return false;
+                    if (sc is not 403 and not 429)
+                    {
+                        return false;
+                    }
 
                     // Treat Retry-After or X-RateLimit-Remaining: 0 as secondary-rate limiting signals
-                    if (r.Headers.RetryAfter != null) return true;
+                    if (r.Headers.RetryAfter != null)
+                    {
+                        return true;
+                    }
+
                     if (r.Headers.TryGetValues("X-RateLimit-Remaining", out var remain) &&
-                        remain?.FirstOrDefault() == "0") return true;
+                        remain?.FirstOrDefault() == "0")
+                    {
+                        return true;
+                    }
 
                     // Fallback: any 403/429 without headers still gets backoff per docs
                     return true;
@@ -49,7 +55,10 @@ namespace OctoshiftCLI
 
                         // 1) Honor Retry-After header
                         var ra = r.Headers.RetryAfter?.Delta;
-                        if (ra.HasValue) return ra.Value;
+                        if (ra.HasValue)
+                        {
+                            return ra.Value;
+                        }
 
                         // 2) If remaining == 0, wait until reset
                         if (r.Headers.TryGetValues("X-RateLimit-Remaining", out var remainVals) &&
@@ -59,7 +68,10 @@ namespace OctoshiftCLI
                         {
                             var resetAt = DateTimeOffset.FromUnixTimeSeconds(resetEpoch);
                             var wait = resetAt - DateTimeOffset.UtcNow;
-                            if (wait > TimeSpan.Zero) return wait;
+                            if (wait > TimeSpan.Zero)
+                            {
+                                return wait;
+                            }
                         }
 
                         // 3) Otherwise: at least 1 minute, exponential thereafter (1,2,4,8,...)
@@ -78,7 +90,7 @@ namespace OctoshiftCLI
                             $"Retry-After={r.Headers.RetryAfter?.Delta?.TotalSeconds}, " +
                             $"X-RateLimit-Remaining={TryHeader(r, "X-RateLimit-Remaining")}, " +
                             $"X-RateLimit-Reset={TryHeader(r, "X-RateLimit-Reset")}. " +
-                            $"Body={(body?.Length > 200 ? body.Substring(0, 200) + "…" : body)}");
+                            $"Body={(body?.Length > 200 ? body[..200] + "…" : body)}");
                     });
 
             var resp = await policy.ExecuteAsync(func);
