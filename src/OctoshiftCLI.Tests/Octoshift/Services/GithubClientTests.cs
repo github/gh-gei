@@ -2084,6 +2084,34 @@ query($id: ID!, $first: Int, $after: String) {
         httpClient.DefaultRequestHeaders.UserAgent.ToString().Should().Be("OctoshiftCLI");
     }
 
+    [Fact]
+    public async Task PostAsync_Handles_Secondary_Rate_Limit_With_429_Status()
+    {
+        // Arrange
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .SetupSequence<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Post),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(CreateHttpResponseFactory(
+                statusCode: HttpStatusCode.TooManyRequests,
+                content: "Too many requests",
+                headers: new[] { ("Retry-After", "1") })())
+            .ReturnsAsync(CreateHttpResponseFactory(content: "SUCCESS_RESPONSE")());
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act
+        var result = await githubClient.PostAsync("http://example.com", _rawRequestBody);
+
+        // Assert
+        result.Should().Be("SUCCESS_RESPONSE");
+        _mockOctoLogger.Verify(m => m.LogWarning(It.Is<string>(s => s.Contains("Secondary rate limit detected"))), Times.Once);
+    }
+
     private object CreateRepositoryMigration(string migrationId = null, string state = RepositoryMigrationStatus.Succeeded) => new
     {
         id = migrationId ?? Guid.NewGuid().ToString(),
