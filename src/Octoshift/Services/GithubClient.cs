@@ -205,7 +205,7 @@ public class GithubClient
         // Check for secondary rate limits before handling primary rate limits
         if (IsSecondaryRateLimit(response.StatusCode, content))
         {
-            return await HandleSecondaryRateLimit(httpMethod, url, body, expectedStatus, customHeaders, response, content, headers, retryCount);
+            return await HandleSecondaryRateLimit(httpMethod, url, body, expectedStatus, customHeaders, headers, retryCount);
         }
 
         if (response.StatusCode == HttpStatusCode.Forbidden && _retryDelay > 0)
