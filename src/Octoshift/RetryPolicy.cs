@@ -49,7 +49,7 @@ namespace OctoshiftCLI
                 })
                 .WaitAndRetryAsync(
                     retryCount: 5,
-                    sleepDurationProvider: async (attempt, outcome, ctx) =>
+                    sleepDurationProvider: (attempt, outcome, ctx) =>
                     {
                         var r = outcome.Result;
 
