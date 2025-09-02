@@ -318,8 +318,6 @@ public class GithubClient
         object body,
         HttpStatusCode expectedStatus,
         Dictionary<string, string> customHeaders,
-        HttpResponseMessage response,
-        string content,
         KeyValuePair<string, IEnumerable<string>>[] headers,
         int retryCount = 0)
     {
