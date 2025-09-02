@@ -181,7 +181,7 @@ public class GithubClient
             }
         }
 
-        using var response = await _httpClient.SendAsync(request);
+        using var response = await _retryPolicy.HttpRetry(() => _httpClient.SendAsync(request));
 
         _log.LogVerbose($"GITHUB REQUEST ID: {ExtractHeaderValue("X-GitHub-Request-Id", response.Headers)}");
         var content = await response.Content.ReadAsStringAsync();
