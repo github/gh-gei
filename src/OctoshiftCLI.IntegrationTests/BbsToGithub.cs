@@ -70,7 +70,7 @@ public sealed class BbsToGithub : IDisposable
     }
 
     [Theory]
-    [InlineData("http://e2e-bbs-8-5-0-linux-2204-westus2.cloudapp.azure.com:7990", true, ArchiveUploadOption.AzureStorage)]
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204-westus2.cloudapp.azure.com:799", true, ArchiveUploadOption.AzureStorage)]
     // [InlineData("http://e2e-bbs-7-21-9-win-2019.westus2.cloudapp.azure.com:7990", false, ArchiveUploadOption.AzureStorage)]
     [InlineData("http://e2e-bbs-8-5-0-linux-2204-westus2.cloudapp.azure.com:7990", true, ArchiveUploadOption.AwsS3)]
     [InlineData("http://e2e-bbs-8-5-0-linux-2204-westus2.cloudapp.azure.com:7990", true, ArchiveUploadOption.GithubStorage)]
