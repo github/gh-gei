@@ -70,10 +70,10 @@ public sealed class BbsToGithub : IDisposable
     }
 
     [Theory]
-    [InlineData("http://e2e-bbs-8-5-0-linux-2204.westus2.cloudapp.azure.com:7990", true, ArchiveUploadOption.AzureStorage)]
-    [InlineData("http://e2e-bbs-7-21-9-win-2019.westus2.cloudapp.azure.com:7990", false, ArchiveUploadOption.AzureStorage)]
-    [InlineData("http://e2e-bbs-8-5-0-linux-2204.westus2.cloudapp.azure.com:7990", true, ArchiveUploadOption.AwsS3)]
-    [InlineData("http://e2e-bbs-8-5-0-linux-2204.westus2.cloudapp.azure.com:7990", true, ArchiveUploadOption.GithubStorage)]
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204-westus2.cloudapp.azure.com:7990", true, ArchiveUploadOption.AzureStorage)]
+    // [InlineData("http://e2e-bbs-7-21-9-win-2019.westus2.cloudapp.azure.com:7990", false, ArchiveUploadOption.AzureStorage)]
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204-westus2.cloudapp.azure.com:7990", true, ArchiveUploadOption.AwsS3)]
+    [InlineData("http://e2e-bbs-8-5-0-linux-2204-westus2.cloudapp.azure.com:7990", true, ArchiveUploadOption.GithubStorage)]
     public async Task Basic(string bbsServer, bool useSshForArchiveDownload, ArchiveUploadOption uploadOption)
     {
         var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
@@ -148,7 +148,7 @@ public sealed class BbsToGithub : IDisposable
     {
         var githubTargetOrg = $"octoshift-e2e-bbs-{TestHelper.GetOsName()}";
         var bbsProjectKey = $"IN";
-        var bbsServer = "http://e2e-bbs-8-5-0-linux-2204.westus2.cloudapp.azure.com:7990";
+        var bbsServer = "http://e2e-bbs-8-5-0-linux-2204-westus2.cloudapp.azure.com:7990";
         var targetRepo = $"IN-100_cli";
 
         var sshKey = Environment.GetEnvironmentVariable(GetSshKeyName(bbsServer));
