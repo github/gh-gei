@@ -293,7 +293,7 @@ public class GithubClient
     private bool IsSecondaryRateLimit(HttpStatusCode statusCode, string content)
     {
         // Secondary rate limits return 403 or 429
-        if (statusCode is not HttpStatusCode.Forbidden and not HttpStatusCode.TooManyRequests)
+        if (statusCode != HttpStatusCode.Forbidden && statusCode != HttpStatusCode.TooManyRequests)
         {
             return false;
         }
