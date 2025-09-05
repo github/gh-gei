@@ -25,6 +25,28 @@ public class AdoApi
         _log = log;
     }
 
+    // Basic HTTP wrapper methods for use by other services
+    public virtual async Task<string> GetAsync(string relativeUrl)
+    {
+        ArgumentNullException.ThrowIfNull(relativeUrl);
+        var url = relativeUrl.StartsWith("http") ? relativeUrl : $"{_adoBaseUrl}{relativeUrl}";
+        return await _client.GetAsync(url);
+    }
+
+    public virtual async Task PutAsync(string relativeUrl, object payload)
+    {
+        ArgumentNullException.ThrowIfNull(relativeUrl);
+        var url = relativeUrl.StartsWith("http") ? relativeUrl : $"{_adoBaseUrl}{relativeUrl}";
+        await _client.PutAsync(url, payload);
+    }
+
+    public virtual async Task<string> PostAsync(string relativeUrl, object payload)
+    {
+        ArgumentNullException.ThrowIfNull(relativeUrl);
+        var url = relativeUrl.StartsWith("http") ? relativeUrl : $"{_adoBaseUrl}{relativeUrl}";
+        return await _client.PostAsync(url, payload);
+    }
+
     public virtual async Task<string> GetOrgOwner(string org)
     {
         var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
@@ -510,7 +532,7 @@ public class AdoApi
         await _client.PatchAsync(url, payload);
     }
 
-    public virtual async Task<(string DefaultBranch, string Clean, string CheckoutSubmodules)> GetPipeline(string org, string teamProject, int pipelineId)
+    public virtual async Task<(string DefaultBranch, string Clean, string CheckoutSubmodules, JToken Triggers)> GetPipeline(string org, string teamProject, int pipelineId)
     {
         var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
 
@@ -530,80 +552,10 @@ public class AdoApi
         var checkoutSubmodules = (string)data["repository"]["checkoutSubmodules"];
         checkoutSubmodules = checkoutSubmodules == null ? "null" : checkoutSubmodules.ToLower();
 
-        return (defaultBranch, clean, checkoutSubmodules);
-    }
+        // Capture trigger information to preserve during rewiring
+        var triggers = data["triggers"];
 
-    public virtual async Task ChangePipelineRepo(string adoOrg, string teamProject, int pipelineId, string defaultBranch, string clean, string checkoutSubmodules, string githubOrg, string githubRepo, string connectedServiceId, string targetApiUrl = null)
-    {
-        var url = $"{_adoBaseUrl}/{adoOrg.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
-
-        var response = await _client.GetAsync(url);
-        var data = JObject.Parse(response);
-
-        // Determine base URLs
-        string apiUrl, webUrl, cloneUrl, branchesUrl, refsUrl, manageUrl;
-        if (targetApiUrl.HasValue())
-        {
-            var apiUri = new Uri(targetApiUrl.TrimEnd('/'));
-            var webHost = apiUri.Host.StartsWith("api.") ? apiUri.Host[4..] : apiUri.Host;
-            var webScheme = apiUri.Scheme;
-            var webBase = $"{webScheme}://{webHost}";
-            apiUrl = $"{targetApiUrl.TrimEnd('/')}/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}";
-            webUrl = $"{webBase}/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}";
-            cloneUrl = $"{webBase}/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}.git";
-            branchesUrl = $"{targetApiUrl.TrimEnd('/')}/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}/branches";
-            refsUrl = $"{targetApiUrl.TrimEnd('/')}/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}/git/refs";
-            manageUrl = webUrl;
-        }
-        else
-        {
-            apiUrl = $"https://api.github.com/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}";
-            webUrl = $"https://github.com/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}";
-            cloneUrl = $"https://github.com/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}.git";
-            branchesUrl = $"https://api.github.com/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}/branches";
-            refsUrl = $"https://api.github.com/repos/{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}/git/refs";
-            manageUrl = webUrl;
-        }
-
-        var newRepo = new
-        {
-            properties = new
-            {
-                apiUrl,
-                branchesUrl,
-                cloneUrl,
-                connectedServiceId,
-                defaultBranch,
-                fullName = $"{githubOrg}/{githubRepo}",
-                manageUrl,
-                orgName = githubOrg,
-                refsUrl,
-                safeRepository = $"{githubOrg.EscapeDataString()}/{githubRepo.EscapeDataString()}",
-                shortName = githubRepo,
-                reportBuildStatus = true
-            },
-            id = $"{githubOrg}/{githubRepo}",
-            type = "GitHub",
-            name = $"{githubOrg}/{githubRepo}",
-            url = cloneUrl,
-            defaultBranch,
-            clean,
-            checkoutSubmodules
-        };
-
-        var payload = new JObject();
-
-        foreach (var prop in data.Properties())
-        {
-            if (prop.Name == "repository")
-            {
-                prop.Value = JObject.Parse(newRepo.ToJson());
-            }
-
-            payload.Add(prop.Name, prop.Value);
-        }
-
-        await _client.PutAsync(url, payload.ToObject(typeof(object)));
+        return (defaultBranch, clean, checkoutSubmodules, triggers);
     }
 
     public virtual async Task<string> GetBoardsGithubRepoId(string org, string teamProject, string teamProjectId, string endpointId, string githubOrg, string githubRepo)
