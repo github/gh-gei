@@ -390,7 +390,7 @@ public class GithubApi
                     $lockSource: Boolean)";
         var gql = @"
                 startRepositoryMigration(
-                    input: { 
+                    input: {
                         sourceId: $sourceId,
                         ownerId: $ownerId,
                         sourceRepositoryUrl: $sourceRepositoryUrl,
@@ -456,7 +456,7 @@ public class GithubApi
                         $targetEnterpriseId: ID!,
                         $sourceAccessToken: String!)";
         var gql = @"
-                startOrganizationMigration( 
+                startOrganizationMigration(
                     input: {
                         sourceOrgUrl: $sourceOrgUrl,
                         targetOrgName: $targetOrgName,
@@ -1077,7 +1077,7 @@ public class GithubApi
                 )";
         var gql = @"
                 abortRepositoryMigration(
-                    input: { 
+                    input: {
                         migrationId: $migrationId
                     })
                    { success }";
@@ -1264,4 +1264,35 @@ public class GithubApi
             StartColumn = (int)scanningAlertInstance["location"]["start_column"],
             EndColumn = (int)scanningAlertInstance["location"]["end_column"]
         };
+
+    public virtual async Task<JObject> GetBranchProtection(string org, string repo, string branch)
+    {
+        var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/branches/{branch.EscapeDataString()}/protection";
+
+        try
+        {
+            var response = await _client.GetAsync(url);
+            return JObject.Parse(response);
+        }
+        catch (HttpRequestException)
+        {
+            // Branch protection may not exist, return null
+            return null;
+        }
+    }
+
+    public virtual async Task UpdateBranchProtection(string org, string repo, string branch, object protection)
+    {
+        var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/branches/{branch.EscapeDataString()}/protection";
+        await _client.PutAsync(url, protection);
+    }
+
+    public virtual async Task<IEnumerable<string>> GetBranches(string org, string repo)
+    {
+        var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/branches";
+        var response = await _client.GetAsync(url);
+        var data = JArray.Parse(response);
+
+        return data.Select(x => (string)x["name"]);
+    }
 }
