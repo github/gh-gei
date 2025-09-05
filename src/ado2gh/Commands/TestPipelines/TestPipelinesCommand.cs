@@ -1,32 +1,32 @@
-﻿using System;
+using System;
 using System.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
 using OctoshiftCLI.AdoToGithub.Factories;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Services;
 
-namespace OctoshiftCLI.AdoToGithub.Commands.RewirePipeline
+namespace OctoshiftCLI.AdoToGithub.Commands.TestPipelines
 {
-    public class RewirePipelineCommand : CommandBase<RewirePipelineCommandArgs, RewirePipelineCommandHandler>
+    public class TestPipelinesCommand : CommandBase<TestPipelinesCommandArgs, TestPipelinesCommandHandler>
     {
-        public RewirePipelineCommand() : base(
-            name: "rewire-pipeline",
-            description: "Updates an Azure Pipeline to point to a GitHub repo instead of an Azure Repo." +
+        public TestPipelinesCommand() : base(
+            name: "test-pipelines",
+            description: "Tests multiple Azure Pipelines by temporarily rewiring them to GitHub, running builds, and generating a comprehensive report." +
                          Environment.NewLine +
                          "Note: Expects ADO_PAT env variable or --ado-pat option to be set.")
         {
             AddOption(AdoOrg);
             AddOption(AdoTeamProject);
-            AddOption(AdoPipeline);
-            AddOption(AdoPipelineId);
             AddOption(GithubOrg);
             AddOption(GithubRepo);
             AddOption(ServiceConnectionId);
             AddOption(AdoPat);
             AddOption(Verbose);
             AddOption(TargetApiUrl);
-            AddOption(DryRun);
             AddOption(MonitorTimeoutMinutes);
+            AddOption(PipelineFilter);
+            AddOption(MaxConcurrentTests);
+            AddOption(ReportPath);
         }
 
         public Option<string> AdoOrg { get; } = new("--ado-org")
@@ -36,16 +36,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands.RewirePipeline
         public Option<string> AdoTeamProject { get; } = new("--ado-team-project")
         {
             IsRequired = true
-        };
-        public Option<string> AdoPipeline { get; } = new("--ado-pipeline")
-        {
-            IsRequired = false,
-            Description = "The path and/or name of your pipeline. If the pipeline is in the root pipeline folder this can be just the name. Otherwise you need to specify the full pipeline path (E.g. \\Services\\Finance\\CI-Pipeline). Either --ado-pipeline or --ado-pipeline-id must be specified."
-        };
-        public Option<int?> AdoPipelineId { get; } = new("--ado-pipeline-id")
-        {
-            IsRequired = false,
-            Description = "The numeric ID of the Azure DevOps build pipeline definition. Either --ado-pipeline or --ado-pipeline-id must be specified."
         };
         public Option<string> GithubOrg { get; } = new("--github-org")
         {
@@ -65,16 +55,24 @@ namespace OctoshiftCLI.AdoToGithub.Commands.RewirePipeline
         {
             Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
         };
-        public Option<bool> DryRun { get; } = new("--dry-run")
-        {
-            Description = "Test mode: Temporarily rewire pipeline to GitHub, trigger a build, monitor results, then rewire back to ADO"
-        };
         public Option<int> MonitorTimeoutMinutes { get; } = new("--monitor-timeout-minutes")
         {
-            Description = "Timeout in minutes for monitoring build completion in dry-run mode. Defaults to 30 minutes."
+            Description = "Timeout in minutes for monitoring build completion. Defaults to 30 minutes."
+        };
+        public Option<string> PipelineFilter { get; } = new("--pipeline-filter")
+        {
+            Description = "Filter pattern for pipeline names (supports wildcards). If not specified, tests all pipelines in the project."
+        };
+        public Option<int> MaxConcurrentTests { get; } = new("--max-concurrent-tests")
+        {
+            Description = "Maximum number of pipeline tests to run concurrently. Defaults to 3."
+        };
+        public Option<string> ReportPath { get; } = new("--report-path")
+        {
+            Description = "Path to save the detailed test report. Defaults to pipeline-test-report.json"
         };
 
-        public override RewirePipelineCommandHandler BuildHandler(RewirePipelineCommandArgs args, IServiceProvider sp)
+        public override TestPipelinesCommandHandler BuildHandler(TestPipelinesCommandArgs args, IServiceProvider sp)
         {
             if (args is null)
             {
@@ -89,10 +87,8 @@ namespace OctoshiftCLI.AdoToGithub.Commands.RewirePipeline
             var log = sp.GetRequiredService<OctoLogger>();
             var adoApiFactory = sp.GetRequiredService<AdoApiFactory>();
             var adoApi = adoApiFactory.Create(args.AdoPat);
-            var pipelineTriggerServiceFactory = sp.GetRequiredService<AdoPipelineTriggerServiceFactory>();
-            var pipelineTriggerService = pipelineTriggerServiceFactory.Create(args.AdoPat);
 
-            return new RewirePipelineCommandHandler(log, adoApi, pipelineTriggerService);
+            return new TestPipelinesCommandHandler(log, adoApi);
         }
     }
 }

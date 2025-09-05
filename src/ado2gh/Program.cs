@@ -31,6 +31,7 @@ namespace OctoshiftCLI.AdoToGithub
                 .AddSingleton(Logger)
                 .AddSingleton<EnvironmentVariableProvider>()
                 .AddSingleton<AdoApiFactory>()
+                .AddSingleton<AdoPipelineTriggerServiceFactory>()
                 .AddSingleton<ITargetGithubApiFactory, GithubApiFactory>()
                 .AddSingleton<RetryPolicy>()
                 .AddSingleton<BasicHttpClient>()
