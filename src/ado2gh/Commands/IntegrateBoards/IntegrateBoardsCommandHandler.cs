@@ -29,7 +29,7 @@ public class IntegrateBoardsCommandHandler : ICommandHandler<IntegrateBoardsComm
 
         _log.LogInformation("Integrating Azure Boards...");
 
-        args.GithubPat ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
+        args.GithubPat ??= _environmentVariableProvider.TargetGithubPersonalAccessToken(throwIfNotFound: false);
 
         var adoTeamProjectId = await _adoApi.GetTeamProjectId(args.AdoOrg, args.AdoTeamProject);
         var githubHandle = await _adoApi.GetGithubHandle(args.AdoOrg, args.AdoTeamProject, args.GithubPat);

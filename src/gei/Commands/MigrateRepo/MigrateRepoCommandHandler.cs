@@ -151,7 +151,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         var sourceRepoUrl = GetSourceRepoUrl(args);
         var sourceToken = GetSourceToken(args);
-        var targetToken = args.GithubTargetPat ?? _environmentVariableProvider.TargetGithubPersonalAccessToken();
+        var targetToken = args.GithubTargetPat ?? _environmentVariableProvider.TargetGithubPersonalAccessToken(throwIfNotFound: false);
 
         string migrationId;
 
@@ -212,7 +212,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _log.LogInformation($"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs --github-target-org {args.GithubTargetOrg} --target-repo {args.TargetRepo}`");
     }
 
-    private string GetSourceToken(MigrateRepoCommandArgs args) => args.GithubSourcePat ?? _environmentVariableProvider.SourceGithubPersonalAccessToken();
+    private string GetSourceToken(MigrateRepoCommandArgs args) => args.GithubSourcePat ?? _environmentVariableProvider.SourceGithubPersonalAccessToken(throwIfNotFound: false);
 
     private string GetSourceRepoUrl(MigrateRepoCommandArgs args) => GetGithubRepoUrl(args.GithubSourceOrg, args.SourceRepo, args.GhesApiUrl.HasValue() ? ExtractGhesBaseUrl(args.GhesApiUrl) : null);
 
