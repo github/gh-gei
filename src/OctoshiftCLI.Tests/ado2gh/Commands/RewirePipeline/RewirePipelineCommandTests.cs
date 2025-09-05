@@ -11,6 +11,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.RewirePipeline
     public class RewirePipelineCommandTests
     {
         private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
+        private readonly Mock<AdoPipelineTriggerServiceFactory> _mockAdoPipelineTriggerServiceFactory = TestHelpers.CreateMock<AdoPipelineTriggerServiceFactory>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
         private readonly ServiceProvider _serviceProvider;
@@ -21,7 +22,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.RewirePipeline
             var serviceCollection = new ServiceCollection();
             serviceCollection
                 .AddSingleton(_mockOctoLogger.Object)
-                .AddSingleton(_mockAdoApiFactory.Object);
+                .AddSingleton(_mockAdoApiFactory.Object)
+                .AddSingleton(_mockAdoPipelineTriggerServiceFactory.Object);
 
             _serviceProvider = serviceCollection.BuildServiceProvider();
         }
@@ -31,7 +33,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.RewirePipeline
         {
             Assert.NotNull(_command);
             Assert.Equal("rewire-pipeline", _command.Name);
-            Assert.Equal(9, _command.Options.Count);
+            Assert.Equal(11, _command.Options.Count);
 
             TestHelpers.VerifyCommandOption(_command.Options, "ado-org", true);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-team-project", true);
@@ -42,6 +44,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.RewirePipeline
             TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false);
             TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
             TestHelpers.VerifyCommandOption(_command.Options, "target-api-url", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "dry-run", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "monitor-timeout-minutes", false);
         }
 
         [Fact]
