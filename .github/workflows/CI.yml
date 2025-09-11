@@ -2,13 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     tags:
-      - 'v*'
+      - "v*"
   pull_request:
-    branches: [ main ]
+    branches: [main]
   schedule:
-    - cron: '0 7 * * *'
+    - cron: "0 7 * * *"
   workflow_dispatch:
 
 jobs:
@@ -21,74 +21,76 @@ jobs:
     runs-on: ${{ matrix.runner-os }}
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: extractions/setup-just@v3
+      - name: Initialize CodeQL
+        if: matrix.runner-os == 'ubuntu-latest'
+        uses: github/codeql-action/init@v3
+        with:
+          languages: "csharp"
+          config-file: ./.github/codeql/codeql-config.yml
 
-    - name: Initialize CodeQL
-      if: matrix.runner-os == 'ubuntu-latest'
-      uses: github/codeql-action/init@v3
-      with:
-        languages: 'csharp'
-        config-file: ./.github/codeql/codeql-config.yml
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v2
-      with:
-        global-json-file: global.json
+      - name: dotnet format
+        run: just format-check
 
-    - name: dotnet format
-      run: dotnet format src/OctoshiftCLI.sln --verify-no-changes
+      - name: Restore dependencies
+        run: just restore
 
-    - name: Restore dependencies
-      run: dotnet restore src/OctoshiftCLI.sln
+      - name: Build
+        run: just build
 
-    - name: Build
-      run: dotnet build src/OctoshiftCLI.sln --no-restore /p:TreatWarningsAsErrors=true
+      - name: Unit Test
+        run: just test-coverage
 
-    - name: Unit Test
-      run: dotnet test src/OctoshiftCLI.Tests/OctoshiftCLI.Tests.csproj --no-build --verbosity normal --logger:"junit;LogFilePath=unit-tests.xml" --collect:"XPlat Code Coverage" --results-directory ./coverage
+      - name: Copy Coverage To Predictable Location
+        if: always() && matrix.runner-os == 'ubuntu-latest'
+        run: cp coverage/**/coverage.cobertura.xml coverage/coverage.cobertura.xml
 
-    - name: Copy Coverage To Predictable Location
-      if: always() && matrix.runner-os == 'ubuntu-latest'
-      run: cp coverage/**/coverage.cobertura.xml coverage/coverage.cobertura.xml
+      - name: Code Coverage Summary Report
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        if: always() && matrix.runner-os == 'ubuntu-latest'
+        with:
+          filename: coverage/coverage.cobertura.xml
+          badge: true
+          format: "markdown"
+          output: "both"
 
-    - name: Code Coverage Summary Report
-      uses: irongut/CodeCoverageSummary@v1.3.0
-      if: always() && matrix.runner-os == 'ubuntu-latest'
-      with:
-        filename: coverage/coverage.cobertura.xml
-        badge: true
-        format: 'markdown'
-        output: 'both'
+      # This is used by the subsequent publish-test-results.yml
+      - name: Upload Unit Test Results
+        if: always() && matrix.runner-os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Unit Test Results
+          path: src/OctoshiftCLI.Tests/unit-tests.xml
 
-    # This is used by the subsequent publish-test-results.yml
-    - name: Upload Unit Test Results
-      if: always() && matrix.runner-os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v4
-      with:
-        name: Unit Test Results
-        path: src/OctoshiftCLI.Tests/unit-tests.xml
+      # This is used by the subsequent publish-test-results.yml
+      - name: Upload Code Coverage Report
+        if: always() && matrix.runner-os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Code Coverage Report
+          path: code-coverage-results.md
 
-    # This is used by the subsequent publish-test-results.yml
-    - name: Upload Code Coverage Report
-      if: always() && matrix.runner-os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v4
-      with:
-        name: Code Coverage Report
-        path: code-coverage-results.md
-
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
-      if: matrix.runner-os == 'ubuntu-latest'
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        if: matrix.runner-os == 'ubuntu-latest'
 
   upload-event-file:
     runs-on: ubuntu-latest
     steps:
-    # This is used by the subsequent publish-test-results.yaml
-    - name: Upload Event File
-      uses: actions/upload-artifact@v4
-      with:
-        name: Event File
-        path: ${{ github.event_path }}
+      # This is used by the subsequent publish-test-results.yaml
+      - name: Upload Event File
+        uses: actions/upload-artifact@v4
+        with:
+          name: Event File
+          path: ${{ github.event_path }}
 
   build-for-e2e-test:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.owner.login == 'github'
@@ -98,55 +100,46 @@ jobs:
         target-os: [windows-latest, ubuntu-latest, macos-latest]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: extractions/setup-just@v3
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v2
-      with:
-        global-json-file: global.json
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
 
-    - name: Build Artifacts (Linux)
-      if: matrix.target-os == 'ubuntu-latest'
-      run: ./publish.ps1
-      shell: pwsh
-      env:
-        SKIP_WINDOWS: "true"
-        SKIP_MACOS: "true"
+      - name: Build Artifacts (Linux)
+        if: matrix.target-os == 'ubuntu-latest'
+        run: just publish-linux
 
-    - name: Build Artifacts (Windows)
-      if: matrix.target-os == 'windows-latest'
-      run: ./publish.ps1
-      shell: pwsh
-      env:
-        SKIP_LINUX: "true"
-        SKIP_MACOS: "true"
+      - name: Build Artifacts (Windows)
+        if: matrix.target-os == 'windows-latest'
+        run: just publish-windows
 
-    - name: Build Artifacts (MacOS)
-      if: matrix.target-os == 'macos-latest'
-      run: ./publish.ps1
-      shell: pwsh
-      env:
-        SKIP_WINDOWS: "true"
-        SKIP_LINUX: "true"
+      - name: Build Artifacts (MacOS)
+        if: matrix.target-os == 'macos-latest'
+        run: just publish-macos
 
-    - name: Upload Binaries
-      uses: actions/upload-artifact@v4
-      with:
-        name: binaries-${{ matrix.target-os }}
-        path: |
-          dist/linux-x64/ado2gh-linux-amd64
-          dist/linux-x64/bbs2gh-linux-amd64
-          dist/linux-x64/gei-linux-amd64
-          dist/osx-x64/ado2gh-darwin-amd64
-          dist/osx-x64/bbs2gh-darwin-amd64
-          dist/osx-x64/gei-darwin-amd64
-          dist/win-x64/ado2gh-windows-amd64.exe
-          dist/win-x64/bbs2gh-windows-amd64.exe
-          dist/win-x64/gei-windows-amd64.exe
+      - name: Upload Binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries-${{ matrix.target-os }}
+          path: |
+            dist/linux-x64/ado2gh-linux-amd64
+            dist/linux-x64/bbs2gh-linux-amd64
+            dist/linux-x64/gei-linux-amd64
+            dist/osx-x64/ado2gh-darwin-amd64
+            dist/osx-x64/bbs2gh-darwin-amd64
+            dist/osx-x64/gei-darwin-amd64
+            dist/win-x64/ado2gh-windows-amd64.exe
+            dist/win-x64/bbs2gh-windows-amd64.exe
+            dist/win-x64/gei-windows-amd64.exe
 
   e2e-test:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.owner.login == 'github'
-    needs: [ build-for-e2e-test ]
+    needs: [build-for-e2e-test]
     strategy:
       fail-fast: false
       matrix:
@@ -155,222 +148,224 @@ jobs:
     runs-on: ${{ matrix.runner-os }}
     concurrency: integration-test-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v2
-      with:
-        global-json-file: global.json
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
 
+      - name: Download Binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: binaries-${{ matrix.runner-os }}
+          path: dist
 
-    - name: Download Binaries
-      uses: actions/download-artifact@v4
-      with:
-        name: binaries-${{ matrix.runner-os }}
-        path: dist
+      - name: Copy binary to root (linux)
+        if: matrix.runner-os == 'ubuntu-latest'
+        run: |
+          New-Item -Path "./" -Name "gh-gei" -ItemType "directory"
+          New-Item -Path "./" -Name "gh-ado2gh" -ItemType "directory"
+          New-Item -Path "./" -Name "gh-bbs2gh" -ItemType "directory"
+          Copy-Item ./dist/linux-x64/gei-linux-amd64 ./gh-gei/gh-gei
+          Copy-Item ./dist/linux-x64/ado2gh-linux-amd64 ./gh-ado2gh/gh-ado2gh
+          Copy-Item ./dist/linux-x64/bbs2gh-linux-amd64 ./gh-bbs2gh/gh-bbs2gh
+        shell: pwsh
 
-    - name: Copy binary to root (linux)
-      if: matrix.runner-os == 'ubuntu-latest'
-      run: |
-        New-Item -Path "./" -Name "gh-gei" -ItemType "directory"
-        New-Item -Path "./" -Name "gh-ado2gh" -ItemType "directory"
-        New-Item -Path "./" -Name "gh-bbs2gh" -ItemType "directory"
-        Copy-Item ./dist/linux-x64/gei-linux-amd64 ./gh-gei/gh-gei
-        Copy-Item ./dist/linux-x64/ado2gh-linux-amd64 ./gh-ado2gh/gh-ado2gh
-        Copy-Item ./dist/linux-x64/bbs2gh-linux-amd64 ./gh-bbs2gh/gh-bbs2gh
-      shell: pwsh
+      - name: Copy binary to root (windows)
+        if: matrix.runner-os == 'windows-latest'
+        run: |
+          New-Item -Path "./" -Name "gh-gei" -ItemType "directory"
+          New-Item -Path "./" -Name "gh-ado2gh" -ItemType "directory"
+          New-Item -Path "./" -Name "gh-bbs2gh" -ItemType "directory"
+          Copy-Item ./dist/win-x64/gei-windows-amd64.exe ./gh-gei/gh-gei.exe
+          Copy-Item ./dist/win-x64/ado2gh-windows-amd64.exe ./gh-ado2gh/gh-ado2gh.exe
+          Copy-Item ./dist/win-x64/bbs2gh-windows-amd64.exe ./gh-bbs2gh/gh-bbs2gh.exe
+        shell: pwsh
 
-    - name: Copy binary to root (windows)
-      if: matrix.runner-os == 'windows-latest'
-      run: |
-        New-Item -Path "./" -Name "gh-gei" -ItemType "directory"
-        New-Item -Path "./" -Name "gh-ado2gh" -ItemType "directory"
-        New-Item -Path "./" -Name "gh-bbs2gh" -ItemType "directory"
-        Copy-Item ./dist/win-x64/gei-windows-amd64.exe ./gh-gei/gh-gei.exe
-        Copy-Item ./dist/win-x64/ado2gh-windows-amd64.exe ./gh-ado2gh/gh-ado2gh.exe
-        Copy-Item ./dist/win-x64/bbs2gh-windows-amd64.exe ./gh-bbs2gh/gh-bbs2gh.exe
-      shell: pwsh
+      - name: Copy binary to root (macos)
+        if: matrix.runner-os == 'macos-latest'
+        run: |
+          New-Item -Path "./" -Name "gh-gei" -ItemType "directory"
+          New-Item -Path "./" -Name "gh-ado2gh" -ItemType "directory"
+          New-Item -Path "./" -Name "gh-bbs2gh" -ItemType "directory"
+          Copy-Item ./dist/osx-x64/gei-darwin-amd64 ./gh-gei/gh-gei
+          Copy-Item ./dist/osx-x64/ado2gh-darwin-amd64 ./gh-ado2gh/gh-ado2gh
+          Copy-Item ./dist/osx-x64/bbs2gh-darwin-amd64 ./gh-bbs2gh/gh-bbs2gh
+        shell: pwsh
 
-    - name: Copy binary to root (macos)
-      if: matrix.runner-os == 'macos-latest'
-      run: |
-        New-Item -Path "./" -Name "gh-gei" -ItemType "directory"
-        New-Item -Path "./" -Name "gh-ado2gh" -ItemType "directory"
-        New-Item -Path "./" -Name "gh-bbs2gh" -ItemType "directory"
-        Copy-Item ./dist/osx-x64/gei-darwin-amd64 ./gh-gei/gh-gei
-        Copy-Item ./dist/osx-x64/ado2gh-darwin-amd64 ./gh-ado2gh/gh-ado2gh
-        Copy-Item ./dist/osx-x64/bbs2gh-darwin-amd64 ./gh-bbs2gh/gh-bbs2gh
-      shell: pwsh
+      - name: Set execute permissions
+        run: |
+          chmod +x ./gh-gei/gh-gei
+          chmod +x ./gh-ado2gh/gh-ado2gh
+          chmod +x ./gh-bbs2gh/gh-bbs2gh
 
-    - name: Set execute permissions
-      run: |
-        chmod +x ./gh-gei/gh-gei
-        chmod +x ./gh-ado2gh/gh-ado2gh
-        chmod +x ./gh-bbs2gh/gh-bbs2gh
+      - name: Install gh-gei extension
+        run: gh extension install .
+        shell: pwsh
+        working-directory: ./gh-gei
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Install gh-gei extension
-      run: gh extension install .
-      shell: pwsh
-      working-directory: ./gh-gei
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install gh-ado2gh extension
+        run: gh extension install .
+        shell: pwsh
+        working-directory: ./gh-ado2gh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Install gh-ado2gh extension
-      run: gh extension install .
-      shell: pwsh
-      working-directory: ./gh-ado2gh
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install gh-bbs2gh extension
+        run: gh extension install .
+        shell: pwsh
+        working-directory: ./gh-bbs2gh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Install gh-bbs2gh extension
-      run: gh extension install .
-      shell: pwsh
-      working-directory: ./gh-bbs2gh
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Integration Test
+        env:
+          ADO_PAT: ${{ secrets.ADO_PAT }}
+          GHEC_PAT: ${{ secrets.GHEC_PAT }}
+          GHES_PAT: ${{ secrets.GHES_PAT }}
+          ADO_SERVER_PAT: ${{ secrets.ADO_SERVER_PAT }}
+          BBS_USERNAME: ${{ secrets.BBS_USERNAME }}
+          BBS_PASSWORD: ${{ secrets.BBS_PASSWORD }}
+          SSH_KEY_BBS_8_5_0: ${{ secrets.SSH_KEY_BBS_8_5_0 }}
+          SSH_KEY_BBS_5_14_0: ${{ secrets.SSH_KEY_BBS_5_14_0 }}
+          SMB_PASSWORD: ${{ secrets.SMB_PASSWORD }}
+          AZURE_STORAGE_CONNECTION_STRING_BBS_LINUX: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_BBS_LINUX }}
+          AZURE_STORAGE_CONNECTION_STRING_BBS_MACOS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_BBS_MACOS }}
+          AZURE_STORAGE_CONNECTION_STRING_BBS_WINDOWS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_BBS_WINDOWS }}
+          AZURE_STORAGE_CONNECTION_STRING_GHES_LINUX: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_GHES_LINUX }}
+          AZURE_STORAGE_CONNECTION_STRING_GHES_MACOS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_GHES_MACOS }}
+          AZURE_STORAGE_CONNECTION_STRING_GHES_WINDOWS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_GHES_WINDOWS }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_BUCKET_NAME: ${{ secrets.AWS_BUCKET_NAME }}
+          LD_LIBRARY_PATH: "$LD_LIBRARY_PATH:${{ github.workspace }}/src/OctoshiftCLI.IntegrationTests/bin/Debug/net8.0/runtimes/ubuntu.18.04-x64/native"
+        run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --filter "${{ matrix.source-vcs }}ToGithub" --logger:"junit;LogFilePath=integration-tests.xml" --logger "console;verbosity=normal" /p:VersionPrefix=9.9
 
-    - name: Integration Test
-      env:
-        ADO_PAT: ${{ secrets.ADO_PAT }}
-        GHEC_PAT: ${{ secrets.GHEC_PAT }}
-        GHES_PAT: ${{ secrets.GHES_PAT }}
-        ADO_SERVER_PAT: ${{ secrets.ADO_SERVER_PAT }}
-        BBS_USERNAME: ${{ secrets.BBS_USERNAME }}
-        BBS_PASSWORD: ${{ secrets.BBS_PASSWORD }}
-        SSH_KEY_BBS_8_5_0: ${{ secrets.SSH_KEY_BBS_8_5_0 }}
-        SSH_KEY_BBS_5_14_0: ${{ secrets.SSH_KEY_BBS_5_14_0 }}
-        SMB_PASSWORD: ${{ secrets.SMB_PASSWORD }}
-        AZURE_STORAGE_CONNECTION_STRING_BBS_LINUX: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_BBS_LINUX }}
-        AZURE_STORAGE_CONNECTION_STRING_BBS_MACOS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_BBS_MACOS }}
-        AZURE_STORAGE_CONNECTION_STRING_BBS_WINDOWS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_BBS_WINDOWS }}
-        AZURE_STORAGE_CONNECTION_STRING_GHES_LINUX: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_GHES_LINUX }}
-        AZURE_STORAGE_CONNECTION_STRING_GHES_MACOS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_GHES_MACOS }}
-        AZURE_STORAGE_CONNECTION_STRING_GHES_WINDOWS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_GHES_WINDOWS }}
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_BUCKET_NAME: ${{ secrets.AWS_BUCKET_NAME }}
-        LD_LIBRARY_PATH: '$LD_LIBRARY_PATH:${{ github.workspace }}/src/OctoshiftCLI.IntegrationTests/bin/Debug/net8.0/runtimes/ubuntu.18.04-x64/native'
-      run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --filter "${{ matrix.source-vcs }}ToGithub" --logger:"junit;LogFilePath=integration-tests.xml" --logger "console;verbosity=normal" /p:VersionPrefix=9.9
+      - name: Publish Integration Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always() && matrix.runner-os == 'ubuntu-latest' && github.actor != 'dependabot[bot]'
+        with:
+          files: "**/*-tests.xml"
+          check_name: "Integration Test Results - ${{ matrix.source-vcs }}"
+          comment_mode: off
 
-    - name: Publish Integration Test Results
-      uses: EnricoMi/publish-unit-test-result-action@v2
-      if: always() && matrix.runner-os == 'ubuntu-latest' && github.actor != 'dependabot[bot]'
-      with:
-        files: "**/*-tests.xml"
-        check_name: "Integration Test Results - ${{ matrix.source-vcs }}"
-        comment_mode: off
+      - name: Upload test logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-test-logs-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
+          path: dist/**/*.log
 
-    - name: Upload test logs
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: integration-test-logs-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
-        path: dist/**/*.log
+      - name: Test Logs
+        if: always()
+        run: Get-ChildItem . -Filter *.octoshift.log -Recurse | ForEach-Object { Get-Content -Path $_.FullName }
+        working-directory: ./dist
+        shell: pwsh
 
-    - name: Test Logs
-      if: always()
-      run: Get-ChildItem . -Filter *.octoshift.log -Recurse | ForEach-Object { Get-Content -Path $_.FullName }
-      working-directory: ./dist
-      shell: pwsh
-
-    - name: Test Logs (Verbose)
-      if: always()
-      run: Get-ChildItem . -Filter *.octoshift.verbose.log -Recurse | ForEach-Object { Get-Content -Path $_.FullName }
-      working-directory: ./dist
-      shell: pwsh
+      - name: Test Logs (Verbose)
+        if: always()
+        run: Get-ChildItem . -Filter *.octoshift.verbose.log -Recurse | ForEach-Object { Get-Content -Path $_.FullName }
+        working-directory: ./dist
+        shell: pwsh
 
   publish:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [ build, e2e-test ]
+    needs: [build, e2e-test]
     environment: PUBLISH_RELEASE
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        token: ${{ secrets.RELEASE_NOTES_PAT }}
-        fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          token: ${{ secrets.RELEASE_NOTES_PAT }}
+          fetch-depth: 0
 
-    - name: Validate tag on main
-      shell: pwsh
-      run: |
-        git checkout main
-        $mainsha = $(git show-ref refs/heads/main --hash)
-        $tagsha = $(git show-ref ${{ github.ref }} --hash)
+      - name: Validate tag on main
+        shell: pwsh
+        run: |
+          git checkout main
+          $mainsha = $(git show-ref refs/heads/main --hash)
+          $tagsha = $(git show-ref ${{ github.ref }} --hash)
 
-        Write-Output "refs/heads/main: $mainsha"
-        Write-Output "${{ github.ref }}: $tagsha"
+          Write-Output "refs/heads/main: $mainsha"
+          Write-Output "${{ github.ref }}: $tagsha"
 
-        if ($mainsha -ne $tagsha) {
-          Write-Error "tag must match HEAD of main"
-          exit 1
-        }
+          if ($mainsha -ne $tagsha) {
+            Write-Error "tag must match HEAD of main"
+            exit 1
+          }
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v2
-      with:
-        global-json-file: global.json
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
 
-    - name: Build Artifacts
-      run: ./publish.ps1
-      shell: pwsh
-      env:
-        CLI_VERSION: ${{ github.ref }}
+      - name: Build Artifacts
+        run: ./publish.ps1
+        shell: pwsh
+        env:
+          CLI_VERSION: ${{ github.ref }}
 
-    - name: Create gh-gei Release
-      uses: softprops/action-gh-release@v2
-      with:
-        body_path: ./RELEASENOTES.md
-        files: |
-          ./dist/ado2gh.*.win-x64.zip
-          ./dist/ado2gh.*.win-x86.zip
-          ./dist/ado2gh.*.linux-x64.tar.gz
-          ./dist/ado2gh.*.osx-x64.tar.gz
-          ./dist/win-x64/gei-windows-amd64.exe
-          ./dist/win-x86/gei-windows-386.exe
-          ./dist/linux-x64/gei-linux-amd64
-          ./dist/osx-x64/gei-darwin-amd64
+      - name: Create gh-gei Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: ./RELEASENOTES.md
+          files: |
+            ./dist/ado2gh.*.win-x64.zip
+            ./dist/ado2gh.*.win-x86.zip
+            ./dist/ado2gh.*.linux-x64.tar.gz
+            ./dist/ado2gh.*.osx-x64.tar.gz
+            ./dist/win-x64/gei-windows-amd64.exe
+            ./dist/win-x86/gei-windows-386.exe
+            ./dist/linux-x64/gei-linux-amd64
+            ./dist/osx-x64/gei-darwin-amd64
 
-    - name: Create gh-ado2gh Release
-      uses: softprops/action-gh-release@v2
-      with:
-        body_path: ./RELEASENOTES.md
-        repository: github/gh-ado2gh
-        token: ${{ secrets.PUBLISH_ADO2GH_TOKEN }}
-        files: |
-          ./dist/win-x86/ado2gh-windows-386.exe
-          ./dist/win-x64/ado2gh-windows-amd64.exe
-          ./dist/linux-x64/ado2gh-linux-amd64
-          ./dist/osx-x64/ado2gh-darwin-amd64
+      - name: Create gh-ado2gh Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: ./RELEASENOTES.md
+          repository: github/gh-ado2gh
+          token: ${{ secrets.PUBLISH_ADO2GH_TOKEN }}
+          files: |
+            ./dist/win-x86/ado2gh-windows-386.exe
+            ./dist/win-x64/ado2gh-windows-amd64.exe
+            ./dist/linux-x64/ado2gh-linux-amd64
+            ./dist/osx-x64/ado2gh-darwin-amd64
 
-    - name: Create gh-bbs2gh Release
-      uses: softprops/action-gh-release@v2
-      with:
-        body_path: ./RELEASENOTES.md
-        repository: github/gh-bbs2gh
-        token: ${{ secrets.PUBLISH_BBS2GH_TOKEN }}
-        files: |
-          ./dist/win-x86/bbs2gh-windows-386.exe
-          ./dist/win-x64/bbs2gh-windows-amd64.exe
-          ./dist/linux-x64/bbs2gh-linux-amd64
-          ./dist/osx-x64/bbs2gh-darwin-amd64
+      - name: Create gh-bbs2gh Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: ./RELEASENOTES.md
+          repository: github/gh-bbs2gh
+          token: ${{ secrets.PUBLISH_BBS2GH_TOKEN }}
+          files: |
+            ./dist/win-x86/bbs2gh-windows-386.exe
+            ./dist/win-x64/bbs2gh-windows-amd64.exe
+            ./dist/linux-x64/bbs2gh-linux-amd64
+            ./dist/osx-x64/bbs2gh-darwin-amd64
 
-    - name: Archive Release Notes
-      shell: pwsh
-      run: |
-        $TAG_NAME = "${{ github.ref }}".Substring(10)
-        Get-Content ./RELEASENOTES.md | Out-File -FilePath ./releasenotes/$TAG_NAME.md
-        "" | Out-File ./RELEASENOTES.md
+      - name: Archive Release Notes
+        shell: pwsh
+        run: |
+          $TAG_NAME = "${{ github.ref }}".Substring(10)
+          Get-Content ./RELEASENOTES.md | Out-File -FilePath ./releasenotes/$TAG_NAME.md
+          "" | Out-File ./RELEASENOTES.md
 
-    - name: Update LATEST-VERSION.TXT
-      shell: pwsh
-      run: |
-        $TAG_NAME = "${{ github.ref }}".Substring(10)
-        $TAG_NAME | Out-File ./LATEST-VERSION.txt
+      - name: Update LATEST-VERSION.TXT
+        shell: pwsh
+        run: |
+          $TAG_NAME = "${{ github.ref }}".Substring(10)
+          $TAG_NAME | Out-File ./LATEST-VERSION.txt
 
-    - name: Commit Release Notes and Version
-      uses: stefanzweifel/git-auto-commit-action@v5
-      with:
-        commit_message: Automated commit of archived release notes and version file [skip ci]
-        file_pattern: RELEASENOTES.md releasenotes/*.md LATEST-VERSION.txt
-        branch: main
+      - name: Commit Release Notes and Version
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: Automated commit of archived release notes and version file [skip ci]
+          file_pattern: RELEASENOTES.md releasenotes/*.md LATEST-VERSION.txt
+          branch: main
