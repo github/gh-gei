@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -19,6 +20,10 @@ public class AdoPipelineTriggerService
     private readonly AdoApi _adoApi;
     private readonly OctoLogger _log;
     private readonly string _adoBaseUrl;
+
+    // Cache for repository IDs and branch policies to avoid redundant API calls
+    private readonly Dictionary<string, string> _repositoryIdCache = [];
+    private readonly Dictionary<string, AdoBranchPolicyResponse> _branchPolicyCache = [];
 
     public AdoPipelineTriggerService(AdoApi adoApi, OctoLogger log, string adoBaseUrl)
     {
@@ -65,6 +70,9 @@ public class AdoPipelineTriggerService
     /// </summary>
     public async Task<bool> IsPipelineRequiredByBranchPolicy(string adoOrg, string teamProject, string repoName, int pipelineId)
     {
+        ArgumentNullException.ThrowIfNull(adoOrg);
+        ArgumentNullException.ThrowIfNull(teamProject);
+
         if (string.IsNullOrEmpty(repoName))
         {
             _log.LogWarning($"Branch policy check skipped for pipeline {pipelineId} - repository name not available. Pipeline trigger configuration may not preserve branch policy requirements.");
@@ -73,11 +81,8 @@ public class AdoPipelineTriggerService
 
         try
         {
-            // Get repository information first
-            var repoUrl = $"{_adoBaseUrl}/{adoOrg.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/git/repositories/{repoName.EscapeDataString()}?api-version=6.0";
-            var repoResponse = await _adoApi.GetAsync(repoUrl);
-            var repoData = JObject.Parse(repoResponse);
-            var repositoryId = repoData["id"]?.ToString();
+            // Get repository information first (with caching)
+            var repositoryId = await GetRepositoryIdWithCache(adoOrg, teamProject, repoName);
 
             if (string.IsNullOrEmpty(repositoryId))
             {
@@ -85,10 +90,8 @@ public class AdoPipelineTriggerService
                 return false;
             }
 
-            // Get branch policies for the repository
-            var policyUrl = $"{_adoBaseUrl}/{adoOrg.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/policy/configurations?repositoryId={repositoryId}&api-version=6.0";
-            var policyResponse = await _adoApi.GetAsync(policyUrl);
-            var policyData = JsonConvert.DeserializeObject<AdoBranchPolicyResponse>(policyResponse);
+            // Get branch policies for the repository (with caching)
+            var policyData = await GetBranchPoliciesWithCache(adoOrg, teamProject, repositoryId);
 
             if (policyData?.Value == null || policyData.Value.Count == 0)
             {
@@ -429,6 +432,109 @@ public class AdoPipelineTriggerService
             return (apiUrl, webUrl, cloneUrl, branchesUrl, refsUrl, webUrl);
         }
     }
+
+    #region Private Helper Methods - Caching
+
+    /// <summary>
+    /// Gets the repository ID with caching to avoid redundant API calls for the same repository.
+    /// </summary>
+    private async Task<string> GetRepositoryIdWithCache(string adoOrg, string teamProject, string repoName)
+    {
+        var cacheKey = $"{adoOrg.ToUpper()}/{teamProject.ToUpper()}/{repoName.ToUpper()}";
+
+        if (_repositoryIdCache.TryGetValue(cacheKey, out var cachedId))
+        {
+            _log.LogVerbose($"Using cached repository ID for {adoOrg}/{teamProject}/{repoName}");
+            return cachedId;
+        }
+
+        _log.LogVerbose($"Fetching repository ID for {adoOrg}/{teamProject}/{repoName}");
+
+        try
+        {
+            var repoUrl = $"{_adoBaseUrl}/{adoOrg.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/git/repositories/{repoName.EscapeDataString()}?api-version=6.0";
+            var repoResponse = await _adoApi.GetAsync(repoUrl);
+            var repoData = JObject.Parse(repoResponse);
+            var repositoryId = repoData["id"]?.ToString();
+
+            if (!string.IsNullOrEmpty(repositoryId))
+            {
+                _repositoryIdCache[cacheKey] = repositoryId;
+                _log.LogVerbose($"Cached repository ID {repositoryId} for {adoOrg}/{teamProject}/{repoName}");
+            }
+
+            return repositoryId;
+        }
+        catch (HttpRequestException ex)
+        {
+            // Don't cache failed requests - let the caller handle the error
+            _log.LogVerbose($"Failed to fetch repository ID for {adoOrg}/{teamProject}/{repoName}: {ex.Message}");
+            throw;
+        }
+        catch (TaskCanceledException ex)
+        {
+            // Don't cache timeouts - let the caller handle the error
+            _log.LogVerbose($"Timeout fetching repository ID for {adoOrg}/{teamProject}/{repoName}: {ex.Message}");
+            throw;
+        }
+        catch (JsonException ex)
+        {
+            // Don't cache JSON parsing errors - let the caller handle the error
+            _log.LogVerbose($"JSON parsing error for repository {adoOrg}/{teamProject}/{repoName}: {ex.Message}");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets the branch policies with caching to avoid redundant API calls for the same repository.
+    /// </summary>
+    private async Task<AdoBranchPolicyResponse> GetBranchPoliciesWithCache(string adoOrg, string teamProject, string repositoryId)
+    {
+        var cacheKey = $"{adoOrg.ToUpper()}/{teamProject.ToUpper()}/{repositoryId.ToUpper()}";
+
+        if (_branchPolicyCache.TryGetValue(cacheKey, out var cachedPolicies))
+        {
+            _log.LogVerbose($"Using cached branch policies for repository ID {repositoryId}");
+            return cachedPolicies;
+        }
+
+        _log.LogVerbose($"Fetching branch policies for repository ID {repositoryId}");
+
+        try
+        {
+            var policyUrl = $"{_adoBaseUrl}/{adoOrg.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/policy/configurations?repositoryId={repositoryId}&api-version=6.0";
+            var policyResponse = await _adoApi.GetAsync(policyUrl);
+            var policyData = JsonConvert.DeserializeObject<AdoBranchPolicyResponse>(policyResponse);
+
+            if (policyData != null)
+            {
+                _branchPolicyCache[cacheKey] = policyData;
+                _log.LogVerbose($"Cached {policyData.Value?.Count ?? 0} branch policies for repository ID {repositoryId}");
+            }
+
+            return policyData;
+        }
+        catch (HttpRequestException ex)
+        {
+            // Don't cache failed requests - let the caller handle the error
+            _log.LogVerbose($"Failed to fetch branch policies for repository ID {repositoryId}: {ex.Message}");
+            throw;
+        }
+        catch (TaskCanceledException ex)
+        {
+            // Don't cache timeouts - let the caller handle the error
+            _log.LogVerbose($"Timeout fetching branch policies for repository ID {repositoryId}: {ex.Message}");
+            throw;
+        }
+        catch (JsonException ex)
+        {
+            // Don't cache JSON parsing errors - let the caller handle the error
+            _log.LogVerbose($"JSON parsing error for branch policies repository ID {repositoryId}: {ex.Message}");
+            throw;
+        }
+    }
+
+    #endregion
 
     #endregion
 }
