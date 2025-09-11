@@ -116,12 +116,9 @@ namespace OctoshiftCLI.AdoToGithub.Commands.TestPipelines
                     foreach (var pipelineName in repoPipelines)
                     {
                         // Apply filter if specified
-                        if (!string.IsNullOrEmpty(args.PipelineFilter))
+                        if (!string.IsNullOrEmpty(args.PipelineFilter) && !IsMatch(pipelineName, args.PipelineFilter))
                         {
-                            if (!IsMatch(pipelineName, args.PipelineFilter))
-                            {
-                                continue;
-                            }
+                            continue;
                         }
 
                         try
