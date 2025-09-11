@@ -61,7 +61,7 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
         _log.LogInformation($"ADO Team Project: {testResult.AdoTeamProject}");
         _log.LogInformation($"Pipeline Name: {testResult.PipelineName}");
         _log.LogInformation($"Build Result: {testResult.Result ?? "not completed"}");
-        
+
         if (testResult.Result == "succeeded")
         {
             _log.LogSuccess("✅ Pipeline test PASSED - Build completed successfully");
