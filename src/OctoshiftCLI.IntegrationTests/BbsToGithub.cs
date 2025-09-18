@@ -71,7 +71,6 @@ public sealed class BbsToGithub : IDisposable
 
     [Theory]
     [InlineData("https://e2e-bbs-linux-1.westus2.cloudapp.azure.com", true, ArchiveUploadOption.AzureStorage)]
-    // [InlineData("http://e2e-bbs-7-21-9-win-2019.westus2.cloudapp.azure.com:7990", false, ArchiveUploadOption.AzureStorage)]
     [InlineData("https://e2e-bbs-linux-1.westus2.cloudapp.azure.com", true, ArchiveUploadOption.AwsS3)]
     [InlineData("https://e2e-bbs-linux-1.westus2.cloudapp.azure.com", true, ArchiveUploadOption.GithubStorage)]
     public async Task Basic(string bbsServer, bool useSshForArchiveDownload, ArchiveUploadOption uploadOption)
