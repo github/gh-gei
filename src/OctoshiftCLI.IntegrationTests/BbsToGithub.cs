@@ -104,7 +104,7 @@ public sealed class BbsToGithub : IDisposable
         var archiveDownloadOptions = $" --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}";
         if (useSshForArchiveDownload)
         {
-            var sshKey = Environment.GetEnvironmentVariable(GetSshKeyName(bbsServer));
+            var sshKey = Environment.GetEnvironmentVariable("SSH_KEY_BBS");
             await File.WriteAllTextAsync(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
         }
         else
@@ -151,7 +151,7 @@ public sealed class BbsToGithub : IDisposable
         var bbsServer = "https://e2e-bbs-linux-1.westus2.cloudapp.azure.com";
         var targetRepo = $"IN-100_cli";
 
-        var sshKey = Environment.GetEnvironmentVariable(GetSshKeyName(bbsServer));
+        var sshKey = Environment.GetEnvironmentVariable("SSH_KEY_BBS");
         await File.WriteAllTextAsync(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
 
 
@@ -168,12 +168,6 @@ public sealed class BbsToGithub : IDisposable
 
         await _targetHelper.AssertGithubRepoExists(githubTargetOrg, targetRepo);
         await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, targetRepo);
-    }
-
-    private string GetSshKeyName(string bbsServer)
-    {
-        var bbsVersion = Regex.Match(bbsServer, @"e2e-bbs-(\d{1,2}-\d{1,2}-\d{1,2})").Groups[1].Value.Replace('-', '_');
-        return $"SSH_KEY_BBS_{bbsVersion}";
     }
 
     public void Dispose()
