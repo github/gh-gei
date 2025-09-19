@@ -99,7 +99,8 @@ public sealed class BbsToGithub : IDisposable
             await sourceHelper.InitializeBbsRepo(bbsProjectKey, repo2);
         });
 
-        var archiveDownloadOptions = $" --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}";
+        var sshPort = Environment.GetEnvironmentVariable("SSH_PORT_BBS");
+        var archiveDownloadOptions = $" --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE} --ssh-port {sshPort}";
         if (useSshForArchiveDownload)
         {
             var sshKey = Environment.GetEnvironmentVariable("SSH_KEY_BBS");
@@ -149,9 +150,9 @@ public sealed class BbsToGithub : IDisposable
         var bbsServer = "https://e2e-bbs-linux-1.westus2.cloudapp.azure.com";
         var targetRepo = $"IN-100_cli";
 
+        var sshPort = Environment.GetEnvironmentVariable("SSH_PORT_BBS");
         var sshKey = Environment.GetEnvironmentVariable("SSH_KEY_BBS");
         await File.WriteAllTextAsync(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
-
 
         var retryPolicy = new RetryPolicy(null);
         await retryPolicy.Retry(async () =>
@@ -160,7 +161,7 @@ public sealed class BbsToGithub : IDisposable
         });
 
         await _targetHelper.RunBbsCliMigration(
-            $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey} --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE} --use-github-storage", _tokens);
+            $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey} --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE} --ssh-port {sshPort} --use-github-storage", _tokens);
 
         _targetHelper.AssertNoErrorInLogs(_startTime);
 
