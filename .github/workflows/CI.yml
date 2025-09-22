@@ -17,6 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         runner-os: [windows-latest, ubuntu-latest, macos-latest]
+        language: [ csharp, actions ]
 
     runs-on: ${{ matrix.runner-os }}
 
@@ -29,7 +30,7 @@ jobs:
         if: matrix.runner-os == 'ubuntu-latest'
         uses: github/codeql-action/init@v3
         with:
-          languages: [ csharp, actions ]
+          languages: ${{ matrix.language }}
           config-file: ./.github/codeql/codeql-config.yml
 
       - name: Setup .NET
