@@ -29,7 +29,7 @@ jobs:
         if: matrix.runner-os == 'ubuntu-latest'
         uses: github/codeql-action/init@v3
         with:
-          languages: "csharp"
+          languages: [ csharp, actions ]
           config-file: ./.github/codeql/codeql-config.yml
 
       - name: Setup .NET
