@@ -48,6 +48,49 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
         }
     }
 
+    private async Task HandleDryRun(RewirePipelineCommandArgs args)
+    {
+        _log.LogInformation("Starting dry-run mode: Testing pipeline rewiring to GitHub...");
+
+        var pipelineTestArgs = new PipelineTestArgs
+        {
+            AdoOrg = args.AdoOrg,
+            AdoTeamProject = args.AdoTeamProject,
+            PipelineName = args.AdoPipeline,
+            GithubOrg = args.GithubOrg,
+            GithubRepo = args.GithubRepo,
+            ServiceConnectionId = args.ServiceConnectionId,
+            MonitorTimeoutMinutes = args.MonitorTimeoutMinutes,
+            TargetApiUrl = args.TargetApiUrl
+        };
+
+        var testResult = await _pipelineTestService.TestPipeline(pipelineTestArgs);
+
+        // Log the test result summary
+        _log.LogInformation($"=== PIPELINE TEST REPORT ===");
+        _log.LogInformation($"ADO Organization: {testResult.AdoOrg}");
+        _log.LogInformation($"ADO Team Project: {testResult.AdoTeamProject}");
+        _log.LogInformation($"Pipeline Name: {testResult.PipelineName}");
+        _log.LogInformation($"Build Result: {testResult.Result ?? "not completed"}");
+
+        if (testResult.Result == "succeeded")
+        {
+            _log.LogSuccess("✅ Pipeline test PASSED - Build completed successfully");
+        }
+        else if (testResult.Result == "failed")
+        {
+            _log.LogError("❌ Pipeline test FAILED - Build completed with failures");
+        }
+        else if (!string.IsNullOrEmpty(testResult.ErrorMessage))
+        {
+            _log.LogError($"❌ Pipeline test FAILED - Error: {testResult.ErrorMessage}");
+        }
+        else
+        {
+            _log.LogWarning("⚠️ Pipeline test completed with unknown result");
+        }
+    }
+
     private async Task HandleRegularRewire(RewirePipelineCommandArgs args)
     {
         _log.LogInformation($"Rewiring Pipeline to GitHub repo...");
