@@ -129,5 +129,4 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
         _log.LogInformation($"Using resolved pipeline ID: {pipelineId}");
         return pipelineId;
     }
-    
 }
