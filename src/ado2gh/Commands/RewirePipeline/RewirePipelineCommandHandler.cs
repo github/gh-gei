@@ -1,4 +1,5 @@
 using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Services;
@@ -96,24 +97,39 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
     {
         _log.LogInformation($"Rewiring Pipeline to GitHub repo...");
 
-        var adoPipelineId = await GetPipelineId(args);
-        var (defaultBranch, clean, checkoutSubmodules, triggers) = await _adoApi.GetPipeline(args.AdoOrg, args.AdoTeamProject, adoPipelineId);
+        try
+        {
+            var adoPipelineId = await GetPipelineId(args);
+            var (defaultBranch, clean, checkoutSubmodules, triggers) = await _adoApi.GetPipeline(args.AdoOrg, args.AdoTeamProject, adoPipelineId);
 
-        // Use the specialized service for complex trigger logic
-        await _pipelineTriggerService.RewirePipelineToGitHub(
-            args.AdoOrg,
-            args.AdoTeamProject,
-            adoPipelineId,
-            defaultBranch,
-            clean,
-            checkoutSubmodules,
-            args.GithubOrg,
-            args.GithubRepo,
-            args.ServiceConnectionId,
-            triggers,
-            args.TargetApiUrl);
+            // Use the specialized service for complex trigger logic
+            await _pipelineTriggerService.RewirePipelineToGitHub(
+                args.AdoOrg,
+                args.AdoTeamProject,
+                adoPipelineId,
+                defaultBranch,
+                clean,
+                checkoutSubmodules,
+                args.GithubOrg,
+                args.GithubRepo,
+                args.ServiceConnectionId,
+                triggers,
+                args.TargetApiUrl);
 
-        _log.LogSuccess("Successfully rewired pipeline");
+            _log.LogSuccess("Successfully rewired pipeline");
+        }
+        catch (HttpRequestException ex) when (ex.Message.Contains("404"))
+        {
+            // Pipeline not found - log error and fail gracefully
+            _log.LogError($"Pipeline not found: {ex.Message}");
+            throw new OctoshiftCliException($"Pipeline could not be found. Please verify the pipeline name or ID and try again.");
+        }
+        catch (ArgumentException ex) when (ex.ParamName == "pipeline")
+        {
+            // Pipeline lookup failed - log error and fail gracefully  
+            _log.LogError($"Pipeline lookup failed: {ex.Message}");
+            throw new OctoshiftCliException($"Unable to find the specified pipeline. Please verify the pipeline name and try again.");
+        }
     }
 
     private async Task<int> GetPipelineId(RewirePipelineCommandArgs args)

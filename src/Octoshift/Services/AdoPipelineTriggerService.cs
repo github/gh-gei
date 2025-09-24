@@ -51,18 +51,33 @@ public class AdoPipelineTriggerService
     {
         var url = $"{_adoBaseUrl}/{adoOrg.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
 
-        var response = await _adoApi.GetAsync(url);
-        var data = JObject.Parse(response);
+        try
+        {
+            var response = await _adoApi.GetAsync(url);
+            var data = JObject.Parse(response);
 
-        var newRepo = CreateGitHubRepositoryConfiguration(githubOrg, githubRepo, defaultBranch, clean, checkoutSubmodules, connectedServiceId, targetApiUrl);
-        var currentRepoName = data["repository"]?["name"]?.ToString();
-        var isPipelineRequiredByBranchPolicy = await IsPipelineRequiredByBranchPolicy(adoOrg, teamProject, currentRepoName, pipelineId);
+            var newRepo = CreateGitHubRepositoryConfiguration(githubOrg, githubRepo, defaultBranch, clean, checkoutSubmodules, connectedServiceId, targetApiUrl);
+            var currentRepoName = data["repository"]?["name"]?.ToString();
+            var isPipelineRequiredByBranchPolicy = await IsPipelineRequiredByBranchPolicy(adoOrg, teamProject, currentRepoName, pipelineId);
 
-        LogBranchPolicyCheckResults(pipelineId, isPipelineRequiredByBranchPolicy);
+            LogBranchPolicyCheckResults(pipelineId, isPipelineRequiredByBranchPolicy);
 
-        var payload = BuildPipelinePayload(data, newRepo, originalTriggers, isPipelineRequiredByBranchPolicy);
+            var payload = BuildPipelinePayload(data, newRepo, originalTriggers, isPipelineRequiredByBranchPolicy);
 
-        await _adoApi.PutAsync(url, payload.ToObject(typeof(object)));
+            await _adoApi.PutAsync(url, payload.ToObject(typeof(object)));
+        }
+        catch (HttpRequestException ex) when (ex.Message.Contains("404"))
+        {
+            // Pipeline not found - log warning and skip
+            _log.LogWarning($"Pipeline {pipelineId} not found in {adoOrg}/{teamProject}. Skipping pipeline rewiring.");
+            return;
+        }
+        catch (HttpRequestException ex)
+        {
+            // Other HTTP errors during pipeline retrieval
+            _log.LogWarning($"HTTP error retrieving pipeline {pipelineId} in {adoOrg}/{teamProject}: {ex.Message}. Skipping pipeline rewiring.");
+            return;
+        }
     }
 
     /// <summary>
