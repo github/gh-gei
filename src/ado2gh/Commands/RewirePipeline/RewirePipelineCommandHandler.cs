@@ -1,4 +1,5 @@
 using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Services;
@@ -27,6 +28,17 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
             throw new ArgumentNullException(nameof(args));
         }
 
+        // Validate that either pipeline name or ID is provided
+        if (string.IsNullOrEmpty(args.AdoPipeline) && !args.AdoPipelineId.HasValue)
+        {
+            throw new OctoshiftCliException("Either --ado-pipeline or --ado-pipeline-id must be specified");
+        }
+
+        if (!string.IsNullOrEmpty(args.AdoPipeline) && args.AdoPipelineId.HasValue)
+        {
+            throw new OctoshiftCliException("Cannot specify both --ado-pipeline and --ado-pipeline-id. Please use only one.");
+        }
+
         if (args.DryRun)
         {
             await HandleDryRun(args);
@@ -46,6 +58,7 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
             AdoOrg = args.AdoOrg,
             AdoTeamProject = args.AdoTeamProject,
             PipelineName = args.AdoPipeline,
+            PipelineId = args.AdoPipelineId,
             GithubOrg = args.GithubOrg,
             GithubRepo = args.GithubRepo,
             ServiceConnectionId = args.ServiceConnectionId,
@@ -84,24 +97,52 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
     {
         _log.LogInformation($"Rewiring Pipeline to GitHub repo...");
 
-        // Use AdoApi for simple API calls
-        var adoPipelineId = await _adoApi.GetPipelineId(args.AdoOrg, args.AdoTeamProject, args.AdoPipeline);
-        var (defaultBranch, clean, checkoutSubmodules, triggers) = await _adoApi.GetPipeline(args.AdoOrg, args.AdoTeamProject, adoPipelineId);
+        try
+        {
+            var adoPipelineId = await GetPipelineId(args);
+            var (defaultBranch, clean, checkoutSubmodules, triggers) = await _adoApi.GetPipeline(args.AdoOrg, args.AdoTeamProject, adoPipelineId);
 
-        // Use the specialized service for complex trigger logic
-        await _pipelineTriggerService.RewirePipelineToGitHub(
-            args.AdoOrg,
-            args.AdoTeamProject,
-            adoPipelineId,
-            defaultBranch,
-            clean,
-            checkoutSubmodules,
-            args.GithubOrg,
-            args.GithubRepo,
-            args.ServiceConnectionId,
-            triggers,
-            args.TargetApiUrl);
+            // Use the specialized service for complex trigger logic
+            await _pipelineTriggerService.RewirePipelineToGitHub(
+                args.AdoOrg,
+                args.AdoTeamProject,
+                adoPipelineId,
+                defaultBranch,
+                clean,
+                checkoutSubmodules,
+                args.GithubOrg,
+                args.GithubRepo,
+                args.ServiceConnectionId,
+                triggers,
+                args.TargetApiUrl);
 
-        _log.LogSuccess("Successfully rewired pipeline");
+            _log.LogSuccess("Successfully rewired pipeline");
+        }
+        catch (HttpRequestException ex) when (ex.Message.Contains("404"))
+        {
+            // Pipeline not found - log error and fail gracefully
+            _log.LogError($"Pipeline not found: {ex.Message}");
+            throw new OctoshiftCliException($"Pipeline could not be found. Please verify the pipeline name or ID and try again.");
+        }
+        catch (ArgumentException ex) when (ex.ParamName == "pipeline")
+        {
+            // Pipeline lookup failed - log error and fail gracefully  
+            _log.LogError($"Pipeline lookup failed: {ex.Message}");
+            throw new OctoshiftCliException($"Unable to find the specified pipeline. Please verify the pipeline name and try again.");
+        }
+    }
+
+    private async Task<int> GetPipelineId(RewirePipelineCommandArgs args)
+    {
+        if (args.AdoPipelineId.HasValue)
+        {
+            _log.LogInformation($"Using provided pipeline ID: {args.AdoPipelineId.Value}");
+            return args.AdoPipelineId.Value;
+        }
+
+        _log.LogInformation($"Looking up pipeline ID for: {args.AdoPipeline}");
+        var pipelineId = await _adoApi.GetPipelineId(args.AdoOrg, args.AdoTeamProject, args.AdoPipeline);
+        _log.LogInformation($"Using resolved pipeline ID: {pipelineId}");
+        return pipelineId;
     }
 }
