@@ -1,1 +1,0 @@
-- **ado2gh rewire-pipeline**: Migration now preserves all original trigger configurations (pullRequest, continuousIntegration, etc.) from Azure DevOps pipelines.
