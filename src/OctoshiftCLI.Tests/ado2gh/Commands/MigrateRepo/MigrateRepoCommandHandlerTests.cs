@@ -310,4 +310,218 @@ public class MigrateRepoCommandHandlerTests
             targetRepoVisibility,
             It.IsAny<bool>()));
     }
+
+    [Fact]
+    public async Task Should_Disable_Status_Checks_When_Flag_Is_True()
+    {
+        // Arrange
+        _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
+        _mockGithubApi.Setup(x => x.CreateAdoMigrationSource(GITHUB_ORG_ID, null).Result).Returns(MIGRATION_SOURCE_ID);
+        _mockGithubApi
+            .Setup(x => x.StartMigration(
+                MIGRATION_SOURCE_ID,
+                ADO_REPO_URL,
+                GITHUB_ORG_ID,
+                GITHUB_REPO,
+                ADO_TOKEN,
+                GITHUB_TOKEN,
+                null,
+                null,
+                false,
+                null,
+                false).Result)
+            .Returns(MIGRATION_ID);
+        _mockGithubApi.Setup(x => x.GetMigration(MIGRATION_ID).Result).Returns((State: RepositoryMigrationStatus.Succeeded, GITHUB_REPO, 0, null, null));
+
+        // Setup branch protection data
+        var branches = new List<string> { "main", "develop" };
+        _mockGithubApi.Setup(x => x.GetBranches(GITHUB_ORG, GITHUB_REPO).Result).Returns(branches);
+
+        var protectionWithStatusChecks = new Newtonsoft.Json.Linq.JObject
+        {
+            ["required_status_checks"] = new Newtonsoft.Json.Linq.JObject
+            {
+                ["strict"] = true,
+                ["contexts"] = new Newtonsoft.Json.Linq.JArray { "ci/build", "ci/test" }
+            },
+            ["enforce_admins"] = new Newtonsoft.Json.Linq.JObject { ["enabled"] = true },
+            ["required_pull_request_reviews"] = new Newtonsoft.Json.Linq.JObject { ["required_approving_review_count"] = 2 }
+        };
+
+        _mockGithubApi.Setup(x => x.GetDefaultBranch(GITHUB_ORG, GITHUB_REPO).Result).Returns("main");
+        _mockGithubApi.Setup(x => x.GetBranchProtection(GITHUB_ORG, GITHUB_REPO, "main").Result).Returns(protectionWithStatusChecks);
+
+        _mockEnvironmentVariableProvider
+            .Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()))
+            .Returns(GITHUB_TOKEN);
+        _mockEnvironmentVariableProvider
+            .Setup(m => m.AdoPersonalAccessToken(It.IsAny<bool>()))
+            .Returns(ADO_TOKEN);
+
+        // Act
+        var args = new MigrateRepoCommandArgs
+        {
+            AdoOrg = ADO_ORG,
+            AdoTeamProject = ADO_TEAM_PROJECT,
+            AdoRepo = ADO_REPO,
+            GithubOrg = GITHUB_ORG,
+            GithubRepo = GITHUB_REPO,
+            CleanStatusChecks = true
+        };
+        await _handler.Handle(args);
+
+        // Assert
+        _mockGithubApi.Verify(m => m.GetDefaultBranch(GITHUB_ORG, GITHUB_REPO), Times.Once);
+        _mockGithubApi.Verify(m => m.GetBranchProtection(GITHUB_ORG, GITHUB_REPO, "main"), Times.Once);
+        _mockGithubApi.Verify(m => m.UpdateBranchProtection(GITHUB_ORG, GITHUB_REPO, "main", It.IsAny<object>()), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogInformation("Cleaning status checks from default branch protection..."), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogInformation("Cleaning status checks for branch 'main'"), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogSuccess("Successfully cleaned status checks from default branch protection"), Times.Once);
+    }
+
+    [Fact]
+    public async Task Should_Not_Disable_Status_Checks_When_Flag_Is_False()
+    {
+        // Arrange
+        _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
+        _mockGithubApi.Setup(x => x.CreateAdoMigrationSource(GITHUB_ORG_ID, null).Result).Returns(MIGRATION_SOURCE_ID);
+        _mockGithubApi
+            .Setup(x => x.StartMigration(
+                MIGRATION_SOURCE_ID,
+                ADO_REPO_URL,
+                GITHUB_ORG_ID,
+                GITHUB_REPO,
+                ADO_TOKEN,
+                GITHUB_TOKEN,
+                null,
+                null,
+                false,
+                null,
+                false).Result)
+            .Returns(MIGRATION_ID);
+        _mockGithubApi.Setup(x => x.GetMigration(MIGRATION_ID).Result).Returns((State: RepositoryMigrationStatus.Succeeded, GITHUB_REPO, 0, null, null));
+
+        _mockEnvironmentVariableProvider
+            .Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()))
+            .Returns(GITHUB_TOKEN);
+        _mockEnvironmentVariableProvider
+            .Setup(m => m.AdoPersonalAccessToken(It.IsAny<bool>()))
+            .Returns(ADO_TOKEN);
+
+        // Act
+        var args = new MigrateRepoCommandArgs
+        {
+            AdoOrg = ADO_ORG,
+            AdoTeamProject = ADO_TEAM_PROJECT,
+            AdoRepo = ADO_REPO,
+            GithubOrg = GITHUB_ORG,
+            GithubRepo = GITHUB_REPO,
+            CleanStatusChecks = false
+        };
+        await _handler.Handle(args);
+
+        // Assert - should not call any branch protection methods
+        _mockGithubApi.Verify(m => m.GetBranches(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockGithubApi.Verify(m => m.GetBranchProtection(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockGithubApi.Verify(m => m.UpdateBranchProtection(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<object>()), Times.Never);
+        _mockOctoLogger.Verify(m => m.LogInformation("Disabling status checks in branch protection rules..."), Times.Never);
+    }
+
+    [Fact]
+    public async Task Should_Skip_Status_Check_Removal_When_Queue_Only_Is_True()
+    {
+        // Arrange
+        _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
+        _mockGithubApi.Setup(x => x.CreateAdoMigrationSource(GITHUB_ORG_ID, null).Result).Returns(MIGRATION_SOURCE_ID);
+        _mockGithubApi
+            .Setup(x => x.StartMigration(
+                MIGRATION_SOURCE_ID,
+                ADO_REPO_URL,
+                GITHUB_ORG_ID,
+                GITHUB_REPO,
+                ADO_TOKEN,
+                GITHUB_TOKEN,
+                null,
+                null,
+                false,
+                null,
+                false).Result)
+            .Returns(MIGRATION_ID);
+
+        _mockEnvironmentVariableProvider
+            .Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()))
+            .Returns(GITHUB_TOKEN);
+        _mockEnvironmentVariableProvider
+            .Setup(m => m.AdoPersonalAccessToken(It.IsAny<bool>()))
+            .Returns(ADO_TOKEN);
+
+        // Act
+        var args = new MigrateRepoCommandArgs
+        {
+            AdoOrg = ADO_ORG,
+            AdoTeamProject = ADO_TEAM_PROJECT,
+            AdoRepo = ADO_REPO,
+            GithubOrg = GITHUB_ORG,
+            GithubRepo = GITHUB_REPO,
+            QueueOnly = true,
+            CleanStatusChecks = true
+        };
+        await _handler.Handle(args);
+
+        // Assert - should not call any branch protection methods when queue-only
+        _mockGithubApi.Verify(m => m.GetBranches(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockGithubApi.Verify(m => m.GetBranchProtection(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockGithubApi.Verify(m => m.UpdateBranchProtection(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<object>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Should_Handle_Exception_During_Status_Check_Removal_Gracefully()
+    {
+        // Arrange
+        _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG).Result).Returns(GITHUB_ORG_ID);
+        _mockGithubApi.Setup(x => x.CreateAdoMigrationSource(GITHUB_ORG_ID, null).Result).Returns(MIGRATION_SOURCE_ID);
+        _mockGithubApi
+            .Setup(x => x.StartMigration(
+                MIGRATION_SOURCE_ID,
+                ADO_REPO_URL,
+                GITHUB_ORG_ID,
+                GITHUB_REPO,
+                ADO_TOKEN,
+                GITHUB_TOKEN,
+                null,
+                null,
+                false,
+                null,
+                false).Result)
+            .Returns(MIGRATION_ID);
+        _mockGithubApi.Setup(x => x.GetMigration(MIGRATION_ID).Result).Returns((State: RepositoryMigrationStatus.Succeeded, GITHUB_REPO, 0, null, null));
+
+        // Setup branch protection data that will throw an exception
+        _mockGithubApi.Setup(x => x.GetDefaultBranch(GITHUB_ORG, GITHUB_REPO)).ThrowsAsync(new System.Net.Http.HttpRequestException("API error"));
+
+        _mockEnvironmentVariableProvider
+            .Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()))
+            .Returns(GITHUB_TOKEN);
+        _mockEnvironmentVariableProvider
+            .Setup(m => m.AdoPersonalAccessToken(It.IsAny<bool>()))
+            .Returns(ADO_TOKEN);
+
+        // Act
+        var args = new MigrateRepoCommandArgs
+        {
+            AdoOrg = ADO_ORG,
+            AdoTeamProject = ADO_TEAM_PROJECT,
+            AdoRepo = ADO_REPO,
+            GithubOrg = GITHUB_ORG,
+            GithubRepo = GITHUB_REPO,
+            CleanStatusChecks = true
+        };
+
+        // Should not throw exception
+        await _handler.Handle(args);
+
+        // Assert
+        _mockOctoLogger.Verify(m => m.LogInformation("Cleaning status checks from default branch protection..."), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogWarning("Failed to clean status checks: API error"), Times.Once);
+    }
 }
