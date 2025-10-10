@@ -1781,7 +1781,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         {
             // Arrange
             var freshGitArchiveUrl = "https://example.com/1/fresh";
-            
+
             _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
@@ -1851,11 +1851,11 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             // Assert
             // Verify that GetArchiveMigrationUrl was called twice for git archive (once during generation, once during retry)
             _mockSourceGithubApi.Verify(x => x.GetArchiveMigrationUrl(SOURCE_ORG, GIT_ARCHIVE_ID), Times.Exactly(2));
-            
+
             // Verify that DownloadToFile was called twice for git archive (original URL failed, fresh URL succeeded)
             _mockHttpDownloadService.Verify(x => x.DownloadToFile(GIT_ARCHIVE_URL, GIT_ARCHIVE_FILE_PATH), Times.Once);
             _mockHttpDownloadService.Verify(x => x.DownloadToFile(freshGitArchiveUrl, GIT_ARCHIVE_FILE_PATH), Times.Once);
-            
+
             // Verify metadata archive was only downloaded once (no retry needed)
             _mockHttpDownloadService.Verify(x => x.DownloadToFile(METADATA_ARCHIVE_URL, METADATA_ARCHIVE_FILE_PATH), Times.Once);
         }
@@ -1865,7 +1865,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         {
             // Arrange
             var freshMetadataArchiveUrl = "https://example.com/2/fresh";
-            
+
             _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
@@ -1935,11 +1935,11 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             // Assert
             // Verify that GetArchiveMigrationUrl was called twice for metadata archive (once during generation, once during retry)
             _mockSourceGithubApi.Verify(x => x.GetArchiveMigrationUrl(SOURCE_ORG, METADATA_ARCHIVE_ID), Times.Exactly(2));
-            
+
             // Verify that DownloadToFile was called twice for metadata archive (original URL failed, fresh URL succeeded)
             _mockHttpDownloadService.Verify(x => x.DownloadToFile(METADATA_ARCHIVE_URL, METADATA_ARCHIVE_FILE_PATH), Times.Once);
             _mockHttpDownloadService.Verify(x => x.DownloadToFile(freshMetadataArchiveUrl, METADATA_ARCHIVE_FILE_PATH), Times.Once);
-            
+
             // Verify git archive was only downloaded once (no retry needed)
             _mockHttpDownloadService.Verify(x => x.DownloadToFile(GIT_ARCHIVE_URL, GIT_ARCHIVE_FILE_PATH), Times.Once);
         }
@@ -1950,7 +1950,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             // Arrange
             var freshGitArchiveUrl = "https://example.com/1/fresh";
             var freshMetadataArchiveUrl = "https://example.com/2/fresh";
-            
+
             _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
@@ -1977,7 +1977,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             _mockSourceGithubApi.SetupSequence(x => x.GetArchiveMigrationUrl(SOURCE_ORG, GIT_ARCHIVE_ID).Result)
                 .Returns(GIT_ARCHIVE_URL)
                 .Returns(freshGitArchiveUrl);
-            
+
             _mockSourceGithubApi.SetupSequence(x => x.GetArchiveMigrationUrl(SOURCE_ORG, METADATA_ARCHIVE_ID).Result)
                 .Returns(METADATA_ARCHIVE_URL)
                 .Returns(freshMetadataArchiveUrl);
@@ -2024,7 +2024,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             // Verify that GetArchiveMigrationUrl was called twice for both archives (once during generation, once during retry)
             _mockSourceGithubApi.Verify(x => x.GetArchiveMigrationUrl(SOURCE_ORG, GIT_ARCHIVE_ID), Times.Exactly(2));
             _mockSourceGithubApi.Verify(x => x.GetArchiveMigrationUrl(SOURCE_ORG, METADATA_ARCHIVE_ID), Times.Exactly(2));
-            
+
             // Verify that DownloadToFile was called twice for each archive (original URL failed, fresh URL succeeded)
             _mockHttpDownloadService.Verify(x => x.DownloadToFile(GIT_ARCHIVE_URL, GIT_ARCHIVE_FILE_PATH), Times.Once);
             _mockHttpDownloadService.Verify(x => x.DownloadToFile(freshGitArchiveUrl, GIT_ARCHIVE_FILE_PATH), Times.Once);
