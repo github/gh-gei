@@ -1775,5 +1775,261 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 targetRepoVisibility,
                 It.IsAny<bool>()));
         }
+
+        [Fact]
+        public async Task Git_Archive_Download_Retries_On_403_Error()
+        {
+            // Arrange
+            var freshGitArchiveUrl = "https://example.com/1/fresh";
+            
+            _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(GITHUB_ORG_ID);
+            _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
+            _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
+            _mockTargetGithubApi.Setup(x => x.StartMigration(
+                MIGRATION_SOURCE_ID,
+                GHES_REPO_URL,
+                GITHUB_ORG_ID,
+                TARGET_REPO,
+                GITHUB_SOURCE_PAT,
+                GITHUB_TARGET_PAT,
+                AUTHENTICATED_GIT_ARCHIVE_URL,
+                AUTHENTICATED_METADATA_ARCHIVE_URL,
+                false,
+                null,
+                false).Result).Returns(MIGRATION_ID);
+            _mockTargetGithubApi.Setup(x => x.GetMigration(MIGRATION_ID).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, 0, null, null));
+
+            _mockSourceGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(GIT_ARCHIVE_ID);
+            _mockSourceGithubApi.Setup(x => x.StartMetadataArchiveGeneration(SOURCE_ORG, SOURCE_REPO, false, false).Result).Returns(METADATA_ARCHIVE_ID);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, GIT_ARCHIVE_ID).Result).Returns(ArchiveMigrationStatus.Exported);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, METADATA_ARCHIVE_ID).Result).Returns(ArchiveMigrationStatus.Exported);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, GIT_ARCHIVE_ID).Result).Returns(GIT_ARCHIVE_URL);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, METADATA_ARCHIVE_ID).Result).Returns(METADATA_ARCHIVE_URL);
+
+            // Setup second call to GetArchiveMigrationUrl for git archive to return fresh URL
+            _mockSourceGithubApi.SetupSequence(x => x.GetArchiveMigrationUrl(SOURCE_ORG, GIT_ARCHIVE_ID).Result)
+                .Returns(GIT_ARCHIVE_URL)  // First call during archive generation
+                .Returns(freshGitArchiveUrl); // Second call during retry
+
+            // Setup HttpDownloadService to fail first time with 403, succeed second time
+            _mockHttpDownloadService
+                .SetupSequence(x => x.DownloadToFile(It.IsAny<string>(), GIT_ARCHIVE_FILE_PATH))
+                .ThrowsAsync(new HttpRequestException("Response status code does not indicate success: 403 (Forbidden)."))
+                .Returns(Task.CompletedTask);
+
+            _mockHttpDownloadService
+                .Setup(x => x.DownloadToFile(METADATA_ARCHIVE_URL, METADATA_ARCHIVE_FILE_PATH))
+                .Returns(Task.CompletedTask);
+
+            _mockAzureApi
+                .SetupSequence(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>()).Result)
+                .Returns(new Uri(AUTHENTICATED_GIT_ARCHIVE_URL))
+                .Returns(new Uri(AUTHENTICATED_METADATA_ARCHIVE_URL));
+
+            _mockFileSystemProvider
+                .SetupSequence(m => m.GetTempFileName())
+                .Returns(GIT_ARCHIVE_FILE_PATH)
+                .Returns(METADATA_ARCHIVE_FILE_PATH);
+
+            _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(GITHUB_SOURCE_PAT);
+            _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(GITHUB_TARGET_PAT);
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
+
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                TargetApiUrl = TARGET_API_URL,
+                GhesApiUrl = GHES_API_URL,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+            };
+            await _handler.Handle(args);
+
+            // Assert
+            // Verify that GetArchiveMigrationUrl was called twice for git archive (once during generation, once during retry)
+            _mockSourceGithubApi.Verify(x => x.GetArchiveMigrationUrl(SOURCE_ORG, GIT_ARCHIVE_ID), Times.Exactly(2));
+            
+            // Verify that DownloadToFile was called twice for git archive (original URL failed, fresh URL succeeded)
+            _mockHttpDownloadService.Verify(x => x.DownloadToFile(GIT_ARCHIVE_URL, GIT_ARCHIVE_FILE_PATH), Times.Once);
+            _mockHttpDownloadService.Verify(x => x.DownloadToFile(freshGitArchiveUrl, GIT_ARCHIVE_FILE_PATH), Times.Once);
+            
+            // Verify metadata archive was only downloaded once (no retry needed)
+            _mockHttpDownloadService.Verify(x => x.DownloadToFile(METADATA_ARCHIVE_URL, METADATA_ARCHIVE_FILE_PATH), Times.Once);
+        }
+
+        [Fact]
+        public async Task Metadata_Archive_Download_Retries_On_403_Error()
+        {
+            // Arrange
+            var freshMetadataArchiveUrl = "https://example.com/2/fresh";
+            
+            _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(GITHUB_ORG_ID);
+            _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
+            _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
+            _mockTargetGithubApi.Setup(x => x.StartMigration(
+                MIGRATION_SOURCE_ID,
+                GHES_REPO_URL,
+                GITHUB_ORG_ID,
+                TARGET_REPO,
+                GITHUB_SOURCE_PAT,
+                GITHUB_TARGET_PAT,
+                AUTHENTICATED_GIT_ARCHIVE_URL,
+                AUTHENTICATED_METADATA_ARCHIVE_URL,
+                false,
+                null,
+                false).Result).Returns(MIGRATION_ID);
+            _mockTargetGithubApi.Setup(x => x.GetMigration(MIGRATION_ID).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, 0, null, null));
+
+            _mockSourceGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(GIT_ARCHIVE_ID);
+            _mockSourceGithubApi.Setup(x => x.StartMetadataArchiveGeneration(SOURCE_ORG, SOURCE_REPO, false, false).Result).Returns(METADATA_ARCHIVE_ID);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, GIT_ARCHIVE_ID).Result).Returns(ArchiveMigrationStatus.Exported);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, METADATA_ARCHIVE_ID).Result).Returns(ArchiveMigrationStatus.Exported);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, GIT_ARCHIVE_ID).Result).Returns(GIT_ARCHIVE_URL);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, METADATA_ARCHIVE_ID).Result).Returns(METADATA_ARCHIVE_URL);
+
+            // Setup second call to GetArchiveMigrationUrl for metadata archive to return fresh URL
+            _mockSourceGithubApi.SetupSequence(x => x.GetArchiveMigrationUrl(SOURCE_ORG, METADATA_ARCHIVE_ID).Result)
+                .Returns(METADATA_ARCHIVE_URL)  // First call during archive generation
+                .Returns(freshMetadataArchiveUrl); // Second call during retry
+
+            // Setup HttpDownloadService - git archive succeeds, metadata archive fails first time with 403, succeeds second time
+            _mockHttpDownloadService
+                .Setup(x => x.DownloadToFile(GIT_ARCHIVE_URL, GIT_ARCHIVE_FILE_PATH))
+                .Returns(Task.CompletedTask);
+
+            _mockHttpDownloadService
+                .SetupSequence(x => x.DownloadToFile(It.IsAny<string>(), METADATA_ARCHIVE_FILE_PATH))
+                .ThrowsAsync(new HttpRequestException("Response status code does not indicate success: 403 (Forbidden)."))
+                .Returns(Task.CompletedTask);
+
+            _mockAzureApi
+                .SetupSequence(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>()).Result)
+                .Returns(new Uri(AUTHENTICATED_GIT_ARCHIVE_URL))
+                .Returns(new Uri(AUTHENTICATED_METADATA_ARCHIVE_URL));
+
+            _mockFileSystemProvider
+                .SetupSequence(m => m.GetTempFileName())
+                .Returns(GIT_ARCHIVE_FILE_PATH)
+                .Returns(METADATA_ARCHIVE_FILE_PATH);
+
+            _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(GITHUB_SOURCE_PAT);
+            _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(GITHUB_TARGET_PAT);
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
+
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                TargetApiUrl = TARGET_API_URL,
+                GhesApiUrl = GHES_API_URL,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+            };
+            await _handler.Handle(args);
+
+            // Assert
+            // Verify that GetArchiveMigrationUrl was called twice for metadata archive (once during generation, once during retry)
+            _mockSourceGithubApi.Verify(x => x.GetArchiveMigrationUrl(SOURCE_ORG, METADATA_ARCHIVE_ID), Times.Exactly(2));
+            
+            // Verify that DownloadToFile was called twice for metadata archive (original URL failed, fresh URL succeeded)
+            _mockHttpDownloadService.Verify(x => x.DownloadToFile(METADATA_ARCHIVE_URL, METADATA_ARCHIVE_FILE_PATH), Times.Once);
+            _mockHttpDownloadService.Verify(x => x.DownloadToFile(freshMetadataArchiveUrl, METADATA_ARCHIVE_FILE_PATH), Times.Once);
+            
+            // Verify git archive was only downloaded once (no retry needed)
+            _mockHttpDownloadService.Verify(x => x.DownloadToFile(GIT_ARCHIVE_URL, GIT_ARCHIVE_FILE_PATH), Times.Once);
+        }
+
+        [Fact]
+        public async Task Both_Archives_Download_Retry_On_403_Error()
+        {
+            // Arrange
+            var freshGitArchiveUrl = "https://example.com/1/fresh";
+            var freshMetadataArchiveUrl = "https://example.com/2/fresh";
+            
+            _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(GITHUB_ORG_ID);
+            _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
+            _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
+            _mockTargetGithubApi.Setup(x => x.StartMigration(
+                MIGRATION_SOURCE_ID,
+                GHES_REPO_URL,
+                GITHUB_ORG_ID,
+                TARGET_REPO,
+                GITHUB_SOURCE_PAT,
+                GITHUB_TARGET_PAT,
+                AUTHENTICATED_GIT_ARCHIVE_URL,
+                AUTHENTICATED_METADATA_ARCHIVE_URL,
+                false,
+                null,
+                false).Result).Returns(MIGRATION_ID);
+            _mockTargetGithubApi.Setup(x => x.GetMigration(MIGRATION_ID).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, 0, null, null));
+
+            _mockSourceGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(GIT_ARCHIVE_ID);
+            _mockSourceGithubApi.Setup(x => x.StartMetadataArchiveGeneration(SOURCE_ORG, SOURCE_REPO, false, false).Result).Returns(METADATA_ARCHIVE_ID);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, GIT_ARCHIVE_ID).Result).Returns(ArchiveMigrationStatus.Exported);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, METADATA_ARCHIVE_ID).Result).Returns(ArchiveMigrationStatus.Exported);
+
+            // Setup GetArchiveMigrationUrl to return original URLs first, then fresh URLs on retry
+            _mockSourceGithubApi.SetupSequence(x => x.GetArchiveMigrationUrl(SOURCE_ORG, GIT_ARCHIVE_ID).Result)
+                .Returns(GIT_ARCHIVE_URL)
+                .Returns(freshGitArchiveUrl);
+            
+            _mockSourceGithubApi.SetupSequence(x => x.GetArchiveMigrationUrl(SOURCE_ORG, METADATA_ARCHIVE_ID).Result)
+                .Returns(METADATA_ARCHIVE_URL)
+                .Returns(freshMetadataArchiveUrl);
+
+            // Setup HttpDownloadService to fail first time for both archives with 403, succeed on retry
+            _mockHttpDownloadService
+                .SetupSequence(x => x.DownloadToFile(It.IsAny<string>(), GIT_ARCHIVE_FILE_PATH))
+                .ThrowsAsync(new HttpRequestException("Response status code does not indicate success: 403 (Forbidden)."))
+                .Returns(Task.CompletedTask);
+
+            _mockHttpDownloadService
+                .SetupSequence(x => x.DownloadToFile(It.IsAny<string>(), METADATA_ARCHIVE_FILE_PATH))
+                .ThrowsAsync(new HttpRequestException("Response status code does not indicate success: 403 (Forbidden)."))
+                .Returns(Task.CompletedTask);
+
+            _mockAzureApi
+                .SetupSequence(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>()).Result)
+                .Returns(new Uri(AUTHENTICATED_GIT_ARCHIVE_URL))
+                .Returns(new Uri(AUTHENTICATED_METADATA_ARCHIVE_URL));
+
+            _mockFileSystemProvider
+                .SetupSequence(m => m.GetTempFileName())
+                .Returns(GIT_ARCHIVE_FILE_PATH)
+                .Returns(METADATA_ARCHIVE_FILE_PATH);
+
+            _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(GITHUB_SOURCE_PAT);
+            _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(GITHUB_TARGET_PAT);
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(GHES_API_URL)).ReturnsAsync(true);
+
+            // Act
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                TargetApiUrl = TARGET_API_URL,
+                GhesApiUrl = GHES_API_URL,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+            };
+            await _handler.Handle(args);
+
+            // Assert
+            // Verify that GetArchiveMigrationUrl was called twice for both archives (once during generation, once during retry)
+            _mockSourceGithubApi.Verify(x => x.GetArchiveMigrationUrl(SOURCE_ORG, GIT_ARCHIVE_ID), Times.Exactly(2));
+            _mockSourceGithubApi.Verify(x => x.GetArchiveMigrationUrl(SOURCE_ORG, METADATA_ARCHIVE_ID), Times.Exactly(2));
+            
+            // Verify that DownloadToFile was called twice for each archive (original URL failed, fresh URL succeeded)
+            _mockHttpDownloadService.Verify(x => x.DownloadToFile(GIT_ARCHIVE_URL, GIT_ARCHIVE_FILE_PATH), Times.Once);
+            _mockHttpDownloadService.Verify(x => x.DownloadToFile(freshGitArchiveUrl, GIT_ARCHIVE_FILE_PATH), Times.Once);
+            _mockHttpDownloadService.Verify(x => x.DownloadToFile(METADATA_ARCHIVE_URL, METADATA_ARCHIVE_FILE_PATH), Times.Once);
+            _mockHttpDownloadService.Verify(x => x.DownloadToFile(freshMetadataArchiveUrl, METADATA_ARCHIVE_FILE_PATH), Times.Once);
+        }
     }
 }
