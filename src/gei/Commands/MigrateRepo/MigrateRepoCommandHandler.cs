@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -266,7 +267,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             {
                 await _httpDownloadService.DownloadToFile(gitArchiveUrl, gitArchiveDownloadFilePath);
             }
-            catch (HttpRequestException ex) when (ex.Message.Contains("403") || ex.Message.Contains("Forbidden"))
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Forbidden)
             {
                 // URL likely expired, regenerate and retry
                 _log.LogInformation("Git archive URL appears to have expired, regenerating fresh URL and retrying download...");
@@ -281,7 +282,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             {
                 await _httpDownloadService.DownloadToFile(metadataArchiveUrl, metadataArchiveDownloadFilePath);
             }
-            catch (HttpRequestException ex) when (ex.Message.Contains("403") || ex.Message.Contains("Forbidden"))
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Forbidden)
             {
                 // URL likely expired, regenerate and retry
                 _log.LogInformation("Metadata archive URL appears to have expired, regenerating fresh URL and retrying download...");

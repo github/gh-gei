@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -1814,7 +1815,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             // Setup HttpDownloadService to fail first time with 403, succeed second time
             _mockHttpDownloadService
                 .SetupSequence(x => x.DownloadToFile(It.IsAny<string>(), GIT_ARCHIVE_FILE_PATH))
-                .ThrowsAsync(new HttpRequestException("Response status code does not indicate success: 403 (Forbidden)."))
+                .ThrowsAsync(CreateHttpForbiddenException())
                 .Returns(Task.CompletedTask);
 
             _mockHttpDownloadService
@@ -1902,7 +1903,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
 
             _mockHttpDownloadService
                 .SetupSequence(x => x.DownloadToFile(It.IsAny<string>(), METADATA_ARCHIVE_FILE_PATH))
-                .ThrowsAsync(new HttpRequestException("Response status code does not indicate success: 403 (Forbidden)."))
+                .ThrowsAsync(CreateHttpForbiddenException())
                 .Returns(Task.CompletedTask);
 
             _mockAzureApi
@@ -1985,12 +1986,12 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             // Setup HttpDownloadService to fail first time for both archives with 403, succeed on retry
             _mockHttpDownloadService
                 .SetupSequence(x => x.DownloadToFile(It.IsAny<string>(), GIT_ARCHIVE_FILE_PATH))
-                .ThrowsAsync(new HttpRequestException("Response status code does not indicate success: 403 (Forbidden)."))
+                .ThrowsAsync(CreateHttpForbiddenException())
                 .Returns(Task.CompletedTask);
 
             _mockHttpDownloadService
                 .SetupSequence(x => x.DownloadToFile(It.IsAny<string>(), METADATA_ARCHIVE_FILE_PATH))
-                .ThrowsAsync(new HttpRequestException("Response status code does not indicate success: 403 (Forbidden)."))
+                .ThrowsAsync(CreateHttpForbiddenException())
                 .Returns(Task.CompletedTask);
 
             _mockAzureApi
@@ -2030,6 +2031,12 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             _mockHttpDownloadService.Verify(x => x.DownloadToFile(freshGitArchiveUrl, GIT_ARCHIVE_FILE_PATH), Times.Once);
             _mockHttpDownloadService.Verify(x => x.DownloadToFile(METADATA_ARCHIVE_URL, METADATA_ARCHIVE_FILE_PATH), Times.Once);
             _mockHttpDownloadService.Verify(x => x.DownloadToFile(freshMetadataArchiveUrl, METADATA_ARCHIVE_FILE_PATH), Times.Once);
+        }
+
+        private static HttpRequestException CreateHttpForbiddenException()
+        {
+            // Use the constructor that sets the StatusCode property (available in .NET 5+)
+            return new HttpRequestException("Response status code does not indicate success: 403 (Forbidden).", null, HttpStatusCode.Forbidden);
         }
     }
 }
