@@ -1,0 +1,1 @@
+- Fixed git archive URL expiration issue during GHES migrations when metadata archive generation takes longer than an hour. When GHES is configured with local storage for migrations, git archive download URLs expire after one hour. The CLI now automatically refreshes expired git archive download URLs and retries the download.
