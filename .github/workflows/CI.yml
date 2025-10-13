@@ -28,7 +28,7 @@ jobs:
       - uses: extractions/setup-just@v3
       - name: Initialize CodeQL
         if: matrix.runner-os == 'ubuntu-latest'
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
           queries: +security-and-quality
@@ -81,7 +81,7 @@ jobs:
           path: code-coverage-results.md
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         if: matrix.runner-os == 'ubuntu-latest'
 
   upload-event-file:
