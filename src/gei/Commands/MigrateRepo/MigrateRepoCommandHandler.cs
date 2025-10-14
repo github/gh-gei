@@ -267,7 +267,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             {
                 await _httpDownloadService.DownloadToFile(gitArchiveUrl, gitArchiveDownloadFilePath);
             }
-            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Forbidden)
+            catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.NotFound)
             {
                 // URL likely expired, regenerate and retry
                 _log.LogInformation("Git archive URL appears to have expired, regenerating fresh URL and retrying download...");
@@ -282,7 +282,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             {
                 await _httpDownloadService.DownloadToFile(metadataArchiveUrl, metadataArchiveDownloadFilePath);
             }
-            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Forbidden)
+            catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.NotFound)
             {
                 // URL likely expired, regenerate and retry
                 _log.LogInformation("Metadata archive URL appears to have expired, regenerating fresh URL and retrying download...");
