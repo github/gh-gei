@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using OctoshiftCLI.Commands;
@@ -261,11 +263,33 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         try
         {
             _log.LogInformation($"Downloading archive from {gitArchiveUrl}");
-            await _httpDownloadService.DownloadToFile(gitArchiveUrl, gitArchiveDownloadFilePath);
+            try
+            {
+                await _httpDownloadService.DownloadToFile(gitArchiveUrl, gitArchiveDownloadFilePath);
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.NotFound)
+            {
+                // URL likely expired, regenerate and retry
+                _log.LogInformation("Git archive URL appears to have expired, regenerating fresh URL and retrying download...");
+                var freshGitArchiveUrl = await _sourceGithubApi.GetArchiveMigrationUrl(githubSourceOrg, gitArchiveId);
+                _log.LogInformation($"Downloading archive from fresh URL: {freshGitArchiveUrl}");
+                await _httpDownloadService.DownloadToFile(freshGitArchiveUrl, gitArchiveDownloadFilePath);
+            }
             _log.LogInformation(keepArchive ? $"Git archive was successfully downloaded at \"{gitArchiveDownloadFilePath}\"" : "Download complete");
 
             _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
-            await _httpDownloadService.DownloadToFile(metadataArchiveUrl, metadataArchiveDownloadFilePath);
+            try
+            {
+                await _httpDownloadService.DownloadToFile(metadataArchiveUrl, metadataArchiveDownloadFilePath);
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.NotFound)
+            {
+                // URL likely expired, regenerate and retry
+                _log.LogInformation("Metadata archive URL appears to have expired, regenerating fresh URL and retrying download...");
+                var freshMetadataArchiveUrl = await _sourceGithubApi.GetArchiveMigrationUrl(githubSourceOrg, metadataArchiveId);
+                _log.LogInformation($"Downloading archive from fresh URL: {freshMetadataArchiveUrl}");
+                await _httpDownloadService.DownloadToFile(freshMetadataArchiveUrl, metadataArchiveDownloadFilePath);
+            }
             _log.LogInformation(keepArchive ? $"Metadata archive was successfully downloaded at \"{metadataArchiveDownloadFilePath}\"" : "Download complete");
 
             return (
