@@ -25,12 +25,14 @@ Supported in PR1 (default branch only):
 2. Required status checks (ADO Build validation / Status policy that produces a check)
 3. (Optional if easily derivable) Block direct pushes (Require pull request) -> implicit when ruleset enforces required reviewers.
 
-Excluded in PR1 (log warning):
-- Work item linking
-- Comment requirements (e.g., require a linked work item or comment resolution)
-- Automatically include code reviewers
-- Merge strategy restrictions
-- Check for linked review (security, etc.)
+Additional ADO Policies (must attempt mapping; failure -> error & abort):
+- Work item linking (ADO: Require linked work items) -> GitHub: No direct equivalent; propose failure with clear message until GH provides rule (hard error if detected).
+- Comment requirements (e.g., require a linked work item or comment resolution) -> Partial: GitHub has "Required conversation resolution" (branch protection legacy); need ruleset parity (if ruleset API exposes). If unavailable -> hard error.
+- Automatically include code reviewers -> Evaluate if GitHub CODEOWNERS can be auto-populated; if not implement TODO and fail.
+- Merge strategy restrictions (e.g., squash only) -> Map to repository merge settings (not ruleset). If cannot set -> hard error.
+- Linked review/security checks (e.g., Sonar, custom) -> Treat as status checks; if context unknown -> fail.
+
+Policy presence without successful mapping MUST throw OctoshiftCliException (no warnings).
 
 Mapping Table (Initial):
 | ADO Policy | ADO Fields | GitHub Ruleset Rule | Notes |
@@ -43,6 +45,7 @@ Conflict Resolution:
 - Reviewers: take highest minimumApproverCount.
 - Status checks: union of all contexts.
 - Disabled policies: ignore.
+- Unmappable policies: throw before apply (no partial apply).
 
 Open Data Needed:
 - Exact ADO policy type IDs for minimum reviewers and build validation.
@@ -53,10 +56,11 @@ Testing Matrix (Unit Tests):
 2. Reviewers + build validation -> union mapping.
 3. Multiple reviewer policies different counts -> highest applied.
 4. Disabled build validation -> excluded.
-5. Unknown policy type present -> warning issued, ruleset unaffected.
+5. Unmappable policy (e.g., work item linking) -> throws OctoshiftCliException, no ruleset created.
 6. Existing ruleset identical -> no update.
 7. Existing ruleset missing one status check -> update adds check.
-8. Truncation scenario when > N checks (simulate limit) -> logs warning.
+8. Truncation scenario when > N checks (simulate limit) -> throws (hard error), not silent.
+9. Mixed mappable + unmappable -> overall failure (no partial apply).
 
 ## Steps / Checklist
 ### 1. API Layer
