@@ -14,3 +14,5 @@
 2025-10-20T19:52Z: Added UpdateRepoRuleset + unit test (passing locally before commit).
 
 2025-10-20T20:48Z: Added extraction + apply services with unit tests; updated plan checklist items.
+
+2025-10-20T20:53Z: Added dry-run tests for create/update paths; plan updated.
