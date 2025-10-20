@@ -1115,24 +1115,26 @@ public class GithubApi
         return uri;
     }
 
+    public virtual async Task<IEnumerable<(int Id, string Name, IEnumerable<string> TargetPatterns, int? RequiredApprovingReviewCount, IEnumerable<string> RequiredStatusChecks)>> GetRepoRulesets(string org, string repo)
+    {
+        var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/rulesets";
+        var rulesets = await _client.GetAllAsync(url)
+            .Select(r => {
+                var includes = ((JArray)r["target"]? ["conditions"]? ["ref_name"]? ["includes"])?.Select(p => (string)p) ?? Enumerable.Empty<string>();
+                var prRule = ((JArray)r["rules"])?.FirstOrDefault(rule => (string)rule["type"] == "pull_request");
+                int? reviewers = (int?)prRule? ["parameters"]? ["required_approving_review_count"];
+                var statusChecks = ((JArray)r["rules"])?.Where(rule => (string)rule["type"] == "required_status_checks")
+                    .SelectMany(rule => ((JArray)rule["parameters"]? ["required_status_checks"])?.Select(c => (string)c) ?? Enumerable.Empty<string>())
+                    .Distinct() ?? Enumerable.Empty<string>();
+                return (Id: (int)r["id"], Name: (string)r["name"], TargetPatterns: includes, RequiredApprovingReviewCount: reviewers, RequiredStatusChecks: statusChecks);
+            })
+            .ToListAsync();
+        return rulesets;
+    }
+
     private static object GetMannequinsPayload(string orgId)
     {
         var query = "query($id: ID!, $first: Int, $after: String)";
-
-        public virtual async Task<IEnumerable<(int Id, string Name, IEnumerable<string> TargetPatterns, int? RequiredApprovingReviewCount, IEnumerable<string> RequiredStatusChecks)>> GetRepoRulesets(string org, string repo)
-        {
-            var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/rulesets";
-            var rulesets = await _client.GetAllAsync(url)
-                .Select(r => (
-                    Id: (int)r["id"],
-                    Name: (string)r["name"],
-                    TargetPatterns: ((JArray)r["target"], IEnumerable<string> patterns) => ((JArray)r["target"]["conditions"]["ref_name"]["includes"]).Select(p => (string)p).ToList(),
-                    RequiredApprovingReviewCount: (int?)r["rules"]?.FirstOrDefault(rule => (string)rule["type"] == "pull_request")?["parameters"]?["required_approving_review_count"],
-                    RequiredStatusChecks: r["rules"] == null ? Enumerable.Empty<string>() : ((JArray)r["rules"]).Where(rule => (string)rule["type"] == "required_status_checks").SelectMany(rule => ((JArray)rule["parameters"]["required_status_checks"]).Select(c => (string)c)).Distinct()
-                );
-            // NOTE: placeholder extraction logic; refine as API schema clarified
-            return await rulesets.ToListAsync();
-        }
 
         var gql = @"
                 node(id: $id) {

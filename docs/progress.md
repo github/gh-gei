@@ -4,3 +4,5 @@
 
 
 2025-10-20T19:18Z: Added preliminary GetRepoRulesets implementation (needs schema validation & robust parsing).
+
+2025-10-20T19:22Z: Fixed syntax error; implemented GetRepoRulesets properly; added and passed initial unit test.
