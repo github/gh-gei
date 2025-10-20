@@ -67,7 +67,7 @@ Testing Matrix (Unit Tests):
 
 ## Steps / Checklist
 ### 1. API Layer
-- [ ] GithubApi: GetRepoRulesets(org, repo)
+- [x] GithubApi: GetRepoRulesets(org, repo) (in progress)
 - [ ] GithubApi: CreateRepoRuleset(org, repo, def)
 - [ ] GithubApi: UpdateRepoRuleset(org, repo, id, def)
 - [ ] Internal model GithubRulesetDefinition { Name, TargetPatterns[], RequiredApprovingReviewCount, RequiredStatusChecks[], Enforcement }.
