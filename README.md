@@ -134,3 +134,19 @@ Use `--enable-rulesets` (or set env `OCTOSHIFT_ENABLE_RULESETS=true`) with `gh a
 
 Example:
 > `gh ado2gh generate-script --ado-org ORG --github-org ORG --enable-rulesets`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## GitHub Ruleset Migration (Experimental)
+Use --enable-rulesets (or set OCTOSHIFT_ENABLE_RULESETS=1) to migrate default branch ADO policies (reviewers, status checks, work item linking, comment resolution via PR body regex) into a GitHub ruleset named ado-default-branch-policies. Re-run safely for idempotent updates. If the ruleset API is unavailable or your token lacks permission, the tool logs a warning and continues without applying a ruleset.

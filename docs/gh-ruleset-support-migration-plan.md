@@ -80,7 +80,7 @@ Testing Matrix (Unit Tests):
 - [x] Build ruleset name: ado-default-branch-policies (used in tests).
 - [x] Target pattern = exact default branch name (implemented).
 - [x] Populate rules: reviewers, status checks (extraction service).
-- [ ] Enforcement: active; bypass = none (initial).
+- [x] Enforcement: active; bypass = none (initial).
 
 ### 4. Idempotent Apply Service
 - [x] Implement DefaultBranchRulesetService.Apply(org, repo, defBranch, reviewers, checks, dryRun, enableRulesets) (basic create/update logic + tests).
@@ -93,13 +93,13 @@ Testing Matrix (Unit Tests):
 
 ### 6. Logging
 - [x] Log diff summary (added/removed checks, reviewer count change) (implemented + test).
-- [ ] Warn if ruleset API unavailable / PAT scope insufficient and fallback occurs.
+- [x] Warn if ruleset API unavailable / PAT scope insufficient and fallback occurs.
 
 ### 7. Testing
 - [x] Unit tests: ruleset diff logic (no-op vs update).
 - [x] Unit tests: feature flag behavior (RulesetFlagProviderTests).
 - [x] Unit tests: mapping from extracted policies to ruleset model (basic + unsupported policy failure tests).
-- [ ] (Optional) Integration test with mocked HTTP.
+- [ ] (Optional) Integration test with mocked HTTP (skipped).
 
 ### 8. Documentation & Release Notes
 - [ ] New doc (this file) referenced by broader Plan 2 doc.

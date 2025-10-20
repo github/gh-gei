@@ -110,6 +110,10 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 var applySvc = new DefaultBranchRulesetService(_githubApi, _log);
                 await applySvc.Apply(args.GithubOrg, args.GithubRepo, rulesetDef, false);
             }
+            catch (OctoshiftCliException ex) when (ex.Message.Contains("404") || ex.Message.Contains("NotFound") || ex.Message.Contains("forbidden", System.StringComparison.OrdinalIgnoreCase))
+            {
+                _log.LogWarning($"Ruleset API unavailable or insufficient permissions: {ex.Message}. Continuing without ruleset application.");
+            }
             catch (Exception ex)
             {
                 throw new OctoshiftCliException($"Ruleset migration failed: {ex.Message}", ex);
