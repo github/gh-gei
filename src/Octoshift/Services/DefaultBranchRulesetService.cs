@@ -18,6 +18,14 @@ namespace OctoshiftCLI.Services
             var match = existing.FirstOrDefault(r => r.Name == def.Name);
             if(match.Name != null)
             {
+                // Name conflict if target patterns differ -> create new with suffix
+                if(!match.TargetPatterns.SequenceEqual(def.TargetPatterns))
+                {
+                    var suffix=1; var baseName=def.Name; var existingNames=existing.Select(r=>r.Name).ToHashSet();
+                    while(existingNames.Contains(def.Name)) { def = new GithubRulesetDefinition { Name = $"{baseName}-{suffix}", TargetPatterns = def.TargetPatterns, RequiredApprovingReviewCount = def.RequiredApprovingReviewCount, RequiredStatusChecks = def.RequiredStatusChecks, RequiredPullRequestBodyPatterns = def.RequiredPullRequestBodyPatterns, Enforcement = def.Enforcement }; suffix++; }
+                    if(dryRun){ _log.LogInformation($"DRY-RUN: Would create ruleset '{def.Name}' (name conflict)"); return 0; }
+                    var idNew=await _github.CreateRepoRuleset(org, repo, def); _log.LogInformation($"Created ruleset '{def.Name}' due to name conflict"); return idNew;
+                }
                 LogDiff(match, def);
                 if(IsEquivalent(match, def)) { _log.LogInformation("Ruleset unchanged"); return match.Id; }
                 if(dryRun) { _log.LogInformation("DRY-RUN: Would update ruleset"); return match.Id; }
