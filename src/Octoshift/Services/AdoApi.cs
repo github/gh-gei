@@ -775,9 +775,10 @@ public class AdoApi
 #pragma warning restore IDE0046 // Convert to conditional expression
 
         return dataProviders[dataProviderKey] is not JObject dataProvider ? null : (string)dataProvider["errorMessage"];
+    }
+
     public virtual async Task<Newtonsoft.Json.Linq.JArray> GetBranchPolicyConfigurations(string org,string teamProject,string repoId,string refName){var url=$"{_adoBaseUrl}/{org.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/policy/configurations?repositoryId={repoId.EscapeDataString()}&refName={refName.EscapeDataString()}&api-version=7.0";var response=await _client.GetAsync(url);var data=Newtonsoft.Json.Linq.JObject.Parse(response);return (Newtonsoft.Json.Linq.JArray)data["value"] ?? new Newtonsoft.Json.Linq.JArray();}
 
-    }
 
     private async Task<bool> HasPermission(string org, string securityNamespaceId, int permission)
     {
