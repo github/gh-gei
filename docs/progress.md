@@ -32,3 +32,5 @@
 2025-10-20T22:40Z: Added placeholder AdoBranchPolicyService integration into migrate-repo handler.
 
 2025-10-20T22:43Z: Temporary AdoApi instantiation in migrate-repo handler for policy retrieval placeholder.
+
+2025-10-20T22:46Z: Added AdoBranchPolicyService real mapping for main branch + unit test.
