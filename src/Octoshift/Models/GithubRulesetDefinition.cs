@@ -1,10 +1,12 @@
 namespace OctoshiftCLI.Models;
+using System.Collections.Generic;
+
 
 public class GithubRulesetDefinition
 {
     public string Name { get; init; }
-    public string[] TargetPatterns { get; init; } = new string[0];
+    public IReadOnlyList<string> TargetPatterns { get; init; } = System.Array.Empty<string>();
     public int? RequiredApprovingReviewCount { get; init; }
-    public string[] RequiredStatusChecks { get; init; } = new string[0];
+    public IReadOnlyList<string> RequiredStatusChecks { get; init; } = System.Array.Empty<string>();
     public string Enforcement { get; init; } = "active";
 }

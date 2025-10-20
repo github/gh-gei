@@ -88,8 +88,8 @@ Testing Matrix (Unit Tests):
 - [ ] If enabled -> ensure ruleset exists/updated; remove legacy branch protection only if safe (optional phase 2, skip removal for first PR).
 
 ### 5. CLI Integration
-- [ ] Add global argument `--enable-rulesets` (default false) OR env var `OCTOSHIFT_ENABLE_RULESETS`.
-- [ ] Help text update.
+- [x] Add CLI argument `--enable-rulesets` (default false) + env var `OCTOSHIFT_ENABLE_RULESETS` (wired in Program.cs).
+- [x] Help text update (added option description in Program.cs and README).
 
 ### 6. Logging
 - [x] Log diff summary (added/removed checks, reviewer count change) (implemented + test).

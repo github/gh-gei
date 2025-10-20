@@ -1150,7 +1150,7 @@ public class GithubApi
                     ref_name = new
                     {
                         includes = def.TargetPatterns,
-                        excludes = new string[0]
+                        excludes = System.Array.Empty<string>()
                     }
                 }
             },
@@ -1174,7 +1174,7 @@ public class GithubApi
                 parameters = new { required_approving_review_count = reviewers }
             });
         }
-        if (def.RequiredStatusChecks?.Length > 0)
+        if (def.RequiredStatusChecks != null && def.RequiredStatusChecks.Any())
         {
             rules.Add(new
             {

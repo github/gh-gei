@@ -98,3 +98,39 @@ When the CLI is launched, it logs a warning if there are any ongoing [GitHub inc
 ## Contributions
 
 See [Contributing](CONTRIBUTING.md) for more info on how to get involved.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Enabling GitHub Rulesets for Default Branch Policy Migration (ADO -> GH)
+
+Use `--enable-rulesets` (or set env `OCTOSHIFT_ENABLE_RULESETS=true`) with `gh ado2gh` to migrate default branch policies into modern GitHub rulesets instead of legacy branch protection.
+
+Example:
+> `gh ado2gh generate-script --ado-org ORG --github-org ORG --enable-rulesets`

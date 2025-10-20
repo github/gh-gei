@@ -67,7 +67,7 @@ public class DefaultBranchRulesetServiceTests
     public async Task Apply_DryRun_Update_NoMutation()
     {
         var api = new Mock<GithubApi>(null, null, null, null);
-        api.Setup(a => a.GetRepoRulesets("org", "repo")).ReturnsAsync(new List<(int, string, IEnumerable<string>, int?, IEnumerable<string>)> { (10, "rs", new[] { "main" }.AsEnumerable(), 1, new string[0]) });
+        api.Setup(a => a.GetRepoRulesets("org", "repo")).ReturnsAsync(new List<(int, string, IEnumerable<string>, int?, IEnumerable<string>)> { (10, "rs", new[] { "main" }.AsEnumerable(), 1, System.Array.Empty<string>()) });
         var log = new Mock<OctoLogger>();
         var svc = new DefaultBranchRulesetService(api.Object, log.Object);
         var def = new GithubRulesetDefinition { Name = "rs", TargetPatterns = new[] { "main" }, RequiredApprovingReviewCount = 2 };

@@ -92,6 +92,11 @@ namespace OctoshiftCLI.AdoToGithub
         {
             CliContext.RootCommand = "ado2gh";
             CliContext.ExecutingCommand = parseResult.CommandResult.Command.Name;
+            var enableRulesetsOption = new Option<bool>("--enable-rulesets", "Enable migration of default branch policies to GitHub rulesets (experimental)");
+            var cliArg = parseResult.GetValueForOption(enableRulesetsOption);
+            var flagProvider = new RulesetFlagProvider(new EnvironmentVariableProvider(Logger));
+            CliContext.RulesetsEnabled = flagProvider.Enabled(cliArg);
+            Logger.LogInformation($"Rulesets enabled: {CliContext.RulesetsEnabled}");
         }
 
         private static async Task GithubStatusCheck(ServiceProvider sp)
@@ -137,8 +142,10 @@ namespace OctoshiftCLI.AdoToGithub
 
         private static Parser BuildParser(ServiceProvider serviceProvider)
         {
-            var root = new RootCommand("Automate end-to-end Azure DevOps Repos to GitHub migrations.")
-                .AddCommands(serviceProvider);
+            var enableRulesetsOption = new Option<bool>("--enable-rulesets", () => false, "Enable migration of default branch policies to GitHub rulesets (experimental)");
+            var root = new RootCommand("Automate end-to-end Azure DevOps Repos to GitHub migrations.");
+            root.AddOption(enableRulesetsOption);
+            root.AddCommands(serviceProvider);
             var commandLineBuilder = new CommandLineBuilder(root);
 
             return commandLineBuilder

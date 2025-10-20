@@ -15,6 +15,8 @@ namespace OctoshiftCLI
             get => _rootCommand;
         }
 
+        public static bool RulesetsEnabled { get; set; }
+
         public static string ExecutingCommand
         {
             set => _executingCommand = _executingCommand is null
