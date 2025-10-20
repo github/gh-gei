@@ -1120,11 +1120,11 @@ public class GithubApi
         var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/rulesets";
         var rulesets = await _client.GetAllAsync(url)
             .Select(r => {
-                var includes = ((JArray)r["target"]? ["conditions"]? ["ref_name"]? ["includes"])?.Select(p => (string)p) ?? Enumerable.Empty<string>();
+                var includes = ((JArray)r["target"]?["conditions"]?["ref_name"]?["includes"])?.Select(p => (string)p) ?? Enumerable.Empty<string>();
                 var prRule = ((JArray)r["rules"])?.FirstOrDefault(rule => (string)rule["type"] == "pull_request");
-                int? reviewers = (int?)prRule? ["parameters"]? ["required_approving_review_count"];
+                int? reviewers = (int?)prRule?["parameters"]?["required_approving_review_count"];
                 var statusChecks = ((JArray)r["rules"])?.Where(rule => (string)rule["type"] == "required_status_checks")
-                    .SelectMany(rule => ((JArray)rule["parameters"]? ["required_status_checks"])?.Select(c => (string)c) ?? Enumerable.Empty<string>())
+                    .SelectMany(rule => ((JArray)rule["parameters"]?["required_status_checks"])?.Select(c => (string)c) ?? Enumerable.Empty<string>())
                     .Distinct() ?? Enumerable.Empty<string>();
                 return (Id: (int)r["id"], Name: (string)r["name"], TargetPatterns: includes, RequiredApprovingReviewCount: reviewers, RequiredStatusChecks: statusChecks);
             })
@@ -1132,10 +1132,62 @@ public class GithubApi
         return rulesets;
     }
 
+    public virtual async Task<int> CreateRepoRuleset(string org, string repo, GithubRulesetDefinition def)
+    {
+        if (def is null || string.IsNullOrWhiteSpace(def.Name) || def.TargetPatterns is null || !def.TargetPatterns.Any())
+        {
+            throw new OctoshiftCliException("Invalid ruleset definition");
+        }
+
+        var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/rulesets";
+        var payload = new
+        {
+            name = def.Name,
+            target = new
+            {
+                conditions = new
+                {
+                    ref_name = new
+                    {
+                        includes = def.TargetPatterns,
+                        excludes = new string[0]
+                    }
+                }
+            },
+            enforcement = def.Enforcement,
+            rules = BuildRules(def)
+        };
+
+        var response = await _client.PostAsync(url, payload);
+        var data = JObject.Parse(response);
+        return (int)data["id"];
+    }
+
+    private static object[] BuildRules(GithubRulesetDefinition def)
+    {
+        var rules = new List<object>();
+        if (def.RequiredApprovingReviewCount is int reviewers && reviewers > 0)
+        {
+            rules.Add(new
+            {
+                type = "pull_request",
+                parameters = new { required_approving_review_count = reviewers }
+            });
+        }
+        if (def.RequiredStatusChecks?.Length > 0)
+        {
+            rules.Add(new
+            {
+                type = "required_status_checks",
+                parameters = new { required_status_checks = def.RequiredStatusChecks }
+            });
+        }
+        return rules.ToArray();
+    }
+
     private static object GetMannequinsPayload(string orgId)
     {
         var query = "query($id: ID!, $first: Int, $after: String)";
-
         var gql = @"
                 node(id: $id) {
                     ... on Organization {

@@ -68,9 +68,9 @@ Testing Matrix (Unit Tests):
 ## Steps / Checklist
 ### 1. API Layer
 - [x] GithubApi: GetRepoRulesets(org, repo) (implemented + test)
-- [ ] GithubApi: CreateRepoRuleset(org, repo, def)
+- [x] GithubApi: CreateRepoRuleset(org, repo, def) (implemented + test)
 - [ ] GithubApi: UpdateRepoRuleset(org, repo, id, def)
-- [ ] Internal model GithubRulesetDefinition { Name, TargetPatterns[], RequiredApprovingReviewCount, RequiredStatusChecks[], Enforcement }.
+- [x] Internal model GithubRulesetDefinition { Name, TargetPatterns[], RequiredApprovingReviewCount, RequiredStatusChecks[], Enforcement } (added).
 
 ### 2. Extract Existing Mapping Logic
 - [ ] Identify current code deriving status checks / reviewers from ADO (reuse existing extraction).
