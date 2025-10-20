@@ -1,4 +1,5 @@
 ﻿using System;
+using OctoshiftCLI.Models;
 using System.Threading.Tasks;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Extensions;
@@ -95,6 +96,24 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
         _warningsCountLogger.LogWarningsCount(warningsCount);
         _log.LogInformation(migrationLogAvailableMessage);
+
+        if (CliContext.RulesetsEnabled)
+        {
+            try
+            {
+                var defaultBranch = await _githubApi.GetDefaultBranch(args.GithubOrg, args.GithubRepo);
+                var extraction = new DefaultBranchPolicyExtractionService();
+                // TODO: Replace empty collection with actual ADO policy retrieval
+                var emptyPolicies = System.Array.Empty<OctoshiftCLI.Models.AdoPolicyConfiguration>();
+                var rulesetDef = extraction.BuildRuleset(defaultBranch, "ado-default-branch-policies", emptyPolicies);
+                var applySvc = new DefaultBranchRulesetService(_githubApi, _log);
+                await applySvc.Apply(args.GithubOrg, args.GithubRepo, rulesetDef, false);
+            }
+            catch (Exception ex)
+            {
+                throw new OctoshiftCliException($"Ruleset migration failed: {ex.Message}", ex);
+            }
+        }
     }
 
     private string GetAdoRepoUrl(string org, string project, string repo, string serverUrl)

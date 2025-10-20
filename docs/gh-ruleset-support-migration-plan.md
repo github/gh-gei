@@ -85,7 +85,7 @@ Testing Matrix (Unit Tests):
 ### 4. Idempotent Apply Service
 - [x] Implement DefaultBranchRulesetService.Apply(org, repo, defBranch, reviewers, checks, dryRun, enableRulesets) (basic create/update logic + tests).
 - [ ] If rulesets disabled -> fallback to existing branch protection behavior (legacy path preserved).
-- [ ] If enabled -> ensure ruleset exists/updated; remove legacy branch protection only if safe (optional phase 2, skip removal for first PR).
+- [x] If enabled -> ensure ruleset exists/updated (hooked into migrate-repo; legacy branch protection removal deferred).
 
 ### 5. CLI Integration
 - [x] Add CLI argument `--enable-rulesets` (default false) + env var `OCTOSHIFT_ENABLE_RULESETS` (wired in Program.cs).
