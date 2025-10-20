@@ -98,7 +98,7 @@ Testing Matrix (Unit Tests):
 ### 7. Testing
 - [ ] Unit tests: ruleset diff logic (no-op vs update).
 - [x] Unit tests: feature flag behavior (RulesetFlagProviderTests).
-- [ ] Unit tests: mapping from extracted policies to ruleset model.
+- [x] Unit tests: mapping from extracted policies to ruleset model (basic + unsupported policy failure tests).
 - [ ] (Optional) Integration test with mocked HTTP.
 
 ### 8. Documentation & Release Notes

@@ -22,3 +22,5 @@
 2025-10-20T21:00Z: Added ruleset enable CLI flag provider + tests.
 
 2025-10-20T21:04Z: Added --enable-rulesets CLI option, wiring to CliContext.RulesetsEnabled; README & release notes updated.
+
+2025-10-20T22:25Z: Added unsupported policy exception logic (work item linking, comment resolution) + tests.
