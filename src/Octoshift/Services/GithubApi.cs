@@ -390,7 +390,7 @@ public class GithubApi
                     $lockSource: Boolean)";
         var gql = @"
                 startRepositoryMigration(
-                    input: { 
+                    input: {
                         sourceId: $sourceId,
                         ownerId: $ownerId,
                         sourceRepositoryUrl: $sourceRepositoryUrl,
@@ -456,7 +456,7 @@ public class GithubApi
                         $targetEnterpriseId: ID!,
                         $sourceAccessToken: String!)";
         var gql = @"
-                startOrganizationMigration( 
+                startOrganizationMigration(
                     input: {
                         sourceOrgUrl: $sourceOrgUrl,
                         targetOrgName: $targetOrgName,
@@ -620,8 +620,15 @@ public class GithubApi
     {
         var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/external-groups";
 
-        var group = await _client.GetAllAsync(url, data => (JArray)data["groups"])
-            .SingleAsync(x => string.Equals((string)x["group_name"], groupName, StringComparison.OrdinalIgnoreCase));
+        var allGroups = await _client.GetAllAsync(url, data => (JArray)data["groups"]).ToListAsync();
+
+        var group = allGroups.SingleOrDefault(x => string.Equals((string)x["group_name"], groupName, StringComparison.OrdinalIgnoreCase));
+
+        if (group == null)
+        {
+            var availableGroups = string.Join(", ", allGroups.Select(g => $"'{g["group_name"]}'"));
+            throw new OctoshiftCliException($"IDP group '{groupName}' not found in organization '{org}'. Available groups: {availableGroups}");
+        }
 
         return (int)group["group_id"];
     }
@@ -1077,7 +1084,7 @@ public class GithubApi
                 )";
         var gql = @"
                 abortRepositoryMigration(
-                    input: { 
+                    input: {
                         migrationId: $migrationId
                     })
                    { success }";

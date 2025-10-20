@@ -272,7 +272,7 @@ public class GithubApiTests
                     ""id"": 1
                 }},
                 {{
-                    ""login"": ""{teamMember2}"", 
+                    ""login"": ""{teamMember2}"",
                     ""id"": 2
                 }}
             ]";
@@ -286,7 +286,7 @@ public class GithubApiTests
                     ""id"": 3
                 }},
                 {{
-                    ""login"": ""{teamMember4}"", 
+                    ""login"": ""{teamMember4}"",
                     ""id"": 4
                 }}
             ]";
@@ -555,7 +555,7 @@ public class GithubApiTests
         var role = "admin";
         var response = $@"
             {{
-                ""role"": ""{role}"" 
+                ""role"": ""{role}""
             }}";
 
         _githubClientMock
@@ -638,15 +638,15 @@ public class GithubApiTests
             $"{{\"query\":\"query($login: String!) {{organization(login: $login) {{ login, id, name }} }}\",\"variables\":{{\"login\":\"{GITHUB_ORG}\"}}}}";
         var response = JObject.Parse($@"
             {{
-                ""data"": 
+                ""data"":
                     {{
-                        ""organization"": 
+                        ""organization"":
                             {{
                                 ""login"": ""{GITHUB_ORG}"",
                                 ""id"": ""{orgId}"",
-                                ""name"": ""github"" 
-                            }} 
-                    }} 
+                                ""name"": ""github""
+                            }}
+                    }}
             }}");
 
         _githubClientMock
@@ -672,15 +672,15 @@ public class GithubApiTests
 
         var response = JObject.Parse($@"
             {{
-                ""data"": 
+                ""data"":
                     {{
-                        ""organization"": 
+                        ""organization"":
                             {{
                                 ""login"": ""{GITHUB_ORG}"",
                                 ""id"": ""{orgId}"",
-                                ""name"": ""github"" 
-                            }} 
-                    }} 
+                                ""name"": ""github""
+                            }}
+                    }}
             }}");
 
         _githubClientMock
@@ -739,15 +739,15 @@ public class GithubApiTests
 
         var response = JObject.Parse($@"
            {{
-                ""data"": 
+                ""data"":
                     {{
-                        ""organization"": 
+                        ""organization"":
                             {{
                                 ""login"": ""{GITHUB_ORG}"",
                                 ""databaseId"": ""{databaseId}"",
-                                ""name"": ""github"" 
-                            }} 
-                    }} 
+                                ""name"": ""github""
+                            }}
+                    }}
             }}");
 
         _githubClientMock
@@ -775,14 +775,14 @@ public class GithubApiTests
             $"{{\"query\":\"query($slug: String!) {{enterprise (slug: $slug) {{ slug, id }} }}\",\"variables\":{{\"slug\":\"{GITHUB_ENTERPRISE}\"}}}}";
         var response = JObject.Parse($@"
             {{
-                ""data"": 
+                ""data"":
                     {{
-                        ""enterprise"": 
+                        ""enterprise"":
                             {{
                                 ""slug"": ""{GITHUB_ENTERPRISE}"",
                                 ""id"": ""{enterpriseId}""
-                            }} 
-                    }} 
+                            }}
+                    }}
             }}");
 
         _githubClientMock
@@ -808,14 +808,14 @@ public class GithubApiTests
 
         var response = JObject.Parse($@"
             {{
-                ""data"": 
+                ""data"":
                     {{
-                        ""enterprise"": 
+                        ""enterprise"":
                             {{
                                 ""slug"": ""{GITHUB_ENTERPRISE}"",
                                 ""id"": ""{enterpriseId}""
-                            }} 
-                    }} 
+                            }}
+                    }}
             }}");
 
         _githubClientMock
@@ -1005,7 +1005,7 @@ public class GithubApiTests
                     $lockSource: Boolean)";
         const string gql = @"
                 startRepositoryMigration(
-                    input: { 
+                    input: {
                         sourceId: $sourceId,
                         ownerId: $ownerId,
                         sourceRepositoryUrl: $sourceRepositoryUrl,
@@ -1115,7 +1115,7 @@ public class GithubApiTests
                     $lockSource: Boolean)";
         const string gql = @"
                 startRepositoryMigration(
-                    input: { 
+                    input: {
                         sourceId: $sourceId,
                         ownerId: $ownerId,
                         sourceRepositoryUrl: $sourceRepositoryUrl,
@@ -1201,7 +1201,7 @@ public class GithubApiTests
         // Arrange
         var response = JObject.Parse(@"
             {
-                ""data"": { 
+                ""data"": {
                     ""startRepositoryMigration"": {
                         ""repositoryMigration"": {
                             ""id"": ""RM_kgC4NjFhNmE2NGU2ZWE1YTQwMDA5ODliZjhi""
@@ -1799,6 +1799,43 @@ public class GithubApiTests
     }
 
     [Fact]
+    public async Task GetIdpGroupId_Throws_OctoshiftCliException_When_Group_Not_Found()
+    {
+        // Arrange
+        const string groupName = "NONEXISTENT_GROUP";
+
+        var url = $"https://api.github.com/orgs/{GITHUB_ORG}/external-groups";
+
+        var group1 = new
+        {
+            group_id = 123,
+            group_name = "existing-group-1",
+            updated_at = DateTime.Parse("2021-01-24T11:31:04-06:00")
+        };
+        var group2 = new
+        {
+            group_id = 456,
+            group_name = "existing-group-2",
+            updated_at = DateTime.Parse("2021-03-24T11:31:04-06:00")
+        };
+
+        _githubClientMock
+            .Setup(m => m.GetAllAsync(url, It.IsAny<Func<JToken, JArray>>(), null))
+            .Returns(new[]
+            {
+                JToken.FromObject(group1),
+                JToken.FromObject(group2)
+            }.ToAsyncEnumerable());
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<OctoshiftCliException>(
+            () => _githubApi.GetIdpGroupId(GITHUB_ORG, groupName));
+
+        exception.Message.Should().Contain($"IDP group '{groupName}' not found in organization '{GITHUB_ORG}'");
+        exception.Message.Should().Contain("Available groups: 'existing-group-1', 'existing-group-2'");
+    }
+
+    [Fact]
     public async Task GetTeamSlug_Returns_The_Team_Slug()
     {
         // Arrange
@@ -2018,14 +2055,14 @@ public class GithubApiTests
 
         var response = JObject.Parse($@"
             {{
-                ""data"": 
+                ""data"":
                     {{
-                        ""user"": 
+                        ""user"":
                             {{
                                 ""id"": ""{userId}"",
-                                ""name"": ""{login}"" 
-                            }} 
-                    }} 
+                                ""name"": ""{login}""
+                            }}
+                    }}
             }}");
 
         _githubClientMock
@@ -2125,7 +2162,7 @@ public class GithubApiTests
         var url = $"https://api.github.com/graphql";
 
         var payload =
-@"{""query"":""query($id: ID!, $first: Int, $after: String) { 
+@"{""query"":""query($id: ID!, $first: Int, $after: String) {
                 node(id: $id) {
                     ... on Organization {
                         mannequins(first: $first, after: $after) {
@@ -2176,7 +2213,7 @@ $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
         var url = $"https://api.github.com/graphql";
 
         var payload =
-@"{""query"":""query($id: ID!, $first: Int, $after: String) { 
+@"{""query"":""query($id: ID!, $first: Int, $after: String) {
                 node(id: $id) {
                     ... on Organization {
                         mannequins(first: $first, after: $after) {
@@ -2259,7 +2296,7 @@ $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
         var url = $"https://api.github.com/graphql";
 
         var payload =
-@"{""query"":""query($id: ID!, $first: Int, $after: String) { 
+@"{""query"":""query($id: ID!, $first: Int, $after: String) {
                 node(id: $id) {
                     ... on Organization {
                         mannequins(first: $first, after: $after) {
@@ -2343,7 +2380,7 @@ $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
         var url = $"https://api.github.com/graphql";
 
         var payload =
-@"{""query"":""query($id: ID!, $first: Int, $after: String, $login: String) { 
+@"{""query"":""query($id: ID!, $first: Int, $after: String, $login: String) {
                 node(id: $id) {
                     ... on Organization {
                         mannequins(first: $first, after: $after, login: $login) {
@@ -2393,7 +2430,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         var url = $"https://api.github.com/graphql";
 
         var payload =
-@"{""query"":""query($id: ID!, $first: Int, $after: String, $login: String) { 
+@"{""query"":""query($id: ID!, $first: Int, $after: String, $login: String) {
                 node(id: $id) {
                     ... on Organization {
                         mannequins(first: $first, after: $after, login: $login) {
@@ -2985,7 +3022,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
 
         var response = $@"
             {{
-                ""default_branch"": ""main"" 
+                ""default_branch"": ""main""
             }}";
 
         _githubClientMock
@@ -3368,7 +3405,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         var response = $@"
                 {{
                     ""id"": ""sarif-id"",
-                }}  
+                }}
             ";
         _githubClientMock
             .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == expectedPayload.ToJson()), null))
@@ -3401,7 +3438,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         var response = $@"
                 {{
                     ""id"": ""sarif-id"",
-                }}  
+                }}
             ";
         _githubClientMock
             .SetupSequence(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == expectedPayload.ToJson()), null))
@@ -3426,7 +3463,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
                 {{
                     ""analyses_url"": ""https://api.,github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/sarifs/sarif-id"",
                     ""processing_status"": ""pending""
-                }}  
+                }}
             ";
         _githubClientMock
             .Setup(m => m.GetAsync(url, null))
@@ -3453,7 +3490,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
                         ""error1"",
                         ""error2""
                     ]
-                }}  
+                }}
             ";
         _githubClientMock
             .Setup(m => m.GetAsync(url, null))
@@ -3532,7 +3569,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
                 )";
         const string gql = @"
                 abortRepositoryMigration(
-                    input: { 
+                    input: {
                         migrationId: $migrationId
                     })
                    { success }";
@@ -3550,9 +3587,9 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         const bool actualBooleanResponse = true;
         var response = JObject.Parse($@"
             {{
-                ""data"": 
+                ""data"":
                     {{
-                        ""abortRepositoryMigration"": 
+                        ""abortRepositoryMigration"":
                             {{
                                 ""success"": ""{actualBooleanResponse}""
                             }}
@@ -3591,7 +3628,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
     [Fact]
     public async Task UploadArchiveToGithubStorage_Should_Upload_The_Content()
     {
-        //Arange 
+        //Arange
         const string orgDatabaseId = "1234";
         const string archiveName = "archiveName";
 
