@@ -16,3 +16,5 @@
 2025-10-20T20:48Z: Added extraction + apply services with unit tests; updated plan checklist items.
 
 2025-10-20T20:53Z: Added dry-run tests for create/update paths; plan updated.
+
+2025-10-20T20:57Z: Added diff logging to DefaultBranchRulesetService with unit test.

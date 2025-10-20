@@ -92,7 +92,7 @@ Testing Matrix (Unit Tests):
 - [ ] Help text update.
 
 ### 6. Logging
-- [ ] Log diff summary (added/removed checks, reviewer count change).
+- [x] Log diff summary (added/removed checks, reviewer count change) (implemented + test).
 - [ ] Warn if ruleset API unavailable / PAT scope insufficient and fallback occurs.
 
 ### 7. Testing
