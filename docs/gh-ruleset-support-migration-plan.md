@@ -73,17 +73,17 @@ Testing Matrix (Unit Tests):
 - [x] Internal model GithubRulesetDefinition { Name, TargetPatterns[], RequiredApprovingReviewCount, RequiredStatusChecks[], Enforcement } (added).
 
 ### 2. Extract Existing Mapping Logic
-- [ ] Identify current code deriving status checks / reviewers from ADO (reuse existing extraction).
-- [ ] Encapsulate into service DefaultBranchPolicyExtractionService.
+- [x] Identify current code deriving status checks / reviewers from ADO (none found; implemented new extraction service).
+- [x] Encapsulate into service DefaultBranchPolicyExtractionService (implemented + tests).
 
 ### 3. Ruleset Construction
-- [ ] Build ruleset name: ado-default-branch-policies.
-- [ ] Target pattern = exact default branch name.
-- [ ] Populate rules: reviewers, status checks.
+- [x] Build ruleset name: ado-default-branch-policies (used in tests).
+- [x] Target pattern = exact default branch name (implemented).
+- [x] Populate rules: reviewers, status checks (extraction service).
 - [ ] Enforcement: active; bypass = none (initial).
 
 ### 4. Idempotent Apply Service
-- [ ] Implement DefaultBranchRulesetService.Apply(org, repo, defBranch, reviewers, checks, dryRun, enableRulesets).
+- [x] Implement DefaultBranchRulesetService.Apply(org, repo, defBranch, reviewers, checks, dryRun, enableRulesets) (basic create/update logic + tests).
 - [ ] If rulesets disabled -> fallback to existing branch protection behavior (legacy path preserved).
 - [ ] If enabled -> ensure ruleset exists/updated; remove legacy branch protection only if safe (optional phase 2, skip removal for first PR).
 

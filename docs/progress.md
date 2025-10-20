@@ -12,3 +12,5 @@
 2025-10-20T19:26Z: Implemented CreateRepoRuleset with unit test (passing). Fixed earlier insertion issues.
 
 2025-10-20T19:52Z: Added UpdateRepoRuleset + unit test (passing locally before commit).
+
+2025-10-20T20:48Z: Added extraction + apply services with unit tests; updated plan checklist items.
