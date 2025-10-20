@@ -107,7 +107,7 @@ Testing Matrix (Unit Tests):
 - [ ] README: brief section on enabling rulesets.
 
 ### 9. Edge Cases
-- Missing default branch name -> error.
+- Missing default branch name -> error (default branch now dynamically retrieved).
 - Existing ruleset with conflicting name but different target -> create new with suffix.
 - Status check contexts > GitHub limit -> log and truncate (document limit).
 

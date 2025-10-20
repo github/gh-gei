@@ -34,3 +34,5 @@
 2025-10-20T22:43Z: Temporary AdoApi instantiation in migrate-repo handler for policy retrieval placeholder.
 
 2025-10-20T22:46Z: Added AdoBranchPolicyService real mapping for main branch + unit test.
+
+2025-10-20T22:49Z: Dynamic ADO default branch retrieval implemented with tests.
