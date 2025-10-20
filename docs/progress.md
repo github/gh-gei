@@ -38,3 +38,5 @@
 2025-10-20T22:49Z: Dynamic ADO default branch retrieval implemented with tests.
 
 2025-10-20T22:52Z: Added PR body pattern support for work item linking & comment resolution + tests.
+
+2025-10-20T22:55Z: Added ruleset name conflict suffix logic + status check truncation (50) with tests.

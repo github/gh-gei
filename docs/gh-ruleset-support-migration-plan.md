@@ -108,8 +108,8 @@ Testing Matrix (Unit Tests):
 
 ### 9. Edge Cases
 - Missing default branch name -> error (default branch now dynamically retrieved).
-- Existing ruleset with conflicting name but different target -> create new with suffix.
-- Status check contexts > GitHub limit -> log and truncate (document limit).
+- Existing ruleset with conflicting name but different target -> implemented suffix logic + test.
+- Status check contexts > GitHub limit -> truncate to 50 (implemented + test).
 
 ### 10. Rollout Strategy
 - Ship behind flag.
