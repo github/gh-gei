@@ -25,14 +25,14 @@ Supported in PR1 (default branch only):
 2. Required status checks (ADO Build validation / Status policy that produces a check)
 3. (Optional if easily derivable) Block direct pushes (Require pull request) -> implicit when ruleset enforces required reviewers.
 
-Additional ADO Policies (must attempt mapping; failure -> error & abort):
-- Work item linking (ADO: Require linked work items) -> GitHub: No direct equivalent; propose failure with clear message until GH provides rule (hard error if detected).
-- Comment requirements (e.g., require a linked work item or comment resolution) -> Partial: GitHub has "Required conversation resolution" (branch protection legacy); need ruleset parity (if ruleset API exposes). If unavailable -> hard error.
-- Automatically include code reviewers -> Evaluate if GitHub CODEOWNERS can be auto-populated; if not implement TODO and fail.
-- Merge strategy restrictions (e.g., squash only) -> Map to repository merge settings (not ruleset). If cannot set -> hard error.
-- Linked review/security checks (e.g., Sonar, custom) -> Treat as status checks; if context unknown -> fail.
+Additional ADO Policies (now targeted in PR1 for default branch):
+- Work item linking (Require linked work items) -> GitHub ruleset: regex requirement on PR title/body (e.g., must contain reference pattern). Implement configurable regex template; absence of required reference triggers failure status.
+- Comment requirements (e.g., resolve all comments) -> Map to GitHub ruleset conversation resolution requirement (if exposed); if ruleset API lacks field fall back to legacy branch protection setting (warn only about fallback, not fail).
+- Automatically include code reviewers -> Assume CODEOWNERS file exists; ruleset does not enforce auto include, but reviewers + CODEOWNERS combination suffices (log info, no error).
+- Merge strategy restrictions (e.g., only squash) -> Set repository merge settings via existing GitHub API (if available); if unsupported, log warning (not fail) per user guidance.
+- Linked review/security checks (e.g., external scanners) -> Treat as status checks if context known; otherwise warn.
 
-Policy presence without successful mapping MUST throw OctoshiftCliException (no warnings).
+"Policy presence" previously meant encountering an ADO policy configuration. Updated semantics: only fail for work item linking if regex enforcement cannot be configured; other unmappable items now warnings per user direction.
 
 Mapping Table (Initial):
 | ADO Policy | ADO Fields | GitHub Ruleset Rule | Notes |
@@ -45,7 +45,8 @@ Conflict Resolution:
 - Reviewers: take highest minimumApproverCount.
 - Status checks: union of all contexts.
 - Disabled policies: ignore.
-- Unmappable policies: throw before apply (no partial apply).
+- Regex work item requirement: if multiple regex templates, require all (AND) to avoid weakening.
+- Unrecognized external status checks: included if context known; else skipped with warning.
 
 Open Data Needed:
 - Exact ADO policy type IDs for minimum reviewers and build validation.
@@ -56,11 +57,13 @@ Testing Matrix (Unit Tests):
 2. Reviewers + build validation -> union mapping.
 3. Multiple reviewer policies different counts -> highest applied.
 4. Disabled build validation -> excluded.
-5. Unmappable policy (e.g., work item linking) -> throws OctoshiftCliException, no ruleset created.
-6. Existing ruleset identical -> no update.
-7. Existing ruleset missing one status check -> update adds check.
-8. Truncation scenario when > N checks (simulate limit) -> throws (hard error), not silent.
-9. Mixed mappable + unmappable -> overall failure (no partial apply).
+5. Work item linking policy -> regex rule applied; failure if regex config absent.
+6. Conversation resolution policy -> falls back to legacy protection when ruleset field missing (assert warning logged once).
+7. Existing ruleset identical -> no update.
+8. Existing ruleset missing one status check -> update adds check.
+9. Multiple regex templates -> all enforced.
+10. Unknown external scanner policy -> warning logged; other rules applied.
+11. Truncation scenario for excessive status checks -> warning & partial set (no fail per updated guidance).
 
 ## Steps / Checklist
 ### 1. API Layer
