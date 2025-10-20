@@ -103,9 +103,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             {
                 var defaultBranch = await _githubApi.GetDefaultBranch(args.GithubOrg, args.GithubRepo);
                 var extraction = new DefaultBranchPolicyExtractionService();
-                var adoApi = new AdoApi(new AdoClient(_log,null,null,new RetryPolicy(_log), args.AdoPat), args.AdoServerUrl ?? "https://dev.azure.com", _log); // lightweight temp
-                var branchPolicySvc = new AdoBranchPolicyService(adoApi);
-                var policies = await branchPolicySvc.GetDefaultBranchPolicies(args.AdoOrg, args.AdoTeamProject, args.AdoRepo);
+                var policies = await _branchPolicyService.GetDefaultBranchPolicies(args.AdoOrg, args.AdoTeamProject, args.AdoRepo);
                 var rulesetDef = extraction.BuildRuleset(defaultBranch, "ado-default-branch-policies", policies);
                 var applySvc = new DefaultBranchRulesetService(_githubApi, _log);
                 await applySvc.Apply(args.GithubOrg, args.GithubRepo, rulesetDef, false);

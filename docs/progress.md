@@ -40,3 +40,5 @@
 2025-10-20T22:52Z: Added PR body pattern support for work item linking & comment resolution + tests.
 
 2025-10-20T22:55Z: Added ruleset name conflict suffix logic + status check truncation (50) with tests.
+
+2025-10-20T22:58Z: Injected AdoBranchPolicyService into migrate-repo handler; patterns integration test added.
