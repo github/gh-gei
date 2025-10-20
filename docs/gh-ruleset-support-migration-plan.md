@@ -18,6 +18,46 @@ Out-of-scope:
 - Non-default branch patterns.
 - Additional ADO policy types beyond current default branch subset.
 
+## Detailed ADO -> GitHub Ruleset Mapping
+
+Supported in PR1 (default branch only):
+1. Required reviewers (ADO Minimum number of reviewers policy)
+2. Required status checks (ADO Build validation / Status policy that produces a check)
+3. (Optional if easily derivable) Block direct pushes (Require pull request) -> implicit when ruleset enforces required reviewers.
+
+Excluded in PR1 (log warning):
+- Work item linking
+- Comment requirements (e.g., require a linked work item or comment resolution)
+- Automatically include code reviewers
+- Merge strategy restrictions
+- Check for linked review (security, etc.)
+
+Mapping Table (Initial):
+| ADO Policy | ADO Fields | GitHub Ruleset Rule | Notes |
+|------------|------------|---------------------|-------|
+| Minimum reviewers | settings.minimumApproverCount | required_approving_review_count | Use max if multiple apply |
+| Build validation (status checks) | settings.buildDefinitionId / displayName | required_status_checks.contexts[] | Need mapping from build to status context; user may supply explicit mapping if ambiguous |
+| Require pull request (implicit) | scope with refName only | required_approving_review_count>=1 | Do not create separate rule; reviewers rule covers |
+
+Conflict Resolution:
+- Reviewers: take highest minimumApproverCount.
+- Status checks: union of all contexts.
+- Disabled policies: ignore.
+
+Open Data Needed:
+- Exact ADO policy type IDs for minimum reviewers and build validation.
+- Status check context naming conventions for build validation (may appear as Azure Pipelines check: "Azure Pipelines" + pipeline name). Provide heuristic extraction.
+
+Testing Matrix (Unit Tests):
+1. Only reviewers policy -> ruleset reviewers count set correctly.
+2. Reviewers + build validation -> union mapping.
+3. Multiple reviewer policies different counts -> highest applied.
+4. Disabled build validation -> excluded.
+5. Unknown policy type present -> warning issued, ruleset unaffected.
+6. Existing ruleset identical -> no update.
+7. Existing ruleset missing one status check -> update adds check.
+8. Truncation scenario when > N checks (simulate limit) -> logs warning.
+
 ## Steps / Checklist
 ### 1. API Layer
 - [ ] GithubApi: GetRepoRulesets(org, repo)
