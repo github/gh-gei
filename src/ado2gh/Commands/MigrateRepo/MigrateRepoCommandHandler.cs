@@ -13,13 +13,15 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private readonly GithubApi _githubApi;
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
     private readonly WarningsCountLogger _warningsCountLogger;
+    private readonly AdoBranchPolicyService _branchPolicyService;
 
-    public MigrateRepoCommandHandler(OctoLogger log, GithubApi githubApi, EnvironmentVariableProvider environmentVariableProvider, WarningsCountLogger warningsCountLogger)
+    public MigrateRepoCommandHandler(OctoLogger log, GithubApi githubApi, EnvironmentVariableProvider environmentVariableProvider, WarningsCountLogger warningsCountLogger, AdoBranchPolicyService branchPolicyService)
     {
         _log = log;
         _githubApi = githubApi;
         _environmentVariableProvider = environmentVariableProvider;
         _warningsCountLogger = warningsCountLogger;
+        _branchPolicyService = branchPolicyService;
     }
 
     public async Task Handle(MigrateRepoCommandArgs args)

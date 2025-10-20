@@ -34,7 +34,7 @@ public class MigrateRepoCommandHandlerTests
     public MigrateRepoCommandHandlerTests()
     {
         _warningsCountLogger = new WarningsCountLogger(_mockOctoLogger.Object);
-        _handler = new MigrateRepoCommandHandler(_mockOctoLogger.Object, _mockGithubApi.Object, _mockEnvironmentVariableProvider.Object, _warningsCountLogger);
+        _handler = new MigrateRepoCommandHandler(_mockOctoLogger.Object, _mockGithubApi.Object, _mockEnvironmentVariableProvider.Object, _warningsCountLogger, new Mock<AdoBranchPolicyService>(null).Object);
     }
 
     [Fact]
