@@ -26,3 +26,5 @@
 2025-10-20T22:25Z: Added unsupported policy exception logic (work item linking, comment resolution) + tests.
 
 2025-10-20T22:30Z: Wired ruleset application into migrate-repo handler (placeholder empty ADO policy set).
+
+2025-10-20T22:36Z: Added AdoBranchPolicyService skeleton + integration test for migrate-repo ruleset application.

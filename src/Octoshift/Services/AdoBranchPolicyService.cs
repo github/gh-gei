@@ -1,0 +1,2 @@
+using System.Collections.Generic;using OctoshiftCLI.Models;using System.Threading.Tasks;namespace OctoshiftCLI.Services;public class AdoBranchPolicyService{private readonly AdoApi _adoApi;public AdoBranchPolicyService(AdoApi adoApi){_adoApi=adoApi;}public virtual Task<IReadOnlyList<AdoPolicyConfiguration>> GetDefaultBranchPolicies(string adoOrg,string teamProject,string repo){ // TODO: Implement actual ADO branch policy retrieval
+ return Task.FromResult<IReadOnlyList<AdoPolicyConfiguration>>(System.Array.Empty<AdoPolicyConfiguration>());}}

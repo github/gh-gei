@@ -41,6 +41,7 @@ namespace OctoshiftCLI.AdoToGithub
                 .AddSingleton<TeamProjectsCsvGeneratorService>()
                 .AddSingleton<ReposCsvGeneratorService>()
                 .AddSingleton<PipelinesCsvGeneratorService>()
+                .AddSingleton<AdoBranchPolicyService>()
                 .AddSingleton<AdoInspectorService>()
                 .AddSingleton<AdoInspectorServiceFactory>()
                 .AddSingleton<DateTimeProvider>()
