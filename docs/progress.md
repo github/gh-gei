@@ -36,3 +36,5 @@
 2025-10-20T22:46Z: Added AdoBranchPolicyService real mapping for main branch + unit test.
 
 2025-10-20T22:49Z: Dynamic ADO default branch retrieval implemented with tests.
+
+2025-10-20T22:52Z: Added PR body pattern support for work item linking & comment resolution + tests.

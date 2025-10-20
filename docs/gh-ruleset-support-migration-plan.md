@@ -96,7 +96,7 @@ Testing Matrix (Unit Tests):
 - [ ] Warn if ruleset API unavailable / PAT scope insufficient and fallback occurs.
 
 ### 7. Testing
-- [ ] Unit tests: ruleset diff logic (no-op vs update).
+- [x] Unit tests: ruleset diff logic (no-op vs update).
 - [x] Unit tests: feature flag behavior (RulesetFlagProviderTests).
 - [x] Unit tests: mapping from extracted policies to ruleset model (basic + unsupported policy failure tests).
 - [ ] (Optional) Integration test with mocked HTTP.

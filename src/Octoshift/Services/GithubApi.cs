@@ -1182,6 +1182,14 @@ public class GithubApi
                 parameters = new { required_status_checks = def.RequiredStatusChecks }
             });
         }
+        if(def.RequiredPullRequestBodyPatterns!=null && def.RequiredPullRequestBodyPatterns.Any())
+        {
+            rules.Add(new
+            {
+                type = "pull_request_body_pattern",
+                parameters = new { patterns = def.RequiredPullRequestBodyPatterns }
+            });
+        }
         return rules.ToArray();
     }
 
