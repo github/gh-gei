@@ -1185,6 +1185,33 @@ public class GithubApi
         return rules.ToArray();
     }
 
+    public virtual async Task UpdateRepoRuleset(string org, string repo, int rulesetId, GithubRulesetDefinition def)
+    {
+        if (def is null)
+        {
+            throw new OctoshiftCliException("Invalid ruleset definition");
+        }
+        var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/rulesets/{rulesetId}";
+        var payload = new
+        {
+            name = def.Name,
+            target = new
+            {
+                conditions = new
+                {
+                    ref_name = new
+                    {
+                        includes = def.TargetPatterns ?? Array.Empty<string>(),
+                        excludes = Array.Empty<string>()
+                    }
+                }
+            },
+            enforcement = def.Enforcement,
+            rules = BuildRules(def)
+        };
+        await _client.PatchAsync(url, payload);
+    }
+
     private static object GetMannequinsPayload(string orgId)
     {
         var query = "query($id: ID!, $first: Int, $after: String)";

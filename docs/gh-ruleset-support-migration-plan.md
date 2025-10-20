@@ -69,7 +69,7 @@ Testing Matrix (Unit Tests):
 ### 1. API Layer
 - [x] GithubApi: GetRepoRulesets(org, repo) (implemented + test)
 - [x] GithubApi: CreateRepoRuleset(org, repo, def) (implemented + test)
-- [ ] GithubApi: UpdateRepoRuleset(org, repo, id, def)
+- [x] GithubApi: UpdateRepoRuleset(org, repo, id, def) (implemented + test)
 - [x] Internal model GithubRulesetDefinition { Name, TargetPatterns[], RequiredApprovingReviewCount, RequiredStatusChecks[], Enforcement } (added).
 
 ### 2. Extract Existing Mapping Logic
