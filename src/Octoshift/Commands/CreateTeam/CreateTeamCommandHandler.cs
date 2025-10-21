@@ -44,32 +44,15 @@ public class CreateTeamCommandHandler : ICommandHandler<CreateTeamCommandArgs>
         }
         else
         {
-            _log.LogInformation($"Attempting to link team '{args.TeamName}' to IDP group '{args.IdpGroup}'");
-
             var members = await _githubApi.GetTeamMembers(args.GithubOrg, teamSlug);
-            _log.LogInformation($"Found {members.Count()} existing team members to remove before linking to IDP group");
 
             foreach (var member in members)
             {
-                _log.LogInformation($"Removing team member '{member}' from team '{teamSlug}'");
                 await _githubApi.RemoveTeamMember(args.GithubOrg, teamSlug, member);
             }
 
-            _log.LogInformation($"Searching for IDP group '{args.IdpGroup}' in organization '{args.GithubOrg}'");
+            var idpGroupId = await _githubApi.GetIdpGroupId(args.GithubOrg, args.IdpGroup);
 
-            int idpGroupId;
-            try
-            {
-                idpGroupId = await _githubApi.GetIdpGroupId(args.GithubOrg, args.IdpGroup);
-                _log.LogInformation($"Found IDP group '{args.IdpGroup}' with ID: {idpGroupId}");
-            }
-            catch (OctoshiftCliException ex)
-            {
-                _log.LogError($"Failed to find IDP group: {ex.Message}");
-                throw;
-            }
-
-            _log.LogInformation($"Adding IDP group '{args.IdpGroup}' (ID: {idpGroupId}) to team '{teamSlug}'");
             await _githubApi.AddEmuGroupToTeam(args.GithubOrg, teamSlug, idpGroupId);
 
             _log.LogSuccess("Successfully linked team to Idp group");
