@@ -16,8 +16,10 @@ public class CreateTeamCommandBase : CommandBase<CreateTeamCommandArgs, CreateTe
 
     public virtual Option<string> TeamName { get; } = new("--team-name") { IsRequired = true };
 
-    public virtual Option<string> IdpGroup { get; } = new("--idp-group");
-
+    public virtual Option<string> IdpGroup { get; } = new("--idp-group")
+    {
+        Description = "The Identity Provider Group to link the team to. For Enterprise Managed Users only."
+    };
     public virtual Option<string> GithubPat { get; } = new("--github-pat")
     {
         Description = "Personal access token of the GitHub target. Overrides GH_PAT environment variable."
