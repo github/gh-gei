@@ -27,6 +27,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands.MigrateRepo
             AddOption(GithubPat);
             AddOption(Verbose);
             AddOption(TargetApiUrl);
+            AddOption(CleanStatusChecks);
         }
 
         public Option<string> AdoOrg { get; } = new("--ado-org")
@@ -69,6 +70,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands.MigrateRepo
         public Option<string> AdoPat { get; } = new("--ado-pat");
         public Option<string> GithubPat { get; } = new("--github-pat");
         public Option<bool> Verbose { get; } = new("--verbose");
+        public Option<bool> CleanStatusChecks { get; } = new("--clean-status-checks")
+        {
+            Description = "Cleans status checks from the default branch protection after migration. Keeps 'Require status checks to pass before merging' enabled but empties the status check lists, removing any migrated ADO build policies that may not be compatible."
+        };
 
         public override MigrateRepoCommandHandler BuildHandler(MigrateRepoCommandArgs args, IServiceProvider sp)
         {
