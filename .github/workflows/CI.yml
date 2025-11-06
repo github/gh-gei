@@ -284,7 +284,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
           token: ${{ secrets.RELEASE_NOTES_PAT }}
           fetch-depth: 0
 
