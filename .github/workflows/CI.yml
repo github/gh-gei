@@ -22,7 +22,7 @@ jobs:
     runs-on: ${{ matrix.runner-os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - uses: extractions/setup-just@v3
@@ -35,7 +35,7 @@ jobs:
           config-file: ./.github/codeql/codeql-config.yml
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
 
@@ -102,13 +102,13 @@ jobs:
         target-os: [windows-latest, ubuntu-latest, macos-latest]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - uses: extractions/setup-just@v3
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
 
@@ -150,12 +150,12 @@ jobs:
     runs-on: ${{ matrix.runner-os }}
     concurrency: integration-test-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
 
@@ -282,7 +282,7 @@ jobs:
     environment: PUBLISH_RELEASE
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           token: ${{ secrets.RELEASE_NOTES_PAT }}
           fetch-depth: 0
@@ -303,7 +303,7 @@ jobs:
           }
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
 
@@ -365,7 +365,7 @@ jobs:
           $TAG_NAME | Out-File ./LATEST-VERSION.txt
 
       - name: Commit Release Notes and Version
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: Automated commit of archived release notes and version file [skip ci]
           file_pattern: RELEASENOTES.md releasenotes/*.md LATEST-VERSION.txt
