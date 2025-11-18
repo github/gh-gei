@@ -1,4 +1,1 @@
-# Release Notes
-
-## Unreleased
 - **ado2gh**: Added support for GitHub Enterprise cloud with data residency app service connections when using `--rewire-pipelines`. The tool now recognizes both `GitHub` and `GitHubProximaPipelines` service connection types.
