@@ -204,8 +204,7 @@ public class AdoApi
 
         var endpoint = response.FirstOrDefault(x =>
             (((string)x["type"]).Equals("GitHub", StringComparison.OrdinalIgnoreCase) ||
-             ((string)x["type"]).Equals("GitHubProximaPipelines", StringComparison.OrdinalIgnoreCase)) &&
-            ((string)x["name"]).Equals(githubOrg, StringComparison.OrdinalIgnoreCase));
+             ((string)x["type"]).Equals("GitHubProximaPipelines", StringComparison.OrdinalIgnoreCase))
 
         return endpoint != null ? (string)endpoint["id"] : null;
     }
