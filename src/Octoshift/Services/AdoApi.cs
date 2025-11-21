@@ -201,13 +201,13 @@ public class AdoApi
     {
         var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4";
         var response = await _client.GetWithPagingAsync(url);
-        
+
         var endpoint = response.FirstOrDefault(x =>
             (((string)x["type"]).Equals("GitHub", StringComparison.OrdinalIgnoreCase) &&
              ((string)x["name"]).Equals(githubOrg, StringComparison.OrdinalIgnoreCase)) ||
             (((string)x["type"]).Equals("GitHubProximaPipelines", StringComparison.OrdinalIgnoreCase) &&
              ((string)x["name"]).Equals(teamProject, StringComparison.OrdinalIgnoreCase)));
-        
+
         return endpoint != null ? (string)endpoint["id"] : null;
     }
 
