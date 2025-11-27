@@ -37,7 +37,7 @@ jobs:
         run: |
           eventjson=`cat 'artifacts/Event File/event.json'`
           prnumber=`echo $(jq -r '.pull_request.number' <<< "$eventjson")`
-          echo "PR_NUMBER=$(echo $prnumber | tr -cd '[0-9]')" >> $GITHUB_ENV
+          echo "PR_NUMBER=$(echo $prnumber | tr -cd '0-9')" >> $GITHUB_ENV
       
       - name: Publish Unit Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
