@@ -343,22 +343,16 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             }
 
             // Validate --bbs-shared-home if running on Bitbucket instance (not using SSH/SMB)
-            if (!args.ShouldDownloadArchive() && args.BbsSharedHome.HasValue())
+            if (!args.ShouldDownloadArchive() && args.BbsSharedHome.HasValue() && !_fileSystemProvider.DirectoryExists(args.BbsSharedHome))
             {
-                if (!_fileSystemProvider.DirectoryExists(args.BbsSharedHome))
-                {
-                    throw new OctoshiftCliException($"The path provided for --bbs-shared-home does not exist or is not accessible: {args.BbsSharedHome}");
-                }
+                throw new OctoshiftCliException($"The path provided for --bbs-shared-home does not exist or is not accessible: {args.BbsSharedHome}");
             }
         }
 
         // Validate --archive-path if provided
-        if (args.ArchivePath.HasValue())
+        if (args.ArchivePath.HasValue() && !_fileSystemProvider.FileExists(args.ArchivePath))
         {
-            if (!_fileSystemProvider.FileExists(args.ArchivePath))
-            {
-                throw new OctoshiftCliException($"The archive file provided with --archive-path does not exist or is not accessible: {args.ArchivePath}");
-            }
+            throw new OctoshiftCliException($"The archive file provided with --archive-path does not exist or is not accessible: {args.ArchivePath}");
         }
 
         if (args.ShouldUploadArchive())
