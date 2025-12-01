@@ -82,7 +82,7 @@ public class DownloadLogsCommandHandler : ICommandHandler<DownloadLogsCommandArg
                 throw new OctoshiftCliException($"Migration log for migration {migrationId} is currently unavailable. Migration logs are only available for 24 hours after a migration finishes. Please ensure the migration ID is correct and the migration has completed recently.");
             }
 
-            var (State, RepositoryName, WarningsCount, FailureReason, MigrationLogUrl) = migrationResult.Result;
+            var (_, RepositoryName, _, _, MigrationLogUrl) = migrationResult.Result;
             logUrl = MigrationLogUrl;
             repositoryName = RepositoryName;
         }
