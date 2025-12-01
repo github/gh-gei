@@ -106,7 +106,10 @@ public class DownloadLogsCommandHandler : ICommandHandler<DownloadLogsCommandArg
             repositoryName = args.GithubRepo;
         }
 
-        args.MigrationLogFile ??= args.MigrationId.HasValue() ? $"migration-log-{repositoryName}-{migrationId}.log" : $"migration-log-{args.GithubOrg}-{repositoryName}-{migrationId}.log";
+        var defaultFileName = args.MigrationId.HasValue()
+            ? $"migration-log-{repositoryName}-{migrationId}.log"
+            : $"migration-log-{args.GithubOrg}-{repositoryName}-{migrationId}.log";
+        args.MigrationLogFile ??= defaultFileName;
 
         if (FileExists(args.MigrationLogFile))
         {
