@@ -49,7 +49,7 @@ public class DownloadLogsCommandHandler : ICommandHandler<DownloadLogsCommandArg
         {
             if (!args.GithubOrg.HasValue() || !args.GithubRepo.HasValue())
             {
-                throw new OctoshiftCliException("Either --migration-id or both --github-org and --github-repo must be specified.");
+                throw new OctoshiftCliException("Either --migration-id (GraphQL migration ID) or both --github-org and --github-repo must be specified.");
             }
         }
 
