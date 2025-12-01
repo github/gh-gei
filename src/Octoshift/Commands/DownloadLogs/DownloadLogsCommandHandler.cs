@@ -82,9 +82,9 @@ public class DownloadLogsCommandHandler : ICommandHandler<DownloadLogsCommandArg
                 throw new OctoshiftCliException($"Migration log for migration {migrationId} unavailable!");
             }
 
-            var migration = migrationResult.Result;
-            logUrl = migration.MigrationLogUrl;
-            repositoryName = migration.RepositoryName;
+            var (State, RepositoryName, WarningsCount, FailureReason, MigrationLogUrl) = migrationResult.Result;
+            logUrl = MigrationLogUrl;
+            repositoryName = RepositoryName;
         }
         else
         {
@@ -106,7 +106,7 @@ public class DownloadLogsCommandHandler : ICommandHandler<DownloadLogsCommandArg
             repositoryName = args.GithubRepo;
         }
 
-        args.MigrationLogFile ??= $"migration-log-{repositoryName}-{migrationId}.log";
+        args.MigrationLogFile ??= args.MigrationId.HasValue() ? $"migration-log-{repositoryName}-{migrationId}.log" : $"migration-log-{args.GithubOrg}-{repositoryName}-{migrationId}.log";
 
         if (FileExists(args.MigrationLogFile))
         {
