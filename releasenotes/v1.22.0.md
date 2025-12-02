@@ -1,0 +1,1 @@
+- Added `--migration-id` option to `download-logs` command to allow downloading logs directly by migration ID without requiring org/repo lookup
