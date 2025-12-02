@@ -22,13 +22,11 @@ public class DownloadLogsCommand : DownloadLogsCommandBase
 
     public override Option<string> GithubRepo { get; } = new("--target-repo")
     {
-        IsRequired = true,
         Description = "Target repository to download latest log for."
     };
 
     public override Option<string> GithubOrg { get; } = new("--github-target-org")
     {
-        IsRequired = true,
         Description = "Target GitHub organization to download logs from."
     };
 }

@@ -299,4 +299,126 @@ public class DownloadLogsCommandHandlerTests
         _mockGithubApi.Verify(m => m.GetMigrationLogUrl(githubOrg, repo), Times.Exactly(6));
         _mockHttpDownloadService.Verify(m => m.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()), Times.Never());
     }
+
+    [Fact]
+    public async Task Should_Throw_When_Neither_MigrationId_Nor_OrgRepo_Provided()
+    {
+        // Act & Assert
+        var args = new DownloadLogsCommandArgs();
+        await FluentAssertions.FluentActions
+            .Invoking(async () => await _handler.Handle(args))
+            .Should().ThrowAsync<OctoshiftCliException>()
+            .WithMessage("Either --migration-id (GraphQL migration ID) or both --github-org and --github-repo must be specified.");
+    }
+
+    [Fact]
+    public async Task Should_Throw_When_Only_GithubOrg_Provided()
+    {
+        // Act & Assert
+        var args = new DownloadLogsCommandArgs
+        {
+            GithubOrg = "test-org"
+        };
+        await FluentAssertions.FluentActions
+            .Invoking(async () => await _handler.Handle(args))
+            .Should().ThrowAsync<OctoshiftCliException>()
+            .WithMessage("Either --migration-id (GraphQL migration ID) or both --github-org and --github-repo must be specified.");
+    }
+
+    [Fact]
+    public async Task Should_Throw_When_Only_GithubRepo_Provided()
+    {
+        // Act & Assert
+        var args = new DownloadLogsCommandArgs
+        {
+            GithubRepo = "test-repo"
+        };
+        await FluentAssertions.FluentActions
+            .Invoking(async () => await _handler.Handle(args))
+            .Should().ThrowAsync<OctoshiftCliException>()
+            .WithMessage("Either --migration-id (GraphQL migration ID) or both --github-org and --github-repo must be specified.");
+    }
+
+    [Fact]
+    public async Task Should_Log_Warning_When_MigrationId_And_OrgRepo_Both_Provided()
+    {
+        // Arrange
+        const string migrationId = "RM_test123";
+        const string githubOrg = "test-org";
+        const string githubRepo = "test-repo";
+        const string logUrl = "some-url";
+        const string repoName = "test-repo-name";
+
+        _mockGithubApi.Setup(m => m.GetMigration(migrationId))
+            .ReturnsAsync((State: "SUCCEEDED", RepositoryName: repoName, WarningsCount: 0, FailureReason: "", MigrationLogUrl: logUrl));
+        _mockHttpDownloadService.Setup(m => m.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
+
+        // Act
+        var args = new DownloadLogsCommandArgs
+        {
+            MigrationId = migrationId,
+            GithubOrg = githubOrg,
+            GithubRepo = githubRepo
+        };
+        await _handler.Handle(args);
+
+        // Assert
+        _mockLogger.Verify(m => m.LogWarning("--github-org and --github-repo are ignored when --migration-id is specified."), Times.Once);
+        _mockGithubApi.Verify(m => m.GetMigration(migrationId), Times.Once);
+        _mockGithubApi.Verify(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Should_Succeed_When_Only_MigrationId_Provided()
+    {
+        // Arrange
+        const string migrationId = "RM_test123";
+        const string logUrl = "some-url";
+        const string repoName = "test-repo-name";
+        const string expectedFileName = $"migration-log-{repoName}-{migrationId}.log";
+
+        _mockGithubApi.Setup(m => m.GetMigration(migrationId))
+            .ReturnsAsync((State: "SUCCEEDED", RepositoryName: repoName, WarningsCount: 0, FailureReason: "", MigrationLogUrl: logUrl));
+        _mockHttpDownloadService.Setup(m => m.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
+
+        // Act
+        var args = new DownloadLogsCommandArgs
+        {
+            MigrationId = migrationId
+        };
+        await _handler.Handle(args);
+
+        // Assert
+        _mockGithubApi.Verify(m => m.GetMigration(migrationId), Times.Once);
+        _mockHttpDownloadService.Verify(m => m.DownloadToFile(logUrl, expectedFileName), Times.Once);
+        _mockGithubApi.Verify(m => m.GetMigrationLogUrl(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Should_Succeed_When_Only_OrgRepo_Provided()
+    {
+        // Arrange
+        const string githubOrg = "test-org";
+        const string githubRepo = "test-repo";
+        const string logUrl = "some-url";
+        const string migrationId = "RM_test123";
+        const string expectedFileName = $"migration-log-{githubOrg}-{githubRepo}-{migrationId}.log";
+
+        _mockGithubApi.Setup(m => m.GetMigrationLogUrl(githubOrg, githubRepo))
+            .ReturnsAsync((logUrl, migrationId));
+        _mockHttpDownloadService.Setup(m => m.DownloadToFile(It.IsAny<string>(), It.IsAny<string>()));
+
+        // Act
+        var args = new DownloadLogsCommandArgs
+        {
+            GithubOrg = githubOrg,
+            GithubRepo = githubRepo
+        };
+        await _handler.Handle(args);
+
+        // Assert
+        _mockGithubApi.Verify(m => m.GetMigrationLogUrl(githubOrg, githubRepo), Times.Once);
+        _mockHttpDownloadService.Verify(m => m.DownloadToFile(logUrl, expectedFileName), Times.Once);
+        _mockGithubApi.Verify(m => m.GetMigration(It.IsAny<string>()), Times.Never);
+    }
 }
