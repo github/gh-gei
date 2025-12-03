@@ -107,5 +107,37 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
                  .ThrowExactly<OctoshiftCliException>()
                  .WithMessage("*--use-github-storage flag was provided with an AWS S3 Bucket name*");
         }
+
+        [Fact]
+        public void Validate_Throws_When_GithubSourceOrg_Is_Url()
+        {
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = "https://github.com/my-org",
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output")
+            };
+
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("The --github-source-org option expects an organization name, not a URL. Please provide just the organization name (e.g., 'my-org' instead of 'https://github.com/my-org').");
+        }
+
+        [Fact]
+        public void Validate_Throws_When_GithubTargetOrg_Is_Url()
+        {
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = "https://github.com/my-org",
+                Output = new FileInfo("unit-test-output")
+            };
+
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("The --github-target-org option expects an organization name, not a URL. Please provide just the organization name (e.g., 'my-org' instead of 'https://github.com/my-org').");
+        }
     }
 }
