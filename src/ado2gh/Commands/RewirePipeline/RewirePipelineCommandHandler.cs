@@ -74,7 +74,6 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
         _log.LogInformation($"ADO Organization: {testResult.AdoOrg}");
         _log.LogInformation($"ADO Team Project: {testResult.AdoTeamProject}");
         _log.LogInformation($"Pipeline Name: {testResult.PipelineName}");
-        _log.LogInformation($"Monitor Timeout: {args.MonitorTimeoutMinutes} minutes");
         _log.LogInformation($"Build Result: {testResult.Result ?? "not completed"}");
 
         if (testResult.Result == "succeeded")

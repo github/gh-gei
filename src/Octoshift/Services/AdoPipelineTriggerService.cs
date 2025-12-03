@@ -50,6 +50,9 @@ public class AdoPipelineTriggerService
         JToken originalTriggers = null,
         string targetApiUrl = null)
     {
+        ArgumentNullException.ThrowIfNull(adoOrg);
+        ArgumentNullException.ThrowIfNull(teamProject);
+
         var url = $"{_adoBaseUrl}/{adoOrg.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
 
         try
@@ -143,7 +146,8 @@ public class AdoPipelineTriggerService
             // Skip branch policy check if repository is disabled
             if (isRepositoryDisabled)
             {
-                _log.LogWarning($"Repository {adoOrg}/{teamProject}/{repoName} is disabled. Branch policy check skipped for pipeline {pipelineId}. Pipeline trigger configuration may not preserve branch policy requirements.");
+                var repoIdentifier = repoName ?? repoId ?? "unknown";
+                _log.LogWarning($"Repository {adoOrg}/{teamProject}/{repoIdentifier} is disabled. Branch policy check skipped for pipeline {pipelineId}. Pipeline trigger configuration may not preserve branch policy requirements.");
                 return false;
             }
 
@@ -531,8 +535,9 @@ public class AdoPipelineTriggerService
             // 404 typically means the repository is disabled or doesn't exist
             // Treat it as disabled to avoid further API calls
             // Log as verbose since the caller will log a more specific warning about the disabled repository
+            // Return (null, true) to indicate repository ID is unknown but repository is disabled
             _log.LogVerbose($"Repository {adoOrg}/{teamProject}/{identifier} returned 404 - likely disabled or not found.");
-            var info = (identifier, true); // Mark as disabled
+            var info = ((string)null, true); // Mark as disabled with null ID since identifier may be a name
             _repositoryCache[cacheKey] = info;
             return info;
         }
