@@ -52,6 +52,7 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
     private async Task HandleDryRun(RewirePipelineCommandArgs args)
     {
         _log.LogInformation("Starting dry-run mode: Testing pipeline rewiring to GitHub...");
+        _log.LogInformation($"Monitor timeout: {args.MonitorTimeoutMinutes} minutes");
 
         var pipelineTestArgs = new PipelineTestArgs
         {
@@ -73,6 +74,7 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
         _log.LogInformation($"ADO Organization: {testResult.AdoOrg}");
         _log.LogInformation($"ADO Team Project: {testResult.AdoTeamProject}");
         _log.LogInformation($"Pipeline Name: {testResult.PipelineName}");
+        _log.LogInformation($"Monitor Timeout: {args.MonitorTimeoutMinutes} minutes");
         _log.LogInformation($"Build Result: {testResult.Result ?? "not completed"}");
 
         if (testResult.Result == "succeeded")
@@ -103,7 +105,7 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
             var (defaultBranch, clean, checkoutSubmodules, triggers) = await _adoApi.GetPipeline(args.AdoOrg, args.AdoTeamProject, adoPipelineId);
 
             // Use the specialized service for complex trigger logic
-            await _pipelineTriggerService.RewirePipelineToGitHub(
+            var rewired = await _pipelineTriggerService.RewirePipelineToGitHub(
                 args.AdoOrg,
                 args.AdoTeamProject,
                 adoPipelineId,
@@ -116,7 +118,10 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
                 triggers,
                 args.TargetApiUrl);
 
-            _log.LogSuccess("Successfully rewired pipeline");
+            if (rewired)
+            {
+                _log.LogSuccess("Successfully rewired pipeline");
+            }
         }
         catch (HttpRequestException ex) when (ex.Message.Contains("404"))
         {

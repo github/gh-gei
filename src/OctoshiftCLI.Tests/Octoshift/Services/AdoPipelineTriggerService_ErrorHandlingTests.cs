@@ -45,11 +45,13 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             _mockAdoApi.Setup(x => x.GetAsync(pipelineUrl))
                 .ThrowsAsync(new HttpRequestException("Response status code does not indicate success: 404 (Not Found)."));
 
-            // Act & Assert - Should not throw exception, should handle gracefully
-            await _triggerService.Invoking(x => x.RewirePipelineToGitHub(
+            // Act
+            var result = await _triggerService.RewirePipelineToGitHub(
                 ADO_ORG, TEAM_PROJECT, PIPELINE_ID, defaultBranch, clean, checkoutSubmodules,
-                githubOrg, githubRepo, serviceConnectionId, null, null))
-                .Should().NotThrowAsync();
+                githubOrg, githubRepo, serviceConnectionId, null, null);
+
+            // Assert - Should return false indicating skipped
+            result.Should().BeFalse();
 
             // Verify that warning was logged
             _mockOctoLogger.Verify(x => x.LogWarning(It.Is<string>(s =>
@@ -77,11 +79,13 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             _mockAdoApi.Setup(x => x.GetAsync(pipelineUrl))
                 .ThrowsAsync(new HttpRequestException("Response status code does not indicate success: 500 (Internal Server Error)."));
 
-            // Act & Assert - Should not throw exception, should handle gracefully
-            await _triggerService.Invoking(x => x.RewirePipelineToGitHub(
+            // Act
+            var result = await _triggerService.RewirePipelineToGitHub(
                 ADO_ORG, TEAM_PROJECT, PIPELINE_ID, defaultBranch, clean, checkoutSubmodules,
-                githubOrg, githubRepo, serviceConnectionId, null, null))
-                .Should().NotThrowAsync();
+                githubOrg, githubRepo, serviceConnectionId, null, null);
+
+            // Assert - Should return false indicating skipped
+            result.Should().BeFalse();
 
             // Verify that warning was logged
             _mockOctoLogger.Verify(x => x.LogWarning(It.Is<string>(s =>
@@ -119,7 +123,7 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
 
             // Mock repository lookup for branch policy check
             var repositoryId = "repo-123";
-            var repoResponse = new { id = repositoryId, name = REPO_NAME }.ToJson();
+            var repoResponse = new { id = repositoryId, name = REPO_NAME, isDisabled = "false" }.ToJson();
             _mockAdoApi.Setup(x => x.GetAsync(repoUrl))
                 .ReturnsAsync(repoResponse);
 
@@ -130,11 +134,14 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
                 .ReturnsAsync(policies);
 
             // Act
-            await _triggerService.RewirePipelineToGitHub(
+            var result = await _triggerService.RewirePipelineToGitHub(
                 ADO_ORG, TEAM_PROJECT, PIPELINE_ID, defaultBranch, clean, checkoutSubmodules,
                 githubOrg, githubRepo, serviceConnectionId, null, null);
 
-            // Assert - Verify that PutAsync was called (pipeline was successfully rewired)
+            // Assert - Should return true indicating successful rewiring
+            result.Should().BeTrue();
+
+            // Verify that PutAsync was called (pipeline was successfully rewired)
             _mockAdoApi.Verify(x => x.PutAsync(pipelineUrl, It.IsAny<object>()), Times.Once);
 
             // Verify that no error warnings were logged

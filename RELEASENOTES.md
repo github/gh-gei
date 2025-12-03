@@ -1,1 +1,6 @@
-
+- Fixed branch policy check for classic pipelines with prefixed repository names to use repository ID directly when available, preventing 404 errors during rewiring
+- Skip branch policy checks for disabled repositories with a warning instead of attempting API calls that may fail
+- Skip pipeline rewiring entirely for disabled repositories, exiting early with an appropriate warning message
+- Fixed misleading success message that appeared even when pipeline rewiring was skipped for disabled repositories
+- Fixed monitor timeout minutes to only display when --dry-run mode is enabled, reducing confusion during regular pipeline rewiring operations
+- Check if pipeline is disabled before attempting to queue a test build, preventing 400 Bad Request errors and providing clear warning messages

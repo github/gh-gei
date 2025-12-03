@@ -22,7 +22,7 @@ public class AdoPipelineTriggerService
     private readonly string _adoBaseUrl;
 
     // Cache for repository IDs and branch policies to avoid redundant API calls
-    private readonly Dictionary<string, string> _repositoryIdCache = [];
+    private readonly Dictionary<string, (string id, bool isDisabled)> _repositoryCache = [];
     private readonly Dictionary<string, AdoBranchPolicyResponse> _branchPolicyCache = [];
 
     public AdoPipelineTriggerService(AdoApi adoApi, OctoLogger log, string adoBaseUrl)
@@ -36,7 +36,8 @@ public class AdoPipelineTriggerService
     /// Changes a pipeline's repository configuration from ADO to GitHub, applying
     /// trigger configuration based on branch policy requirements and existing settings.
     /// </summary>
-    public virtual async Task RewirePipelineToGitHub(
+    /// <returns>True if the pipeline was successfully rewired, false if it was skipped.</returns>
+    public virtual async Task<bool> RewirePipelineToGitHub(
         string adoOrg,
         string teamProject,
         int pipelineId,
@@ -56,52 +57,93 @@ public class AdoPipelineTriggerService
             var response = await _adoApi.GetAsync(url);
             var data = JObject.Parse(response);
 
-            var newRepo = CreateGitHubRepositoryConfiguration(githubOrg, githubRepo, defaultBranch, clean, checkoutSubmodules, connectedServiceId, targetApiUrl);
             var currentRepoName = data["repository"]?["name"]?.ToString();
-            var isPipelineRequiredByBranchPolicy = await IsPipelineRequiredByBranchPolicy(adoOrg, teamProject, currentRepoName, pipelineId);
+            var currentRepoId = data["repository"]?["id"]?.ToString();
+
+            // Check if repository is disabled - skip rewiring if it is
+            if (!string.IsNullOrEmpty(currentRepoId) || !string.IsNullOrEmpty(currentRepoName))
+            {
+                var identifier = !string.IsNullOrEmpty(currentRepoId) ? currentRepoId : currentRepoName;
+                var (_, isDisabled) = await GetRepositoryInfoWithCache(adoOrg, teamProject, currentRepoId, currentRepoName);
+
+                if (isDisabled)
+                {
+                    _log.LogWarning($"Repository {adoOrg}/{teamProject}/{identifier} is disabled. Skipping pipeline rewiring for pipeline {pipelineId}.");
+                    return false;
+                }
+            }
+
+            var newRepo = CreateGitHubRepositoryConfiguration(githubOrg, githubRepo, defaultBranch, clean, checkoutSubmodules, connectedServiceId, targetApiUrl);
+            var isPipelineRequiredByBranchPolicy = await IsPipelineRequiredByBranchPolicy(adoOrg, teamProject, currentRepoName, currentRepoId, pipelineId);
 
             LogBranchPolicyCheckResults(pipelineId, isPipelineRequiredByBranchPolicy);
 
             var payload = BuildPipelinePayload(data, newRepo, originalTriggers, isPipelineRequiredByBranchPolicy);
 
             await _adoApi.PutAsync(url, payload.ToObject(typeof(object)));
+            return true;
         }
         catch (HttpRequestException ex) when (ex.Message.Contains("404"))
         {
             // Pipeline not found - log warning and skip
             _log.LogWarning($"Pipeline {pipelineId} not found in {adoOrg}/{teamProject}. Skipping pipeline rewiring.");
-            return;
+            return false;
         }
         catch (HttpRequestException ex)
         {
             // Other HTTP errors during pipeline retrieval
             _log.LogWarning($"HTTP error retrieving pipeline {pipelineId} in {adoOrg}/{teamProject}: {ex.Message}. Skipping pipeline rewiring.");
-            return;
+            return false;
         }
     }
 
     /// <summary>
     /// Analyzes branch policies to determine if a pipeline is required for branch protection.
     /// </summary>
-    public async Task<bool> IsPipelineRequiredByBranchPolicy(string adoOrg, string teamProject, string repoName, int pipelineId)
+    public async Task<bool> IsPipelineRequiredByBranchPolicy(string adoOrg, string teamProject, string repoName, string repoId, int pipelineId)
     {
         ArgumentNullException.ThrowIfNull(adoOrg);
         ArgumentNullException.ThrowIfNull(teamProject);
 
-        if (string.IsNullOrEmpty(repoName))
+        if (string.IsNullOrEmpty(repoName) && string.IsNullOrEmpty(repoId))
         {
-            _log.LogWarning($"Branch policy check skipped for pipeline {pipelineId} - repository name not available. Pipeline trigger configuration may not preserve branch policy requirements.");
+            _log.LogWarning($"Branch policy check skipped for pipeline {pipelineId} - repository name and ID not available. Pipeline trigger configuration may not preserve branch policy requirements.");
             return false;
         }
 
         try
         {
-            // Get repository information first (with caching)
-            var repositoryId = await GetRepositoryIdWithCache(adoOrg, teamProject, repoName);
+            // Use repository ID directly if available, otherwise look it up by name
+            string repositoryId;
+            var isRepositoryDisabled = false;
 
-            if (string.IsNullOrEmpty(repositoryId))
+            if (!string.IsNullOrEmpty(repoId))
             {
-                _log.LogWarning($"Repository ID not found for {adoOrg}/{teamProject}/{repoName}. Branch policy check cannot be performed for pipeline {pipelineId}.");
+                _log.LogVerbose($"Using repository ID from pipeline definition for branch policy check: {repoId}");
+                repositoryId = repoId;
+
+                // Check if repository is disabled by fetching its details
+                var (_, disabled) = await GetRepositoryInfoWithCache(adoOrg, teamProject, repoId, repoName);
+                isRepositoryDisabled = disabled;
+            }
+            else
+            {
+                // Get repository information by name (with caching)
+                var (id, disabled) = await GetRepositoryInfoWithCache(adoOrg, teamProject, null, repoName);
+                repositoryId = id;
+                isRepositoryDisabled = disabled;
+
+                if (string.IsNullOrEmpty(repositoryId))
+                {
+                    _log.LogWarning($"Repository ID not found for {adoOrg}/{teamProject}/{repoName}. Branch policy check cannot be performed for pipeline {pipelineId}.");
+                    return false;
+                }
+            }
+
+            // Skip branch policy check if repository is disabled
+            if (isRepositoryDisabled)
+            {
+                _log.LogWarning($"Repository {adoOrg}/{teamProject}/{repoName} is disabled. Branch policy check skipped for pipeline {pipelineId}. Pipeline trigger configuration may not preserve branch policy requirements.");
                 return false;
             }
 
@@ -451,51 +493,65 @@ public class AdoPipelineTriggerService
     #region Private Helper Methods - Caching
 
     /// <summary>
-    /// Gets the repository ID with caching to avoid redundant API calls for the same repository.
+    /// Gets the repository information (ID and disabled status) with caching to avoid redundant API calls for the same repository.
     /// </summary>
-    private async Task<string> GetRepositoryIdWithCache(string adoOrg, string teamProject, string repoName)
+    private async Task<(string id, bool isDisabled)> GetRepositoryInfoWithCache(string adoOrg, string teamProject, string repoId, string repoName)
     {
-        var cacheKey = $"{adoOrg.ToUpper()}/{teamProject.ToUpper()}/{repoName.ToUpper()}";
+        var identifier = !string.IsNullOrEmpty(repoId) ? repoId : repoName;
+        var cacheKey = $"{adoOrg.ToUpper()}/{teamProject.ToUpper()}/{identifier.ToUpper()}";
 
-        if (_repositoryIdCache.TryGetValue(cacheKey, out var cachedId))
+        if (_repositoryCache.TryGetValue(cacheKey, out var cachedInfo))
         {
-            _log.LogVerbose($"Using cached repository ID for {adoOrg}/{teamProject}/{repoName}");
-            return cachedId;
+            _log.LogVerbose($"Using cached repository information for {adoOrg}/{teamProject}/{identifier}");
+            return cachedInfo;
         }
 
-        _log.LogVerbose($"Fetching repository ID for {adoOrg}/{teamProject}/{repoName}");
+        _log.LogVerbose($"Fetching repository information for {adoOrg}/{teamProject}/{identifier}");
 
         try
         {
-            var repoUrl = $"{_adoBaseUrl}/{adoOrg.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/git/repositories/{repoName.EscapeDataString()}?api-version=6.0";
+            var repoUrl = $"{_adoBaseUrl}/{adoOrg.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/git/repositories/{identifier.EscapeDataString()}?api-version=6.0";
             var repoResponse = await _adoApi.GetAsync(repoUrl);
             var repoData = JObject.Parse(repoResponse);
             var repositoryId = repoData["id"]?.ToString();
+            var isDisabled = repoData["isDisabled"]?.ToString().Equals("true", StringComparison.OrdinalIgnoreCase) ?? false;
 
             if (!string.IsNullOrEmpty(repositoryId))
             {
-                _repositoryIdCache[cacheKey] = repositoryId;
-                _log.LogVerbose($"Cached repository ID {repositoryId} for {adoOrg}/{teamProject}/{repoName}");
+                var info = (repositoryId, isDisabled);
+                _repositoryCache[cacheKey] = info;
+                _log.LogVerbose($"Cached repository information (ID: {repositoryId}, Disabled: {isDisabled}) for {adoOrg}/{teamProject}/{identifier}");
+                return info;
             }
 
-            return repositoryId;
+            return (null, false);
+        }
+        catch (HttpRequestException ex) when (ex.Message.Contains("404"))
+        {
+            // 404 typically means the repository is disabled or doesn't exist
+            // Treat it as disabled to avoid further API calls
+            // Log as verbose since the caller will log a more specific warning about the disabled repository
+            _log.LogVerbose($"Repository {adoOrg}/{teamProject}/{identifier} returned 404 - likely disabled or not found.");
+            var info = (identifier, true); // Mark as disabled
+            _repositoryCache[cacheKey] = info;
+            return info;
         }
         catch (HttpRequestException ex)
         {
             // Don't cache failed requests - let the caller handle the error
-            _log.LogVerbose($"Failed to fetch repository ID for {adoOrg}/{teamProject}/{repoName}: {ex.Message}");
+            _log.LogVerbose($"Failed to fetch repository information for {adoOrg}/{teamProject}/{identifier}: {ex.Message}");
             throw;
         }
         catch (TaskCanceledException ex)
         {
             // Don't cache timeouts - let the caller handle the error
-            _log.LogVerbose($"Timeout fetching repository ID for {adoOrg}/{teamProject}/{repoName}: {ex.Message}");
+            _log.LogVerbose($"Timeout fetching repository information for {adoOrg}/{teamProject}/{identifier}: {ex.Message}");
             throw;
         }
         catch (JsonException ex)
         {
             // Don't cache JSON parsing errors - let the caller handle the error
-            _log.LogVerbose($"JSON parsing error for repository {adoOrg}/{teamProject}/{repoName}: {ex.Message}");
+            _log.LogVerbose($"JSON parsing error for repository {adoOrg}/{teamProject}/{identifier}: {ex.Message}");
             throw;
         }
     }
