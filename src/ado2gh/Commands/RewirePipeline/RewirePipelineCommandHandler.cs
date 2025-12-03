@@ -131,7 +131,7 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
         }
         catch (ArgumentException ex) when (ex.ParamName == "pipeline")
         {
-            // Pipeline lookup failed - log error and fail gracefully  
+            // Pipeline lookup failed - log error and fail gracefully
             _log.LogError($"Pipeline lookup failed: {ex.Message}");
             throw new OctoshiftCliException($"Unable to find the specified pipeline. Please verify the pipeline name and try again.");
         }
