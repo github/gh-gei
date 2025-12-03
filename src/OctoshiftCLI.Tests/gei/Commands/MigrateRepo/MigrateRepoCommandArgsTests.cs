@@ -378,4 +378,3 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         }
     }
 }
-

@@ -20,7 +20,7 @@ public class ReclaimMannequinCommandArgs : CommandArgs
     {
         if (GithubOrg.IsUrl())
         {
-            throw new OctoshiftCliException($"The --github-org option expects an organization name, not a URL. Please provide just the organization name (e.g., 'my-org' instead of 'https://github.com/my-org').");
+            throw new OctoshiftCliException("The --github-org option expects an organization name, not a URL. Please provide just the organization name (e.g., 'my-org' instead of 'https://github.com/my-org').");
         }
 
         if (string.IsNullOrEmpty(Csv) && (string.IsNullOrEmpty(MannequinUser) || string.IsNullOrEmpty(TargetUser)))

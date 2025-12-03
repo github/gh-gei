@@ -83,4 +83,3 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateOrg
         }
     }
 }
-

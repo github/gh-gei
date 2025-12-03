@@ -18,12 +18,12 @@ public class DownloadLogsCommandArgs : CommandArgs
     {
         if (GithubOrg.IsUrl())
         {
-            throw new OctoshiftCliException($"The --github-org option expects an organization name, not a URL. Please provide just the organization name (e.g., 'my-org' instead of 'https://github.com/my-org').");
+            throw new OctoshiftCliException("The --github-org option expects an organization name, not a URL. Please provide just the organization name (e.g., 'my-org' instead of 'https://github.com/my-org').");
         }
 
         if (GithubRepo.IsUrl())
         {
-            throw new OctoshiftCliException($"The --github-repo option expects a repository name, not a URL. Please provide just the repository name (e.g., 'my-repo' instead of 'https://github.com/my-org/my-repo').");
+            throw new OctoshiftCliException("The --github-repo option expects a repository name, not a URL. Please provide just the repository name (e.g., 'my-repo' instead of 'https://github.com/my-org/my-repo').");
         }
     }
 }

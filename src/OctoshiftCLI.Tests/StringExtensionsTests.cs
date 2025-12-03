@@ -41,4 +41,3 @@ namespace OctoshiftCLI.Tests
         }
     }
 }
-
