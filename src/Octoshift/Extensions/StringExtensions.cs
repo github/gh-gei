@@ -26,5 +26,34 @@ namespace OctoshiftCLI.Extensions
         public static string EscapeDataString(this string value) => Uri.EscapeDataString(value);
 
         public static byte[] ToBytes(this string s) => Encoding.UTF8.GetBytes(s);
+        
+        public static bool IsUrl(this string s)
+        {
+            if (s.IsNullOrWhiteSpace())
+            {
+                return false;
+            }
+
+            // Check if string starts with http:// or https://
+            if (s.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                s.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            // Check if string contains common URL patterns like domain.com/path or www.
+            if (s.Contains("://") || s.StartsWith("www.", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            // Check if it looks like a URL path (contains / and .)
+            if (s.Contains('/') && s.Contains('.'))
+            {
+                return true;
+            }
+
+            return false;
+        }
     }
 }

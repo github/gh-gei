@@ -21,6 +21,26 @@ public class MigrateCodeScanningAlertsCommandArgs : CommandArgs
 
     public override void Validate(OctoLogger log)
     {
+        if (SourceOrg.IsUrl())
+        {
+            throw new OctoshiftCliException($"The --source-org option expects an organization name, not a URL. Please provide just the organization name (e.g., 'my-org' instead of 'https://github.com/my-org').");
+        }
+
+        if (TargetOrg.IsUrl())
+        {
+            throw new OctoshiftCliException($"The --target-org option expects an organization name, not a URL. Please provide just the organization name (e.g., 'my-org' instead of 'https://github.com/my-org').");
+        }
+
+        if (SourceRepo.IsUrl())
+        {
+            throw new OctoshiftCliException($"The --source-repo option expects a repository name, not a URL. Please provide just the repository name (e.g., 'my-repo' instead of 'https://github.com/my-org/my-repo').");
+        }
+
+        if (TargetRepo.IsUrl())
+        {
+            throw new OctoshiftCliException($"The --target-repo option expects a repository name, not a URL. Please provide just the repository name (e.g., 'my-repo' instead of 'https://github.com/my-org/my-repo').");
+        }
+
         if (SourceRepo.HasValue() && TargetRepo.IsNullOrWhiteSpace())
         {
             TargetRepo = SourceRepo;
