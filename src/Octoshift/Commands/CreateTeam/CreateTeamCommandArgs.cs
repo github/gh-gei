@@ -1,5 +1,4 @@
-﻿using OctoshiftCLI.Commands;
-using OctoshiftCLI.Extensions;
+﻿using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.Commands.CreateTeam;

@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using OctoshiftCLI.Commands;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
 

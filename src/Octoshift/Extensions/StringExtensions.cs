@@ -26,7 +26,7 @@ namespace OctoshiftCLI.Extensions
         public static string EscapeDataString(this string value) => Uri.EscapeDataString(value);
 
         public static byte[] ToBytes(this string s) => Encoding.UTF8.GetBytes(s);
-        
+
         public static bool IsUrl(this string s)
         {
             if (s.IsNullOrWhiteSpace())
@@ -48,12 +48,7 @@ namespace OctoshiftCLI.Extensions
             }
 
             // Check if it looks like a URL path (contains / and .)
-            if (s.Contains('/') && s.Contains('.'))
-            {
-                return true;
-            }
-
-            return false;
+            return s.Contains('/') && s.Contains('.');
         }
     }
 }
