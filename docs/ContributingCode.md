@@ -23,8 +23,20 @@ For unit testing we use XUnit.Net and Moq.
 
 Pretty much all code should be covered by unit tests. Any new code should come with appropriate unit tests in the same PR.
 
+Run tests with `just`:
+
+```shellsession
+just test
+```
+
 ### Integration Tests
 In addition there are a small number of End-to-End integration tests (still a work in progress), that will run actual migrations against ADO/GitHub.
+
+Run tests with `just`:
+
+```shellsession
+just test-integration
+```
 
 **WARNING:** Running the integration tests locally will crash any CI integration test actions that are in progress and result in unexpected behavior, so wait until any in progress actions finish first.
 
@@ -52,7 +64,7 @@ In addition there are a small number of End-to-End integration tests (still a wo
     ```
 4. Run the integration tests, either use the Test Runner in Visual Studio, or run the command:
     ```
-    dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj
+    just test-integration
     ```
 
 Running e2e tests locally isn't supported yet, to run these you can create a draft PR.
@@ -63,23 +75,23 @@ There are 3 types of static analysis that are enforced on every PR:
 
 2. CodeQL - This is run on every PR and checks for any potential security or quality issues in the code. As with the Roslyn analyzers we have defaulted to turning on most rules, and will turn some off over time if needed. CodeQL rules can be turned off in .github/codeql/csharp-custom-queries.qls. It should possible to run CodeQL locally by following [this guide](https://codeql.github.com/docs/codeql-cli/getting-started-with-the-codeql-cli/). In the future we will setup a Codespaces container that makes this easier to get going. You can also create a draft PR to run a CodeQL scan.
 
-3. dotnet format - This is a style/formatting check. To ensure we follow consistent code formatting you should run `dotnet format` locally before creating a PR. If the PR build fails on dotnet format it's almost certainly because you didn't run dotnet format before committing.
+3. just format - This is a style/formatting check. To ensure we follow consistent code formatting you should run `just format` locally before creating a PR. If the PR build fails on dotnet format it's almost certainly because you didn't run dotnet format before committing.
 
 ## Publishing a Release
-Only repo maintainers can publish a release. The process is kicked off by pushing a tag in the format `v0.7`. We follow [Semantic Versioning](https://semver.org/) when deciding on the next version number.
+Only repo maintainers can publish a release. The process is kicked off by pushing a tag in the format `v1.18.0`. We follow [Semantic Versioning](https://semver.org/) when deciding on the next version number.
 
 ### How to publish a release
 
-1. Check [`RELEASENOTES.md`](http://releasenotes.md/) to see if there is anything to release.
+1. Check [`RELEASENOTES.md`](/RELEASENOTES.md) to see if there is anything to release.
 2. Switch to the `main` branch and `pull` the latest.
 3. *optional* List the tags e.g. `git tag`
-4. Tag the version e.g. `git tag v5.0`
+4. Tag the version e.g. `git tag v1.18.0`
 5. Push the tags up e.g. `git push --tags`
 6. This will trigger an Actions workflow that results in a new release being published, once the build is done it will wait for approval(from maintainers) in order to `pushlish` the binaries. The workflow does the following steps:
     - Validates that the SHA referenced by the tag is in the history of the `main` branch
     - Runs `publish.ps1` to build self-contained binaries for each platform. This script also embeds the version number (extracted from the tag) into each binary.
-    - Creates a release in this repo with the self-contained binaries, uses the contents of `RELEASENOTES.md` as the release description.
-    - Moves the contents of `[RELEASENOTES.md](http://RELEASENOTES.md)` to a version specific file under the name of the created `tag` in the releasenotes folder, then empties out `RELEASENOTES.md` and commits the 2 files.
+    - Creates a release in this repo with the self-contained binaries, uses the contents of [`RELEASENOTES.md`](/RELEASENOTES.md) as the release description.
+    - Moves the contents of [`RELEASENOTES.md`](/RELEASENOTES.md) to a version specific file under the name of the created `tag` in the releasenotes folder, then empties out [`RELEASENOTES.md`](/RELEASENOTES.md) and commits the 2 files.
 
 ## Development Basics
 
@@ -89,12 +101,12 @@ Check out `publish.ps1` to see how binaries are built for this repo for various 
 
 Build with:
 ```bash
-dotnet build src/OctoshiftCLI.sln
+just build
 ```
 
 Alternatively, you can use for gei
 ```bash
- dotnet watch build --project  src/gei/gei.csproj
+just watch-gei
 ```
 to run builds automatically.
 - If you're doing this, you can run the binaries with `./src/gei/bin/Debug/net8.0/gei`
@@ -106,12 +118,12 @@ dotnet run --project src/gei/gei.csproj
 
 Run tests with
 ```bash
-dotnet test src/OctoshiftCLI.Tests/OctoshiftCLI.Tests.csproj
+just test
 ```
 
 Format your files locally with:
 ```bash
-dotnet format src/OctoshiftCLI.sln
+just format
 ```
 
 ### Good to Knows

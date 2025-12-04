@@ -6,11 +6,11 @@ using FluentAssertions;
 using Moq;
 using Moq.Protected;
 using OctoshiftCLI.Contracts;
-using OctoshiftCLI.GithubEnterpriseImporter.Factories;
+using OctoshiftCLI.Factories;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Factories;
+namespace OctoshiftCLI.Tests.Octoshift.Factories;
 
 public class GithubApiFactoryTests
 {
@@ -270,5 +270,59 @@ public class GithubApiFactoryTests
             Times.Once(),
             ItExpr.Is<HttpRequestMessage>(msg => msg.RequestUri.AbsoluteUri.StartsWith("https://api.github.com")),
             ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact]
+    public void Create_Should_Create_Github_Api_With_Github_Pat_From_Environment_If_Not_Provided()
+    {
+        // Arrange
+        var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
+        environmentVariableProviderMock.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(TARGET_GH_PAT);
+
+        using var httpClient = new HttpClient();
+
+        var mockHttpClientFactory = new Mock<IHttpClientFactory>();
+        mockHttpClientFactory
+            .Setup(x => x.CreateClient("Default"))
+            .Returns(httpClient);
+
+        // Act
+        var factory = new GithubApiFactory(null, mockHttpClientFactory.Object, environmentVariableProviderMock.Object, null, null, null);
+        var targetFactory = (ITargetGithubApiFactory)factory;
+        var result = targetFactory.Create();
+
+        // Assert
+        result.Should().NotBeNull();
+        httpClient.DefaultRequestHeaders.Authorization.Parameter.Should().Be(TARGET_GH_PAT);
+        httpClient.DefaultRequestHeaders.Authorization.Scheme.Should().Be("Bearer");
+
+        environmentVariableProviderMock.Verify(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()));
+    }
+
+    [Fact]
+    public void Create_Should_Create_Github_Api_With_Provided_Github_Pat()
+    {
+        // Arrange
+        var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
+        environmentVariableProviderMock.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(TARGET_GH_PAT);
+
+        using var httpClient = new HttpClient();
+
+        var mockHttpClientFactory = new Mock<IHttpClientFactory>();
+        mockHttpClientFactory
+            .Setup(x => x.CreateClient("Default"))
+            .Returns(httpClient);
+
+        // Act
+        var factory = new GithubApiFactory(null, mockHttpClientFactory.Object, environmentVariableProviderMock.Object, null, null, null);
+        var targetFactory = (ITargetGithubApiFactory)factory;
+        var result = targetFactory.Create(targetPersonalAccessToken: TARGET_GH_PAT);
+
+        // Assert
+        result.Should().NotBeNull();
+        httpClient.DefaultRequestHeaders.Authorization.Parameter.Should().Be(TARGET_GH_PAT);
+        httpClient.DefaultRequestHeaders.Authorization.Scheme.Should().Be("Bearer");
+
+        environmentVariableProviderMock.Verify(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()), Times.Never);
     }
 }

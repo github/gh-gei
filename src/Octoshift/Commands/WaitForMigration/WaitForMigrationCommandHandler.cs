@@ -9,7 +9,7 @@ namespace OctoshiftCLI.Commands.WaitForMigration;
 
 public class WaitForMigrationCommandHandler : ICommandHandler<WaitForMigrationCommandArgs>
 {
-    internal int WaitIntervalInSeconds = 10;
+    internal int WaitIntervalInSeconds = 60;
 
     private readonly OctoLogger _log;
     private readonly GithubApi _githubApi;

@@ -39,6 +39,6 @@ public class GenerateMannequinCsvCommandBaseTests
 
         _command.BuildHandler(args, _serviceProvider);
 
-        _mockGithubApiFactory.Verify(m => m.Create(targetApiUrl, null));
+        _mockGithubApiFactory.Verify(m => m.Create(targetApiUrl, null, null));
     }
 }

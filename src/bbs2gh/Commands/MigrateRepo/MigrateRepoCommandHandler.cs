@@ -19,7 +19,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private readonly IBbsArchiveDownloader _bbsArchiveDownloader;
     private readonly FileSystemProvider _fileSystemProvider;
     private readonly WarningsCountLogger _warningsCountLogger;
-    private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000;
+    private const int CHECK_EXPORT_STATUS_DELAY_IN_MILLISECONDS = 10000;
+    private const int CHECK_MIGRATION_STATUS_DELAY_IN_MILLISECONDS = 60000;
 
     public MigrateRepoCommandHandler(
         OctoLogger log,
@@ -89,6 +90,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             {
                 args.ArchivePath = GetSourceExportArchiveAbsolutePath(args.BbsSharedHome, exportId);
             }
+
+            _log.LogInformation($"Archive path: {args.ArchivePath}");
 
             try
             {
@@ -170,7 +173,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         while (ExportState.IsInProgress(exportState))
         {
             _log.LogInformation($"Export status: {exportState}; {exportProgress}% complete");
-            await Task.Delay(CHECK_STATUS_DELAY_IN_MILLISECONDS);
+            await Task.Delay(CHECK_EXPORT_STATUS_DELAY_IN_MILLISECONDS);
             (exportState, exportMessage, exportProgress) = await _bbsApi.GetExport(exportId);
         }
 
@@ -274,8 +277,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         while (RepositoryMigrationStatus.IsPending(migrationState))
         {
-            _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 10 seconds...");
-            await Task.Delay(CHECK_STATUS_DELAY_IN_MILLISECONDS);
+            _log.LogInformation($"Migration in progress (ID: {migrationId}). State: {migrationState}. Waiting 60 seconds...");
+            await Task.Delay(CHECK_MIGRATION_STATUS_DELAY_IN_MILLISECONDS);
             (migrationState, _, warningsCount, failureReason, migrationLogUrl) = await _githubApi.GetMigration(migrationId);
         }
 
@@ -338,6 +341,18 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             {
                 throw new OctoshiftCliException("Both --smb-user and --smb-password (or SMB_PASSWORD env. variable) must be specified for SMB download.");
             }
+
+            // Validate --bbs-shared-home if running on Bitbucket instance (not using SSH/SMB)
+            if (!args.ShouldDownloadArchive() && args.BbsSharedHome.HasValue() && !_fileSystemProvider.DirectoryExists(args.BbsSharedHome))
+            {
+                throw new OctoshiftCliException($"The path provided for --bbs-shared-home does not exist or is not accessible: {args.BbsSharedHome}");
+            }
+        }
+
+        // Validate --archive-path if provided
+        if (args.ArchivePath.HasValue() && !_fileSystemProvider.FileExists(args.ArchivePath))
+        {
+            throw new OctoshiftCliException($"The archive file provided with --archive-path does not exist or is not accessible: {args.ArchivePath}");
         }
 
         if (args.ShouldUploadArchive())

@@ -130,15 +130,110 @@ public class GithubApiTests
     }
 
     [Fact]
+    public async Task CreateTeam_Retries_On_500_Error_And_Returns_Existing_Team()
+    {
+        // Arrange
+        const string teamName = "TEAM_NAME";
+        const string teamId = "TEAM_ID";
+        const string teamSlug = "TEAM_SLUG";
+
+        var createUrl = $"https://api.github.com/orgs/{GITHUB_ORG}/teams";
+        var getTeamsUrl = $"https://api.github.com/orgs/{GITHUB_ORG}/teams";
+        var payload = new { name = teamName, privacy = "closed" };
+
+        // Setup for the first call to fail with 500
+        _githubClientMock
+            .SetupSequence(m => m.PostAsync(createUrl, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+            .ThrowsAsync(new HttpRequestException("Internal Server Error", null, HttpStatusCode.InternalServerError));
+
+        // Setup for GetTeams call during retry logic
+        var teamsResponse = new[]
+        {
+            new { id = teamId, name = teamName, slug = teamSlug }
+        }.ToAsyncJTokenEnumerable();
+
+        _githubClientMock
+            .Setup(m => m.GetAllAsync(getTeamsUrl, null))
+            .Returns(teamsResponse);
+
+        // Act
+        var result = await _githubApi.CreateTeam(GITHUB_ORG, teamName);
+
+        // Assert
+        result.Should().Be((teamId, teamSlug));
+        _githubClientMock.Verify(m => m.PostAsync(createUrl, It.IsAny<object>(), null), Times.Once);
+        _githubClientMock.Verify(m => m.GetAllAsync(getTeamsUrl, null), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateTeam_Retries_On_502_Error_And_Creates_Team_On_Retry()
+    {
+        // Arrange
+        const string teamName = "TEAM_NAME";
+        const string teamId = "TEAM_ID";
+        const string teamSlug = "TEAM_SLUG";
+
+        var createUrl = $"https://api.github.com/orgs/{GITHUB_ORG}/teams";
+        var getTeamsUrl = $"https://api.github.com/orgs/{GITHUB_ORG}/teams";
+        var payload = new { name = teamName, privacy = "closed" };
+
+        var successResponse = $"{{\"id\": \"{teamId}\", \"slug\": \"{teamSlug}\"}}";
+
+        // Setup for the first call to fail with 502, second call to succeed
+        _githubClientMock
+            .SetupSequence(m => m.PostAsync(createUrl, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+            .ThrowsAsync(new HttpRequestException("Bad Gateway", null, HttpStatusCode.BadGateway))
+            .ReturnsAsync(successResponse);
+
+        // Setup for GetTeams call during retry logic (team doesn't exist yet)
+        var emptyTeamsResponse = Array.Empty<JToken>().ToAsyncJTokenEnumerable();
+        _githubClientMock
+            .Setup(m => m.GetAllAsync(getTeamsUrl, null))
+            .Returns(emptyTeamsResponse);
+
+        // Act
+        var result = await _githubApi.CreateTeam(GITHUB_ORG, teamName);
+
+        // Assert
+        result.Should().Be((teamId, teamSlug));
+        _githubClientMock.Verify(m => m.PostAsync(createUrl, It.IsAny<object>(), null), Times.Exactly(2));
+        _githubClientMock.Verify(m => m.GetAllAsync(getTeamsUrl, null), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateTeam_Does_Not_Retry_On_400_Error()
+    {
+        // Arrange
+        const string teamName = "TEAM_NAME";
+
+        var createUrl = $"https://api.github.com/orgs/{GITHUB_ORG}/teams";
+        var payload = new { name = teamName, privacy = "closed" };
+
+        // Setup for the call to fail with 400 (client error)
+        _githubClientMock
+            .Setup(m => m.PostAsync(createUrl, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+            .ThrowsAsync(new HttpRequestException("Bad Request", null, HttpStatusCode.BadRequest));
+
+        // Act & Assert
+        await FluentAssertions.FluentActions
+            .Invoking(async () => await _githubApi.CreateTeam(GITHUB_ORG, teamName))
+            .Should()
+            .ThrowAsync<HttpRequestException>()
+            .Where(ex => ex.Message.Contains("Bad Request"));
+
+        _githubClientMock.Verify(m => m.PostAsync(createUrl, It.IsAny<object>(), null), Times.Once);
+    }
+
+    [Fact]
     public async Task GetTeams_Returns_All_Teams()
     {
         // Arrange
         var url = $"https://api.github.com/orgs/{GITHUB_ORG}/teams";
 
-        var team1 = (Name: "TEAM_1", Slug: "SLUG_1");
-        var team2 = (Name: "TEAM_2", Slug: "SLUG_2");
-        var team3 = (Name: "TEAM_3", Slug: "SLUG_3");
-        var team4 = (Name: "TEAM_4", Slug: "SLUG_4");
+        var team1 = (Id: "1", Name: "TEAM_1", Slug: "SLUG_1");
+        var team2 = (Id: "2", Name: "TEAM_2", Slug: "SLUG_2");
+        var team3 = (Id: "3", Name: "TEAM_3", Slug: "SLUG_3");
+        var team4 = (Id: "4", Name: "TEAM_4", Slug: "SLUG_4");
 
         var teamsResult = new[]
         {
@@ -2840,17 +2935,6 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         location = locationsArray[1];
         expectedData = JObject.Parse(alertLocation_2);
         location.Path.Should().Be((string)expectedData["details"]["path"]);
-    }
-
-    private void AssertSecretScanningData(GithubSecretScanningAlert actual, JToken expectedData)
-    {
-        actual.Number.Should().Be((int)expectedData["number"]);
-        actual.State.Should().Be((string)expectedData["state"]);
-        actual.SecretType.Should().Be((string)expectedData["secret_type"]);
-        actual.Resolution.Should().Be((string)expectedData["resolution"]);
-        actual.Secret.Should().Be((string)expectedData["secret"]);
-        actual.ResolutionComment.Should().Be((string)expectedData["resolution_comment"]);
-        actual.ResolverName.Should().Be((string)expectedData["resolved_by"]["login"]);
     }
 
     [Fact]

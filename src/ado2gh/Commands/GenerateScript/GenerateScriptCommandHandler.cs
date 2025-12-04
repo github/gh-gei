@@ -44,7 +44,6 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
             LinkIdpGroups = args.All || args.LinkIdpGroups,
             LockAdoRepos = args.All || args.LockAdoRepos,
             DisableAdoRepos = args.All || args.DisableAdoRepos,
-            IntegrateBoards = args.All || args.IntegrateBoards,
             RewirePipelines = args.All || args.RewirePipelines,
             DownloadMigrationLogs = args.All || args.DownloadMigrationLogs
         };
@@ -110,12 +109,10 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         {
             foreach (var teamProject in await _adoInspectorService.GetTeamProjects(org))
             {
-                foreach (var repo in await _adoInspectorService.GetRepos(org, teamProject))
+                foreach (var repo in (await _adoInspectorService.GetRepos(org, teamProject))
+                    .Where(repo => !seen.Add(GetGithubRepoName(teamProject, repo.Name))))
                 {
-                    if (!seen.Add(GetGithubRepoName(teamProject, repo.Name)))
-                    {
-                        _log.LogWarning($"DUPLICATE REPO NAME: {GetGithubRepoName(teamProject, repo.Name)}");
-                    }
+                    _log.LogWarning($"DUPLICATE REPO NAME: {GetGithubRepoName(teamProject, repo.Name)}");
                 }
             }
         }
@@ -169,10 +166,8 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
                     AppendLine(content, Exec(LockAdoRepoScript(adoOrg, adoTeamProject, adoRepo.Name)));
                     AppendLine(content, Exec(MigrateRepoScript(adoOrg, adoTeamProject, adoRepo.Name, githubOrg, githubRepo, true, adoServerUrl, targetApiUrl)));
                     AppendLine(content, Exec(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo.Name)));
-                    AppendLine(content, Exec(ConfigureAutolinkScript(githubOrg, githubRepo, adoOrg, adoTeamProject)));
                     AppendLine(content, Exec(AddMaintainersToGithubRepoScript(adoTeamProject, githubOrg, githubRepo)));
                     AppendLine(content, Exec(AddAdminsToGithubRepoScript(adoTeamProject, githubOrg, githubRepo)));
-                    AppendLine(content, Exec(BoardsIntegrationScript(adoOrg, adoTeamProject, githubOrg, githubRepo)));
                     AppendLine(content, Exec(DownloadMigrationLogScript(githubOrg, githubRepo, targetApiUrl)));
 
                     foreach (var adoPipeline in await _adoInspectorService.GetPipelines(adoOrg, adoTeamProject, adoRepo.Name))
@@ -274,17 +269,14 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
                     if (
                         _generateScriptOptions.CreateTeams ||
                         _generateScriptOptions.DisableAdoRepos ||
-                        _generateScriptOptions.IntegrateBoards ||
                         _generateScriptOptions.RewirePipelines ||
                         _generateScriptOptions.DownloadMigrationLogs
                     )
                     {
                         AppendLine(content, "    ExecBatch @(");
                         AppendLine(content, "        " + Wrap(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo.Name)));
-                        AppendLine(content, "        " + Wrap(ConfigureAutolinkScript(githubOrg, githubRepo, adoOrg, adoTeamProject)));
                         AppendLine(content, "        " + Wrap(AddMaintainersToGithubRepoScript(adoTeamProject, githubOrg, githubRepo)));
                         AppendLine(content, "        " + Wrap(AddAdminsToGithubRepoScript(adoTeamProject, githubOrg, githubRepo)));
-                        AppendLine(content, "        " + Wrap(BoardsIntegrationScript(adoOrg, adoTeamProject, githubOrg, githubRepo)));
                         AppendLine(content, "        " + Wrap(DownloadMigrationLogScript(githubOrg, githubRepo, targetApiUrl)));
 
                         appIds.TryGetValue(adoOrg, out var appId);
@@ -352,11 +344,6 @@ if ($Failed -ne 0) {
             ? $"gh ado2gh share-service-connection --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --service-connection-id \"{appId}\"{(_log.Verbose ? " --verbose" : string.Empty)}"
             : null;
 
-    private string ConfigureAutolinkScript(string githubOrg, string githubRepo, string adoOrg, string adoTeamProject) =>
-        _generateScriptOptions.IntegrateBoards
-            ? $"gh ado2gh configure-autolink --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\"{(_log.Verbose ? " --verbose" : string.Empty)}"
-            : null;
-
     private string MigrateRepoScript(string adoOrg, string adoTeamProject, string adoRepo, string githubOrg, string githubRepo, bool wait, string adoServerUrl, string targetApiUrl) =>
         $"gh ado2gh migrate-repo{(targetApiUrl.HasValue() ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-repo \"{adoRepo}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}{(wait ? string.Empty : " --queue-only")} --target-repo-visibility private{(adoServerUrl.HasValue() ? $" --ado-server-url \"{adoServerUrl}\"" : string.Empty)}";
 
@@ -388,11 +375,6 @@ if ($Failed -ne 0) {
             ? $"gh ado2gh rewire-pipeline --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-pipeline \"{adoPipeline}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --service-connection-id \"{appId}\"{(_log.Verbose ? " --verbose" : string.Empty)}"
             : null;
 
-    private string BoardsIntegrationScript(string adoOrg, string adoTeamProject, string githubOrg, string githubRepo) =>
-        _generateScriptOptions.IntegrateBoards
-            ? $"gh ado2gh integrate-boards --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\"{(_log.Verbose ? " --verbose" : string.Empty)}"
-            : null;
-
     private string WaitForMigrationScript(string repoMigrationKey, string targetApiUrl) => $"gh ado2gh wait-for-migration{(targetApiUrl.HasValue() ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";
 
     private string DownloadMigrationLogScript(string githubOrg, string githubRepo, string targetApiUrl) =>
@@ -415,7 +397,6 @@ if ($Failed -ne 0) {
         public bool LinkIdpGroups { get; init; }
         public bool LockAdoRepos { get; init; }
         public bool DisableAdoRepos { get; init; }
-        public bool IntegrateBoards { get; init; }
         public bool RewirePipelines { get; init; }
         public bool DownloadMigrationLogs { get; init; }
     }

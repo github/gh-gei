@@ -10,6 +10,7 @@ using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Factories;
 using OctoshiftCLI.GithubEnterpriseImporter.Factories;
+
 using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter
@@ -27,7 +28,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
             serviceCollection
                 .AddSingleton(Logger)
                 .AddSingleton<EnvironmentVariableProvider>()
-                .AddSingleton<GithubApiFactory>()
+                .AddSingleton<ISourceGithubApiFactory, GithubApiFactory>()
+                .AddSingleton<ITargetGithubApiFactory, GithubApiFactory>()
                 .AddSingleton<IBlobServiceClientFactory, BlobServiceClientFactory>()
                 .AddSingleton<IAzureApiFactory, AzureApiFactory>()
                 .AddSingleton<AwsApiFactory>()
@@ -40,8 +42,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddSingleton<DateTimeProvider>()
                 .AddSingleton<WarningsCountLogger>()
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
-                .AddSingleton<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
-                .AddSingleton<ISourceGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddSingleton<SecretScanningAlertServiceFactory>()
                 .AddSingleton<CodeScanningAlertServiceFactory>()
                 .AddSingleton<GhesVersionCheckerFactory>()

@@ -135,7 +135,7 @@ public class CodeScanningAlertServiceTests
         var processingStatus = new SarifProcessingStatus
         {
             Status = SarifProcessingStatus.Complete,
-            Errors = new Collection<string>()
+            Errors = []
         };
 
         _mockSourceGithubApi.Setup(x => x.GetCodeScanningAnalysisForRepository(SOURCE_ORG, SOURCE_REPO, "main")).ReturnsAsync(new[] { analysis1, analysis2 });
@@ -219,7 +219,7 @@ public class CodeScanningAlertServiceTests
         const string sarifResponse2 = "SARIF_RESPONSE_2";
         const string sarifResponse3 = "SARIF_RESPONSE_3";
         var processingStatus =
-            new SarifProcessingStatus { Status = SarifProcessingStatus.Complete, Errors = new Collection<string>() };
+            new SarifProcessingStatus { Status = SarifProcessingStatus.Complete, Errors = [] };
 
         _mockSourceGithubApi.Setup(x => x.GetCodeScanningAnalysisForRepository(SOURCE_ORG, SOURCE_REPO, "main")).ReturnsAsync(new[] { analysis1, analysis2, analysis3 });
         _mockTargetGithubApi.Setup(x => x.GetCodeScanningAnalysisForRepository(TARGET_ORG, TARGET_REPO, "main")).ReturnsAsync(new[] { analysis1 });
@@ -898,7 +898,7 @@ public class CodeScanningAlertServiceTests
         var processingStatus = new SarifProcessingStatus
         {
             Status = SarifProcessingStatus.Complete,
-            Errors = new Collection<string>()
+            Errors = []
         };
 
         _mockSourceGithubApi.Setup(x => x.GetCodeScanningAnalysisForRepository(SOURCE_ORG, SOURCE_REPO, "main")).ReturnsAsync(new[] { analysis1, analysis2 });

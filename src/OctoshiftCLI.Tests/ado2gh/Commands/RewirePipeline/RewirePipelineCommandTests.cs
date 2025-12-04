@@ -11,6 +11,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.RewirePipeline
     public class RewirePipelineCommandTests
     {
         private readonly Mock<AdoApiFactory> _mockAdoApiFactory = TestHelpers.CreateMock<AdoApiFactory>();
+        private readonly Mock<AdoPipelineTriggerServiceFactory> _mockAdoPipelineTriggerServiceFactory = TestHelpers.CreateMock<AdoPipelineTriggerServiceFactory>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
 
         private readonly ServiceProvider _serviceProvider;
@@ -21,7 +22,8 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.RewirePipeline
             var serviceCollection = new ServiceCollection();
             serviceCollection
                 .AddSingleton(_mockOctoLogger.Object)
-                .AddSingleton(_mockAdoApiFactory.Object);
+                .AddSingleton(_mockAdoApiFactory.Object)
+                .AddSingleton(_mockAdoPipelineTriggerServiceFactory.Object);
 
             _serviceProvider = serviceCollection.BuildServiceProvider();
         }
@@ -31,16 +33,20 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.RewirePipeline
         {
             Assert.NotNull(_command);
             Assert.Equal("rewire-pipeline", _command.Name);
-            Assert.Equal(8, _command.Options.Count);
+            Assert.Equal(12, _command.Options.Count);
 
             TestHelpers.VerifyCommandOption(_command.Options, "ado-org", true);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-team-project", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "ado-pipeline", true);
+            TestHelpers.VerifyCommandOption(_command.Options, "ado-pipeline", false); // Made optional when ID is provided
+            TestHelpers.VerifyCommandOption(_command.Options, "ado-pipeline-id", false);
             TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(_command.Options, "github-repo", true);
             TestHelpers.VerifyCommandOption(_command.Options, "service-connection-id", true);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false);
             TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "target-api-url", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "dry-run", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "monitor-timeout-minutes", false);
         }
 
         [Fact]
@@ -62,6 +68,24 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.RewirePipeline
             _command.BuildHandler(args, _serviceProvider);
 
             _mockAdoApiFactory.Verify(m => m.Create(adoPat));
+        }
+
+        [Fact]
+        public void It_Accepts_Pipeline_Id_Instead_Of_Pipeline_Name()
+        {
+            var args = new RewirePipelineCommandArgs
+            {
+                AdoOrg = "foo-org",
+                AdoTeamProject = "blah-tp",
+                AdoPipelineId = 123,
+                GithubOrg = "gh-org",
+                GithubRepo = "gh-repo",
+                ServiceConnectionId = Guid.NewGuid().ToString(),
+            };
+
+            var handler = _command.BuildHandler(args, _serviceProvider);
+
+            Assert.NotNull(handler);
         }
     }
 }
