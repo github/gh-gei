@@ -1,14 +1,24 @@
 name: Integration Tests
 
 on:
+  push:
+    branches: [main]
+    tags:
+      - "v*"
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 7 * * *"
   workflow_dispatch:
     inputs:
       pr_number:
         type: number
-        required: true
+        required: false
+        description: 'PR number (optional, for manual PR testing)'
       sha:
         type: string
-        required: true
+        required: false
+        description: 'SHA to test (optional, for manual PR testing)'
 
 permissions:
   contents: read
