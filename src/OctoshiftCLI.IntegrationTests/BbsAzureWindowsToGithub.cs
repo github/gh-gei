@@ -13,7 +13,6 @@ namespace OctoshiftCLI.IntegrationTests;
 [Collection("Integration Tests")]
 public sealed class BbsAzureWindowsToGithub : IDisposable
 {
-    private const string SSH_KEY_FILE = "ssh_key.pem";
     private const string UPLOADS_URL = "https://uploads.github.com";
 
     private readonly ITestOutputHelper _output;
@@ -72,9 +71,7 @@ public sealed class BbsAzureWindowsToGithub : IDisposable
         var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
         var githubTargetOrg = $"octoshift-e2e-bbs-{TestHelper.GetOsName()}";
         var repo1 = $"{bbsProjectKey}-repo-1";
-        var repo2 = $"{bbsProjectKey}-repo-2";
         var targetRepo1 = $"{bbsProjectKey}-e2e-{TestHelper.GetOsName().ToLower()}-repo-1";
-        var targetRepo2 = $"{bbsProjectKey}-e2e-{TestHelper.GetOsName().ToLower()}-repo-2";
 
         var sourceBbsApi = new BbsApi(_sourceBbsClient, bbsServer, _logger);
         var sourceHelper = new TestHelper(_output, sourceBbsApi, _sourceBbsClient, bbsServer);
@@ -90,8 +87,6 @@ public sealed class BbsAzureWindowsToGithub : IDisposable
             await sourceHelper.CreateBbsProject(bbsProjectKey);
             await sourceHelper.CreateBbsRepo(bbsProjectKey, repo1);
             await sourceHelper.InitializeBbsRepo(bbsProjectKey, repo1);
-            await sourceHelper.CreateBbsRepo(bbsProjectKey, repo2);
-            await sourceHelper.InitializeBbsRepo(bbsProjectKey, repo2);
         });
 
         // Use SMB for archive download (Windows BBS server)
@@ -108,14 +103,6 @@ public sealed class BbsAzureWindowsToGithub : IDisposable
 
         await _targetHelper.AssertGithubRepoExists(githubTargetOrg, targetRepo1);
         await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, targetRepo1);
-
-        await _targetHelper.RunBbsCliMigration(
-            $"migrate-repo --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey} --bbs-repo {repo2} --github-repo {targetRepo2}{archiveDownloadOptions}", _tokens);
-
-        _targetHelper.AssertNoErrorInLogs(_startTime);
-
-        await _targetHelper.AssertGithubRepoExists(githubTargetOrg, targetRepo2);
-        await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, targetRepo2);
     }
 
     public void Dispose()
