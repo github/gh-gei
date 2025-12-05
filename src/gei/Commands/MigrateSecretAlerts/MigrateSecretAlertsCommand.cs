@@ -78,10 +78,7 @@ public class MigrateSecretAlertsCommand : CommandBase<MigrateSecretAlertsCommand
             throw new ArgumentNullException(nameof(sp));
         }
 
-        var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
-        args.GithubSourcePat ??= environmentVariableProvider.SourceGithubPersonalAccessToken(false);
-        args.GithubTargetPat ??= environmentVariableProvider.TargetGithubPersonalAccessToken();
-
+        // The factory handles environment variable resolution
         if (args.GithubSourcePat.IsNullOrWhiteSpace())
         {
             args.GithubSourcePat = args.GithubTargetPat;
