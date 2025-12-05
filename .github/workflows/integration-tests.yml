@@ -34,11 +34,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
+      if: github.event.inputs.pr_number != ''
       with:
         ref: 'refs/pull/${{ github.event.inputs.pr_number }}/merge'
         fetch-depth: 0
 
+    - uses: actions/checkout@v5
+      if: github.event.inputs.pr_number == ''
+      with:
+        fetch-depth: 0
+
     - name: Check SHA
+      if: github.event.inputs.pr_number != '' && github.event.inputs.sha != ''
       run: |
         git fetch origin refs/pull/${{ github.event.inputs.pr_number }}/head:pr-head
         prsha=`git rev-parse pr-head | awk '{ print $1 }'`
@@ -133,12 +140,18 @@ jobs:
     concurrency: integration-test-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
     steps:
     - uses: actions/checkout@v5
+      if: github.event.inputs.pr_number != ''
       with:
         ref: 'refs/pull/${{ github.event.inputs.pr_number }}/merge'
         fetch-depth: 0
 
+    - uses: actions/checkout@v5
+      if: github.event.inputs.pr_number == ''
+      with:
+        fetch-depth: 0
+
     - name: Get PR Commit
-      if: always() && matrix.runner-os == 'ubuntu-latest'
+      if: always() && matrix.runner-os == 'ubuntu-latest' && github.event.inputs.pr_number != ''
       run: |
         prsha=`git ls-remote origin refs/pull/${{ github.event.inputs.pr_number }}/head | awk '{ print $1 }'`
         echo "SHA: $prsha"
