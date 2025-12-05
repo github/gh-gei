@@ -23,7 +23,7 @@ jobs:
         target-os: [windows-latest, ubuntu-latest, macos-latest]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         ref: 'refs/pull/${{ github.event.inputs.pr_number }}/merge'
         fetch-depth: 0
@@ -95,7 +95,7 @@ jobs:
     runs-on: ${{ matrix.runner-os }}
     concurrency: integration-test-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         ref: 'refs/pull/${{ github.event.inputs.pr_number }}/merge'
         fetch-depth: 0
@@ -186,8 +186,8 @@ jobs:
         ADO_SERVER_PAT: ${{ secrets.ADO_SERVER_PAT }}
         BBS_USERNAME: ${{ secrets.BBS_USERNAME }}
         BBS_PASSWORD: ${{ secrets.BBS_PASSWORD }}
-        SSH_KEY_BBS_8_5_0: ${{ secrets.SSH_KEY_BBS_8_5_0 }}
-        SSH_KEY_BBS_5_14_0: ${{ secrets.SSH_KEY_BBS_5_14_0 }}
+        SSH_KEY_BBS: ${{ secrets.SSH_KEY_BBS }}
+        SSH_PORT_BBS: ${{ secrets.SSH_PORT_BBS }}
         SMB_PASSWORD: ${{ secrets.SMB_PASSWORD }}
         AZURE_STORAGE_CONNECTION_STRING_BBS_LINUX: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_BBS_LINUX }}
         AZURE_STORAGE_CONNECTION_STRING_BBS_MACOS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_BBS_MACOS }}
