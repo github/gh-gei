@@ -22,7 +22,7 @@ jobs:
     runs-on: ${{ matrix.runner-os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - uses: extractions/setup-just@v3
@@ -35,7 +35,7 @@ jobs:
           config-file: ./.github/codeql/codeql-config.yml
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
 
@@ -52,12 +52,12 @@ jobs:
         run: just test-coverage
 
       - name: Copy Coverage To Predictable Location
-        if: always() && matrix.runner-os == 'ubuntu-latest'
+        if: always() && matrix.runner-os == 'ubuntu-latest' && matrix.language == 'csharp'
         run: cp coverage/**/coverage.cobertura.xml coverage/coverage.cobertura.xml
 
       - name: Code Coverage Summary Report
         uses: irongut/CodeCoverageSummary@v1.3.0
-        if: always() && matrix.runner-os == 'ubuntu-latest'
+        if: always() && matrix.runner-os == 'ubuntu-latest' && matrix.language == 'csharp'
         with:
           filename: coverage/coverage.cobertura.xml
           badge: true
@@ -66,7 +66,7 @@ jobs:
 
       # This is used by the subsequent publish-test-results.yml
       - name: Upload Unit Test Results
-        if: always() && matrix.runner-os == 'ubuntu-latest'
+        if: always() && matrix.runner-os == 'ubuntu-latest' && matrix.language == 'csharp'
         uses: actions/upload-artifact@v4
         with:
           name: Unit Test Results
@@ -74,7 +74,7 @@ jobs:
 
       # This is used by the subsequent publish-test-results.yml
       - name: Upload Code Coverage Report
-        if: always() && matrix.runner-os == 'ubuntu-latest'
+        if: always() && matrix.runner-os == 'ubuntu-latest' && matrix.language == 'csharp'
         uses: actions/upload-artifact@v4
         with:
           name: Code Coverage Report
@@ -102,13 +102,13 @@ jobs:
         target-os: [windows-latest, ubuntu-latest, macos-latest]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - uses: extractions/setup-just@v3
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
 
@@ -150,12 +150,12 @@ jobs:
     runs-on: ${{ matrix.runner-os }}
     concurrency: integration-test-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
 
@@ -282,9 +282,8 @@ jobs:
     environment: PUBLISH_RELEASE
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
-          persist-credentials: false
           token: ${{ secrets.RELEASE_NOTES_PAT }}
           fetch-depth: 0
 
@@ -304,7 +303,7 @@ jobs:
           }
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
 
@@ -366,7 +365,7 @@ jobs:
           $TAG_NAME | Out-File ./LATEST-VERSION.txt
 
       - name: Commit Release Notes and Version
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@28e16e81777b558cc906c8750092100bbb34c5e3
         with:
           commit_message: Automated commit of archived release notes and version file [skip ci]
           file_pattern: RELEASENOTES.md releasenotes/*.md LATEST-VERSION.txt
