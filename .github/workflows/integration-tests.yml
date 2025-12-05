@@ -1,24 +1,14 @@
 name: Integration Tests
 
 on:
-  push:
-    branches: [main]
-    tags:
-      - "v*"
-  pull_request:
-    branches: [main]
-  schedule:
-    - cron: "0 7 * * *"
   workflow_dispatch:
     inputs:
       pr_number:
         type: number
-        required: false
-        description: 'PR number (optional, for manual PR testing)'
+        required: true
       sha:
         type: string
-        required: false
-        description: 'SHA to test (optional, for manual PR testing)'
+        required: true
 
 permissions:
   contents: read
@@ -35,19 +25,18 @@ jobs:
     steps:
     - uses: actions/checkout@v5
       with:
-        ref: ${{ github.event.inputs.pr_number && format('refs/pull/{0}/merge', github.event.inputs.pr_number) || github.ref }}
+        ref: 'refs/pull/${{ github.event.inputs.pr_number }}/merge'
         fetch-depth: 0
 
     - name: Check SHA
-      if: github.event.inputs.pr_number && github.event.inputs.sha
       run: |
         git fetch origin refs/pull/${{ github.event.inputs.pr_number }}/head:pr-head
         prsha=`git rev-parse pr-head | awk '{ print $1 }'`
 
         echo "PR SHA: $prsha"
-        echo "expected SHA: ${{ github.event.inputs.sha }}"
+        echo "expected SHA: ${{ github.event.inputs.SHA }}"
 
-        if [ "$prsha" != "${{ github.event.inputs.sha }}" ]; then
+        if [ "$prsha" != "${{ github.event.inputs.SHA }}" ]; then
           echo "SHA must match" >&2
           exit 1
         fi
@@ -135,11 +124,11 @@ jobs:
     steps:
     - uses: actions/checkout@v5
       with:
-        ref: ${{ github.event.inputs.pr_number && format('refs/pull/{0}/merge', github.event.inputs.pr_number) || github.ref }}
+        ref: 'refs/pull/${{ github.event.inputs.pr_number }}/merge'
         fetch-depth: 0
 
     - name: Get PR Commit
-      if: always() && matrix.runner-os == 'ubuntu-latest' && github.event.inputs.pr_number
+      if: always() && matrix.runner-os == 'ubuntu-latest'
       run: |
         prsha=`git ls-remote origin refs/pull/${{ github.event.inputs.pr_number }}/head | awk '{ print $1 }'`
         echo "SHA: $prsha"
