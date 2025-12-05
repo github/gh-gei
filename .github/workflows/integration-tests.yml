@@ -108,34 +108,7 @@ jobs:
       fail-fast: false
       matrix:
         runner-os: [windows-latest, ubuntu-latest, macos-latest]
-        source-vcs: [AdoBasic, AdoCsv, Ghes, Github, BbsAzureLinux, BbsAzureWindows, BbsAwsLinux, BbsGithubStorage, BbsGithubMultipart]
-        exclude:
-          # Split BBS tests across different runners for parallelization instead of running all on each platform
-          # BbsAzureLinux runs on ubuntu-latest
-          - runner-os: windows-latest
-            source-vcs: BbsAzureLinux
-          - runner-os: macos-latest
-            source-vcs: BbsAzureLinux
-          # BbsAzureWindows runs on windows-latest
-          - runner-os: ubuntu-latest
-            source-vcs: BbsAzureWindows
-          - runner-os: macos-latest
-            source-vcs: BbsAzureWindows
-          # BbsAwsLinux runs on macos-latest
-          - runner-os: windows-latest
-            source-vcs: BbsAwsLinux
-          - runner-os: ubuntu-latest
-            source-vcs: BbsAwsLinux
-          # BbsGithubStorage runs on ubuntu-latest
-          - runner-os: windows-latest
-            source-vcs: BbsGithubStorage
-          - runner-os: macos-latest
-            source-vcs: BbsGithubStorage
-          # BbsGithubMultipart runs on windows-latest
-          - runner-os: ubuntu-latest
-            source-vcs: BbsGithubMultipart
-          - runner-os: macos-latest
-            source-vcs: BbsGithubMultipart
+        source-vcs: [AdoBasic, AdoCsv, Bbs, Ghes, Github]
     runs-on: ${{ matrix.runner-os }}
     concurrency: integration-test-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
     steps:
