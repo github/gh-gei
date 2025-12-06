@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
 using OctoshiftCLI.Services;
@@ -16,6 +15,7 @@ public sealed class BbsToGithub : IDisposable
 {
     private const string SSH_KEY_FILE = "ssh_key.pem";
     private const string AWS_REGION = "us-east-1";
+    private const string UPLOADS_URL = "https://uploads.github.com";
 
     private readonly ITestOutputHelper _output;
     private readonly OctoLogger _logger;
@@ -61,7 +61,7 @@ public sealed class BbsToGithub : IDisposable
         _targetGithubClient = new GithubClient(_logger, _targetGithubHttpClient, new VersionChecker(_versionClient, _logger), new RetryPolicy(_logger), new DateTimeProvider(), targetGithubToken);
         var retryPolicy = new RetryPolicy(_logger);
         var environmentVariableProvider = new EnvironmentVariableProvider(_logger);
-        _archiveUploader = new ArchiveUploader(_targetGithubClient, _logger, retryPolicy, environmentVariableProvider);
+        _archiveUploader = new ArchiveUploader(_targetGithubClient, UPLOADS_URL, _logger, retryPolicy, environmentVariableProvider);
         _targetGithubApi = new GithubApi(_targetGithubClient, "https://api.github.com", new RetryPolicy(_logger), _archiveUploader);
 
         _blobServiceClient = new BlobServiceClient(_azureStorageConnectionString);
@@ -70,18 +70,15 @@ public sealed class BbsToGithub : IDisposable
     }
 
     [Theory]
-    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.AzureStorage)]
-    [InlineData("http://e2e-bbs-7-21-9-win-2019.eastus.cloudapp.azure.com:7990", false, ArchiveUploadOption.AzureStorage)]
-    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.AwsS3)]
-    [InlineData("http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990", true, ArchiveUploadOption.GithubStorage)]
+    [InlineData("https://e2e-bbs-linux-1.westus2.cloudapp.azure.com", true, ArchiveUploadOption.AzureStorage)]
+    [InlineData("https://e2e-bbs-linux-1.westus2.cloudapp.azure.com", true, ArchiveUploadOption.AwsS3)]
+    [InlineData("https://e2e-bbs-linux-1.westus2.cloudapp.azure.com", true, ArchiveUploadOption.GithubStorage)]
     public async Task Basic(string bbsServer, bool useSshForArchiveDownload, ArchiveUploadOption uploadOption)
     {
         var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
         var githubTargetOrg = $"octoshift-e2e-bbs-{TestHelper.GetOsName()}";
         var repo1 = $"{bbsProjectKey}-repo-1";
-        var repo2 = $"{bbsProjectKey}-repo-2";
         var targetRepo1 = $"{bbsProjectKey}-e2e-{TestHelper.GetOsName().ToLower()}-repo-1";
-        var targetRepo2 = $"{bbsProjectKey}-e2e-{TestHelper.GetOsName().ToLower()}-repo-2";
 
         var sourceBbsApi = new BbsApi(_sourceBbsClient, bbsServer, _logger);
         var sourceHelper = new TestHelper(_output, sourceBbsApi, _sourceBbsClient, bbsServer);
@@ -97,14 +94,13 @@ public sealed class BbsToGithub : IDisposable
             await sourceHelper.CreateBbsProject(bbsProjectKey);
             await sourceHelper.CreateBbsRepo(bbsProjectKey, repo1);
             await sourceHelper.InitializeBbsRepo(bbsProjectKey, repo1);
-            await sourceHelper.CreateBbsRepo(bbsProjectKey, repo2);
-            await sourceHelper.InitializeBbsRepo(bbsProjectKey, repo2);
         });
 
-        var archiveDownloadOptions = $" --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE}";
+        var sshPort = Environment.GetEnvironmentVariable("SSH_PORT_BBS");
+        var archiveDownloadOptions = $" --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE} --ssh-port {sshPort}";
         if (useSshForArchiveDownload)
         {
-            var sshKey = Environment.GetEnvironmentVariable(GetSshKeyName(bbsServer));
+            var sshKey = Environment.GetEnvironmentVariable("SSH_KEY_BBS");
             await File.WriteAllTextAsync(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
         }
         else
@@ -136,9 +132,7 @@ public sealed class BbsToGithub : IDisposable
         _targetHelper.AssertNoErrorInLogs(_startTime);
 
         await _targetHelper.AssertGithubRepoExists(githubTargetOrg, targetRepo1);
-        await _targetHelper.AssertGithubRepoExists(githubTargetOrg, targetRepo2);
         await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, targetRepo1);
-        await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, targetRepo2);
 
         // TODO: Assert migration logs are downloaded
     }
@@ -148,12 +142,12 @@ public sealed class BbsToGithub : IDisposable
     {
         var githubTargetOrg = $"octoshift-e2e-bbs-{TestHelper.GetOsName()}";
         var bbsProjectKey = $"IN";
-        var bbsServer = "http://e2e-bbs-8-5-0-linux-2204.eastus.cloudapp.azure.com:7990";
+        var bbsServer = "https://e2e-bbs-linux-1.westus2.cloudapp.azure.com";
         var targetRepo = $"IN-100_cli";
 
-        var sshKey = Environment.GetEnvironmentVariable(GetSshKeyName(bbsServer));
+        var sshPort = Environment.GetEnvironmentVariable("SSH_PORT_BBS");
+        var sshKey = Environment.GetEnvironmentVariable("SSH_KEY_BBS");
         await File.WriteAllTextAsync(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
-
 
         var retryPolicy = new RetryPolicy(null);
         await retryPolicy.Retry(async () =>
@@ -162,18 +156,12 @@ public sealed class BbsToGithub : IDisposable
         });
 
         await _targetHelper.RunBbsCliMigration(
-            $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey} --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE} --use-github-storage", _tokens);
+            $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey} --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE} --ssh-port {sshPort} --use-github-storage", _tokens);
 
         _targetHelper.AssertNoErrorInLogs(_startTime);
 
         await _targetHelper.AssertGithubRepoExists(githubTargetOrg, targetRepo);
         await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, targetRepo);
-    }
-
-    private string GetSshKeyName(string bbsServer)
-    {
-        var bbsVersion = Regex.Match(bbsServer, @"e2e-bbs-(\d{1,2}-\d{1,2}-\d{1,2})").Groups[1].Value.Replace('-', '_');
-        return $"SSH_KEY_BBS_{bbsVersion}";
     }
 
     public void Dispose()

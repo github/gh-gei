@@ -11,6 +11,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
         public string GithubTargetOrg { get; set; }
         public string TargetRepo { get; set; }
         public string TargetApiUrl { get; set; }
+        public string TargetUploadsUrl { get; set; }
         public string GhesApiUrl { get; set; }
         [Secret]
         public string AzureStorageConnectionString { get; set; }

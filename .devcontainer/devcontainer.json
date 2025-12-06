@@ -1,12 +1,12 @@
 {
 	"name": "C# (.NET)",
-	"image": "mcr.microsoft.com/devcontainers/dotnet:8.0",
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
 
 	// Configure tool-specific properties.
 	"customizations": {
-		// Configure properties specific to VS Code.
-		"vscode": {	
-			// Add the IDs of extensions you want installed when the container is created.
+		"vscode": {
 			"extensions": [
 				"ms-dotnettools.csdevkit",
 				"github.copilot",
@@ -14,8 +14,10 @@
 			]
 		}
 	},
+
 	"features": {
 		"ghcr.io/devcontainers/features/github-cli:1": {}
 	},
+
 	"remoteUser": "vscode"
 }

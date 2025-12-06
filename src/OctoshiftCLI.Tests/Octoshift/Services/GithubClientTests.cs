@@ -2084,6 +2084,124 @@ query($id: ID!, $first: Int, $after: String) {
         httpClient.DefaultRequestHeaders.UserAgent.ToString().Should().Be("OctoshiftCLI");
     }
 
+    [Fact]
+    public async Task PostAsync_Handles_Secondary_Rate_Limit_With_429_Status()
+    {
+        // Arrange
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .SetupSequence<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Post),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(CreateHttpResponseFactory(
+                statusCode: HttpStatusCode.TooManyRequests,
+                content: "Too many requests",
+                headers: new[] { ("Retry-After", "1") })())
+            .ReturnsAsync(CreateHttpResponseFactory(content: "SUCCESS_RESPONSE")());
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act
+        var result = await githubClient.PostAsync("http://example.com", _rawRequestBody);
+
+        // Assert
+        result.Should().Be("SUCCESS_RESPONSE");
+        _mockOctoLogger.Verify(m => m.LogWarning(It.Is<string>(s => s.Contains("Secondary rate limit detected"))), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetAsync_Handles_Secondary_Rate_Limit_With_Forbidden_Status()
+    {
+        // Arrange
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .SetupSequence<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(CreateHttpResponseFactory(
+                statusCode: HttpStatusCode.Forbidden,
+                content: "You have triggered an abuse detection mechanism",
+                headers: new[] { ("Retry-After", "2") })())
+            .ReturnsAsync(CreateHttpResponseFactory(content: "SUCCESS_RESPONSE")());
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act
+        var result = await githubClient.GetAsync("http://example.com");
+
+        // Assert
+        result.Should().Be("SUCCESS_RESPONSE");
+        _mockOctoLogger.Verify(m => m.LogWarning("Secondary rate limit detected (attempt 1/3). Waiting 2 seconds before retrying..."), Times.Once);
+    }
+
+    [Fact]
+    public async Task SendAsync_Uses_Exponential_Backoff_When_No_Retry_Headers()
+    {
+        // Arrange
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .SetupSequence<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Patch),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(CreateHttpResponseFactory(
+                statusCode: HttpStatusCode.Forbidden,
+                content: "abuse detection mechanism")())
+            .ReturnsAsync(CreateHttpResponseFactory(
+                statusCode: HttpStatusCode.Forbidden,
+                content: "abuse detection mechanism")())
+            .ReturnsAsync(CreateHttpResponseFactory(content: "SUCCESS_RESPONSE")());
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act
+        var result = await githubClient.PatchAsync("http://example.com", _rawRequestBody);
+
+        // Assert
+        result.Should().Be("SUCCESS_RESPONSE");
+        _mockOctoLogger.Verify(m => m.LogWarning("Secondary rate limit detected (attempt 1/3). Waiting 60 seconds before retrying..."), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogWarning("Secondary rate limit detected (attempt 2/3). Waiting 120 seconds before retrying..."), Times.Once);
+    }
+
+    [Fact]
+    public async Task SendAsync_Throws_Exception_After_Max_Secondary_Rate_Limit_Retries()
+    {
+        // Arrange
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Delete),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(CreateHttpResponseFactory(
+                statusCode: HttpStatusCode.TooManyRequests,
+                content: "Too many requests")());
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act & Assert
+        await FluentActions
+            .Invoking(async () => await githubClient.DeleteAsync("http://example.com"))
+            .Should()
+            .ThrowExactlyAsync<OctoshiftCliException>()
+            .WithMessage("Secondary rate limit exceeded. Maximum retries (3) reached. Please wait before retrying your request.");
+
+        // Verify all retry attempts were logged
+        _mockOctoLogger.Verify(m => m.LogWarning("Secondary rate limit detected (attempt 1/3). Waiting 60 seconds before retrying..."), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogWarning("Secondary rate limit detected (attempt 2/3). Waiting 120 seconds before retrying..."), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogWarning("Secondary rate limit detected (attempt 3/3). Waiting 240 seconds before retrying..."), Times.Once);
+    }
+
     private object CreateRepositoryMigration(string migrationId = null, string state = RepositoryMigrationStatus.Succeeded) => new
     {
         id = migrationId ?? Guid.NewGuid().ToString(),

@@ -71,6 +71,10 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 _mockFileSystemProvider.Object,
                 _warningsCountLogger
             );
+
+            // Default setup for file system operations
+            _mockFileSystemProvider.Setup(m => m.FileExists(It.IsAny<string>())).Returns(true);
+            _mockFileSystemProvider.Setup(m => m.DirectoryExists(It.IsAny<string>())).Returns(true);
         }
 
         [Fact]
@@ -959,6 +963,117 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
                 It.IsAny<string>(),
                 targetRepoVisibility
             ));
+        }
+
+        [Fact]
+        public async Task It_Throws_When_Archive_Path_Does_Not_Exist()
+        {
+            const string nonExistentArchivePath = "/path/to/nonexistent/archive.tar";
+            _mockFileSystemProvider.Setup(m => m.FileExists(nonExistentArchivePath)).Returns(false);
+
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                ArchivePath = nonExistentArchivePath,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage($"*--archive-path*{nonExistentArchivePath}*");
+        }
+
+        [Fact]
+        public async Task It_Throws_When_Bbs_Shared_Home_Does_Not_Exist_When_Running_On_Bitbucket_Instance()
+        {
+            const string nonExistentBbsSharedHome = "/nonexistent/shared/home";
+            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
+            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
+            _mockFileSystemProvider.Setup(m => m.DirectoryExists(nonExistentBbsSharedHome)).Returns(false);
+
+            await _handler.Invoking(async x => await x.Handle(new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
+                BbsSharedHome = nonExistentBbsSharedHome
+            }))
+                .Should()
+                .ThrowAsync<OctoshiftCliException>()
+                .WithMessage($"*--bbs-shared-home*{nonExistentBbsSharedHome}*");
+        }
+
+        [Fact]
+        public async Task It_Does_Not_Validate_Bbs_Shared_Home_When_Using_Ssh()
+        {
+            const string nonExistentBbsSharedHome = "/nonexistent/shared/home";
+            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
+            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
+            _mockBbsArchiveDownloader.Setup(x => x.Download(BBS_EXPORT_ID, It.IsAny<string>())).ReturnsAsync(ARCHIVE_PATH);
+            _mockFileSystemProvider.Setup(m => m.DirectoryExists(nonExistentBbsSharedHome)).Returns(false);
+
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
+                BbsSharedHome = nonExistentBbsSharedHome,
+                SshUser = SSH_USER,
+                SshPrivateKey = PRIVATE_KEY
+            };
+
+            await _handler.Invoking(x => x.Handle(args))
+                .Should()
+                .NotThrowAsync();
+        }
+
+        [Fact]
+        public async Task It_Does_Not_Validate_Bbs_Shared_Home_When_Using_Smb()
+        {
+            const string nonExistentBbsSharedHome = "/nonexistent/shared/home";
+            _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
+            _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
+            _mockBbsArchiveDownloader.Setup(x => x.Download(BBS_EXPORT_ID, It.IsAny<string>())).ReturnsAsync(ARCHIVE_PATH);
+            _mockFileSystemProvider.Setup(m => m.DirectoryExists(nonExistentBbsSharedHome)).Returns(false);
+            _mockEnvironmentVariableProvider.Setup(m => m.SmbPassword(It.IsAny<bool>())).Returns(SMB_PASSWORD);
+
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsUsername = BBS_USERNAME,
+                BbsPassword = BBS_PASSWORD,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
+                BbsSharedHome = nonExistentBbsSharedHome,
+                SmbUser = SMB_USER
+            };
+
+            await _handler.Invoking(x => x.Handle(args))
+                .Should()
+                .NotThrowAsync();
+        }
+
+        [Fact]
+        public async Task It_Logs_Archive_Path_Before_Upload()
+        {
+            _mockFileSystemProvider.Setup(m => m.FileExists(ARCHIVE_PATH)).Returns(true);
+            _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<FileStream>())).ReturnsAsync(new Uri(ARCHIVE_URL));
+
+            var args = new MigrateRepoCommandArgs
+            {
+                ArchivePath = ARCHIVE_PATH,
+                AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                QueueOnly = true,
+            };
+
+            await _handler.Handle(args);
+            _mockOctoLogger.Verify(m => m.LogInformation($"Archive path: {ARCHIVE_PATH}"), Times.Once);
         }
     }
 }

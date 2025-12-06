@@ -47,6 +47,7 @@ public class GenerateScriptCommandHandlerTests
     private const string BBS_SHARED_HOME = "BBS-SHARED-HOME";
     private const string AWS_BUCKET_NAME = "AWS-BUCKET-NAME";
     private const string AWS_REGION = "AWS_REGION";
+    private const string UPLOADS_URL = "UPLOADS-URL";
 
     public GenerateScriptCommandHandlerTests()
     {
@@ -784,8 +785,43 @@ function Exec {
 )));
 
     }
+    [Fact]
+    public async Task BBS_Single_Repo_With_TargetUploadsUrl()
+    {
+        // Arrange
+        var TARGET_API_URL = "https://foo.com/api/v3";
+        const string BBS_PROJECT_KEY = "BBS-PROJECT";
+        const string BBS_REPO_SLUG = "repo-slug";
 
+        _mockBbsApi.Setup(m => m.GetProjects()).ReturnsAsync(new[]
+        {
+            (Id: 1, Key: BBS_PROJECT_KEY, Name: "BBS Project Name"),
+        });
+        _mockBbsApi.Setup(m => m.GetRepos(BBS_PROJECT_KEY)).ReturnsAsync(new[]
+        {
+            (Id: 1, Slug: BBS_REPO_SLUG, Name: "RepoName"),
+        });
 
+        // Act
+        var args = new GenerateScriptCommandArgs
+        {
+            BbsServerUrl = BBS_SERVER_URL,
+            GithubOrg = GITHUB_ORG,
+            Output = new FileInfo("unit-test-output"),
+            TargetApiUrl = TARGET_API_URL,
+            TargetUploadsUrl = UPLOADS_URL,
+            BbsProject = BBS_PROJECT_KEY,
+        };
+        await _handler.Handle(args);
+
+        // Assert
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script =>
+            script.Contains("--bbs-server-url \"http://bbs-server-url\"") &&
+            script.Contains("--bbs-project \"BBS-PROJECT\"") &&
+            script.Contains("--github-org \"GITHUB-ORG\"") &&
+            script.Contains("--target-uploads-url \"UPLOADS-URL\"")
+        )));
+    }
 
     private string TrimNonExecutableLines(string script, int skipFirst = 9, int skipLast = 0)
     {

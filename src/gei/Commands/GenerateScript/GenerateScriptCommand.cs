@@ -22,6 +22,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
             AddOption(GithubTargetOrg);
 
             AddOption(TargetApiUrl);
+            AddOption(TargetUploadsUrl);
             AddOption(GhesApiUrl);
             AddOption(AwsBucketName);
             AddOption(AwsRegion);
@@ -100,6 +101,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
         {
             Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
         };
+        public Option<string> TargetUploadsUrl { get; } = new(
+            name: "--target-uploads-url",
+            description: "The URL of the target uploads API, if not migrating to github.com. Defaults to https://uploads.github.com")
+        { IsHidden = true };
         public Option<bool> UseGithubStorage { get; } = new("--use-github-storage")
         {
             IsHidden = true,
@@ -125,8 +130,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
             var sourceGithubApiFactory = sp.GetRequiredService<ISourceGithubApiFactory>();
 
             var sourceGithubApi = args.GhesApiUrl.HasValue() && args.NoSslVerify ?
-                sourceGithubApiFactory.CreateClientNoSsl(args.GhesApiUrl, args.GithubSourcePat) :
-                sourceGithubApiFactory.Create(args.GhesApiUrl, args.GithubSourcePat);
+                sourceGithubApiFactory.CreateClientNoSsl(args.GhesApiUrl, args.TargetUploadsUrl, args.GithubSourcePat) :
+                sourceGithubApiFactory.Create(args.GhesApiUrl, args.TargetUploadsUrl, args.GithubSourcePat);
 
             var ghesVersionChecker = ghesVersionCheckerFactory.Create(sourceGithubApi);
 
