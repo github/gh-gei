@@ -182,6 +182,6 @@ public class ArchiveUploader
         }
 
         _streamSizeLimit = limit;
-        _log.LogInformation($"Stream size limit set to {_streamSizeLimit} bytes.");
+        _log.LogInformation($"Multipart upload part size set to {_streamSizeLimit} bytes.");
     }
 }
