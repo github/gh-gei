@@ -15,6 +15,11 @@ public class GrantMigratorRoleCommandArgs : CommandArgs
 
     public override void Validate(OctoLogger log)
     {
+        if (GithubOrg.IsUrl())
+        {
+            throw new OctoshiftCliException($"The --github-org option expects an organization name, not a URL. Please provide just the organization name (e.g., 'my-org' instead of 'https://github.com/my-org').");
+        }
+
         ActorType = ActorType?.ToUpper();
 
         if (ActorType is "TEAM" or "USER")

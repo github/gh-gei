@@ -30,5 +30,56 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateOrg
 
             args.GithubSourcePat.Should().Be(TARGET_PAT);
         }
+
+        [Fact]
+        public void Validate_Throws_When_GithubSourceOrg_Is_Url()
+        {
+            var args = new MigrateOrgCommandArgs
+            {
+                GithubSourceOrg = "https://github.com/my-org",
+                GithubTargetOrg = TARGET_ORG,
+                GithubTargetEnterprise = TARGET_ENTERPRISE,
+                GithubTargetPat = TARGET_PAT,
+            };
+
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("The --github-source-org option expects an organization name, not a URL. Please provide just the organization name (e.g., 'my-org' instead of 'https://github.com/my-org').");
+        }
+
+        [Fact]
+        public void Validate_Throws_When_GithubTargetOrg_Is_Url()
+        {
+            var args = new MigrateOrgCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = "https://github.com/my-org",
+                GithubTargetEnterprise = TARGET_ENTERPRISE,
+                GithubTargetPat = TARGET_PAT,
+            };
+
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("The --github-target-org option expects an organization name, not a URL. Please provide just the organization name (e.g., 'my-org' instead of 'https://github.com/my-org').");
+        }
+
+        [Fact]
+        public void Validate_Throws_When_GithubTargetEnterprise_Is_Url()
+        {
+            var args = new MigrateOrgCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                GithubTargetEnterprise = "https://github.com/enterprises/my-enterprise",
+                GithubTargetPat = TARGET_PAT,
+            };
+
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("The --github-target-enterprise option expects an enterprise name, not a URL. Please provide just the enterprise name (e.g., 'my-enterprise' instead of 'https://github.com/enterprises/my-enterprise').");
+        }
     }
 }
