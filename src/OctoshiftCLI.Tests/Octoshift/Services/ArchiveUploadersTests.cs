@@ -61,7 +61,7 @@ public class ArchiveUploaderTests
 
         // Assert
         archiveUploader._streamSizeLimit.Should().Be(customSize);
-        logMock.Verify(x => x.LogInformation($"Multipart upload part size set to {customSize} bytes."), Times.Once);
+        logMock.Verify(x => x.LogInformation($"Multipart upload part size set to 10 MB."), Times.Once);
     }
 
     [Fact]
@@ -191,7 +191,7 @@ public class ArchiveUploaderTests
 
         // Assert
         archiveUploader._streamSizeLimit.Should().Be(minimumSize);
-        logMock.Verify(x => x.LogInformation($"Multipart upload part size set to {minimumSize} bytes."), Times.Once);
+        logMock.Verify(x => x.LogInformation($"Multipart upload part size set to 5 MB."), Times.Once);
     }
 
     [Fact]
@@ -213,7 +213,7 @@ public class ArchiveUploaderTests
 
         // Assert
         archiveUploader._streamSizeLimit.Should().Be(largeSize);
-        logMock.Verify(x => x.LogInformation($"Multipart upload part size set to {largeSize} bytes."), Times.Once);
+        logMock.Verify(x => x.LogInformation($"Multipart upload part size set to 500 MB."), Times.Once);
     }
 
     [Fact]
