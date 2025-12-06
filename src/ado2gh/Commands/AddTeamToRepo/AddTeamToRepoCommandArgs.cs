@@ -10,5 +10,6 @@ namespace OctoshiftCLI.AdoToGithub.Commands.AddTeamToRepo
         public string Role { get; set; }
         [Secret]
         public string GithubPat { get; set; }
+        public string TargetApiUrl { get; set; }
     }
 }
