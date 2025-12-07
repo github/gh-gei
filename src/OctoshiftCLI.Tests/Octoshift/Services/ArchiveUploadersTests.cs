@@ -46,21 +46,21 @@ public class ArchiveUploaderTests
     public void Constructor_Should_Use_Valid_Environment_Variable_Value()
     {
         // Arrange
-        var customSize = 10 * 1024 * 1024; // 10 MiB
+        var customSizeMiB = 10; // 10 MiB
+        var customSizeBytes = customSizeMiB * 1024 * 1024;
         var logMock = TestHelpers.CreateMock<OctoLogger>();
-        var githubClientMock = TestHelpers.CreateMock<GithubClient>();
         var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
         var retryPolicy = new RetryPolicy(logMock.Object);
 
         environmentVariableProviderMock
-            .Setup(x => x.GithubOwnedStorageMultipartBytes(false))
-            .Returns(customSize.ToString());
+            .Setup(x => x.GithubOwnedStorageMultipartMebibytes(false))
+            .Returns(customSizeMiB.ToString());
 
         // Act
         var archiveUploader = new ArchiveUploader(_githubClientMock.Object, UPLOADS_URL, logMock.Object, retryPolicy, environmentVariableProviderMock.Object);
 
         // Assert
-        archiveUploader._streamSizeLimit.Should().Be(customSize);
+        archiveUploader._streamSizeLimit.Should().Be(customSizeBytes);
         logMock.Verify(x => x.LogInformation($"Multipart upload part size set to 10 MB."), Times.Once);
     }
 
@@ -70,12 +70,11 @@ public class ArchiveUploaderTests
         // Arrange
         var defaultSize = 100 * 1024 * 1024; // 100 MiB
         var logMock = TestHelpers.CreateMock<OctoLogger>();
-        var githubClientMock = TestHelpers.CreateMock<GithubClient>();
         var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
         var retryPolicy = new RetryPolicy(logMock.Object);
 
         environmentVariableProviderMock
-            .Setup(x => x.GithubOwnedStorageMultipartBytes(false))
+            .Setup(x => x.GithubOwnedStorageMultipartMebibytes(false))
             .Returns(() => null);
 
         // Act
@@ -91,12 +90,11 @@ public class ArchiveUploaderTests
         // Arrange
         var defaultSize = 100 * 1024 * 1024; // 100 MiB
         var logMock = TestHelpers.CreateMock<OctoLogger>();
-        var githubClientMock = TestHelpers.CreateMock<GithubClient>();
         var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
         var retryPolicy = new RetryPolicy(logMock.Object);
 
         environmentVariableProviderMock
-            .Setup(x => x.GithubOwnedStorageMultipartBytes(false))
+            .Setup(x => x.GithubOwnedStorageMultipartMebibytes(false))
             .Returns("invalid_value");
 
         // Act
@@ -112,12 +110,11 @@ public class ArchiveUploaderTests
         // Arrange
         var defaultSize = 100 * 1024 * 1024; // 100 MiB
         var logMock = TestHelpers.CreateMock<OctoLogger>();
-        var githubClientMock = TestHelpers.CreateMock<GithubClient>();
         var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
         var retryPolicy = new RetryPolicy(logMock.Object);
 
         environmentVariableProviderMock
-            .Setup(x => x.GithubOwnedStorageMultipartBytes(false))
+            .Setup(x => x.GithubOwnedStorageMultipartMebibytes(false))
             .Returns("0");
 
         // Act
@@ -133,12 +130,11 @@ public class ArchiveUploaderTests
         // Arrange
         var defaultSize = 100 * 1024 * 1024; // 100 MiB
         var logMock = TestHelpers.CreateMock<OctoLogger>();
-        var githubClientMock = TestHelpers.CreateMock<GithubClient>();
         var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
         var retryPolicy = new RetryPolicy(logMock.Object);
 
         environmentVariableProviderMock
-            .Setup(x => x.GithubOwnedStorageMultipartBytes(false))
+            .Setup(x => x.GithubOwnedStorageMultipartMebibytes(false))
             .Returns("-1000");
 
         // Act
@@ -152,45 +148,45 @@ public class ArchiveUploaderTests
     public void Constructor_Should_Use_Default_And_Log_Warning_When_Environment_Variable_Below_Minimum()
     {
         // Arrange
-        var belowMinimumSize = 1024 * 1024; // 1 MiB (below 5 MiB minimum)
-        var defaultSize = 100 * 1024 * 1024; // 100 MiB
-        var minSize = 5 * 1024 * 1024; // 5 MiB minimum
+        var belowMinimumSizeMiB = 1; // below 5 MiB minimum
+        var defaultSizeMiB = 100;
+        var defaultSizeBytes = defaultSizeMiB * 1024 * 1024;
+        var minSizeMiB = 5; // 5 MiB minimum
         var logMock = TestHelpers.CreateMock<OctoLogger>();
-        var githubClientMock = TestHelpers.CreateMock<GithubClient>();
         var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
         var retryPolicy = new RetryPolicy(logMock.Object);
 
         environmentVariableProviderMock
-            .Setup(x => x.GithubOwnedStorageMultipartBytes(false))
-            .Returns(belowMinimumSize.ToString());
+            .Setup(x => x.GithubOwnedStorageMultipartMebibytes(false))
+            .Returns(belowMinimumSizeMiB.ToString());
 
         // Act
         var archiveUploader = new ArchiveUploader(_githubClientMock.Object, UPLOADS_URL, logMock.Object, retryPolicy, environmentVariableProviderMock.Object);
 
         // Assert
-        archiveUploader._streamSizeLimit.Should().Be(defaultSize);
-        logMock.Verify(x => x.LogWarning($"GITHUB_OWNED_STORAGE_MULTIPART_BYTES is set to {belowMinimumSize} bytes, but the minimum value is {minSize} bytes. Using default value of {defaultSize} bytes."), Times.Once);
+        archiveUploader._streamSizeLimit.Should().Be(defaultSizeBytes);
+        logMock.Verify(x => x.LogWarning($"GITHUB_OWNED_STORAGE_MULTIPART_MEBIBYTES is set to {belowMinimumSizeMiB} MiB, but the minimum value is {minSizeMiB} MiB. Using default value of {defaultSizeMiB} MiB."), Times.Once);
     }
 
     [Fact]
     public void Constructor_Should_Accept_Value_Equal_To_Minimum()
     {
         // Arrange
-        var minimumSize = 5 * 1024 * 1024; // 5 MiB minimum
+        var minimumSizeMiB = 5; // 5 MiB minimum
+        var minimumSizeBytes = minimumSizeMiB * 1024 * 1024;
         var logMock = TestHelpers.CreateMock<OctoLogger>();
-        var githubClientMock = TestHelpers.CreateMock<GithubClient>();
         var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
         var retryPolicy = new RetryPolicy(logMock.Object);
 
         environmentVariableProviderMock
-            .Setup(x => x.GithubOwnedStorageMultipartBytes(false))
-            .Returns(minimumSize.ToString());
+            .Setup(x => x.GithubOwnedStorageMultipartMebibytes(false))
+            .Returns(minimumSizeMiB.ToString());
 
         // Act
         var archiveUploader = new ArchiveUploader(_githubClientMock.Object, UPLOADS_URL, logMock.Object, retryPolicy, environmentVariableProviderMock.Object);
 
         // Assert
-        archiveUploader._streamSizeLimit.Should().Be(minimumSize);
+        archiveUploader._streamSizeLimit.Should().Be(minimumSizeBytes);
         logMock.Verify(x => x.LogInformation($"Multipart upload part size set to 5 MB."), Times.Once);
     }
 
@@ -198,21 +194,21 @@ public class ArchiveUploaderTests
     public void Constructor_Should_Accept_Large_Valid_Value()
     {
         // Arrange
-        var largeSize = 500 * 1024 * 1024; // 500 MiB
+        var largeSizeMiB = 500; // 500 MiB
+        var largeSizeBytes = largeSizeMiB * 1024 * 1024;
         var logMock = TestHelpers.CreateMock<OctoLogger>();
-        var githubClientMock = TestHelpers.CreateMock<GithubClient>();
         var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
         var retryPolicy = new RetryPolicy(logMock.Object);
 
         environmentVariableProviderMock
-            .Setup(x => x.GithubOwnedStorageMultipartBytes(false))
-            .Returns(largeSize.ToString());
+            .Setup(x => x.GithubOwnedStorageMultipartMebibytes(false))
+            .Returns(largeSizeMiB.ToString());
 
         // Act
-        var archiveUploader = new ArchiveUploader(githubClientMock.Object, UPLOADS_URL, logMock.Object, retryPolicy, environmentVariableProviderMock.Object);
+        var archiveUploader = new ArchiveUploader(_githubClientMock.Object, UPLOADS_URL, logMock.Object, retryPolicy, environmentVariableProviderMock.Object);
 
         // Assert
-        archiveUploader._streamSizeLimit.Should().Be(largeSize);
+        archiveUploader._streamSizeLimit.Should().Be(largeSizeBytes);
         logMock.Verify(x => x.LogInformation($"Multipart upload part size set to 500 MB."), Times.Once);
     }
 

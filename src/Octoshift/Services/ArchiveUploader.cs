@@ -11,13 +11,15 @@ namespace OctoshiftCLI.Services;
 
 public class ArchiveUploader
 {
-    private const int MIN_MULTIPART_BYTES = 5 * 1024 * 1024; // 5 MiB minimum size for multipart upload. Don't allow overrides smaller than this.
+    private const int BYTES_PER_MEBIBYTE = 1024 * 1024;
+    private const int MIN_MULTIPART_MEBIBYTES = 5; // 5 MiB minimum size for multipart upload. Don't allow overrides smaller than this.
+    private const int DEFAULT_MULTIPART_MEBIBYTES = 100;
 
     private readonly GithubClient _client;
     private readonly string _uploadsUrl;
     private readonly OctoLogger _log;
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
-    internal int _streamSizeLimit = 100 * 1024 * 1024; // 100 MiB
+    internal int _streamSizeLimit = DEFAULT_MULTIPART_MEBIBYTES * BYTES_PER_MEBIBYTE; // 100 MiB stored in bytes
     private readonly RetryPolicy _retryPolicy;
 
     public ArchiveUploader(GithubClient client, string uploadsUrl, OctoLogger log, RetryPolicy retryPolicy, EnvironmentVariableProvider environmentVariableProvider)
@@ -169,19 +171,20 @@ public class ArchiveUploader
 
     private void SetStreamSizeLimitFromEnvironment()
     {
-        var envValue = _environmentVariableProvider.GithubOwnedStorageMultipartBytes();
-        if (!int.TryParse(envValue, out var limit) || limit <= 0)
+        var envValue = _environmentVariableProvider.GithubOwnedStorageMultipartMebibytes();
+        if (!int.TryParse(envValue, out var limitInMebibytes) || limitInMebibytes <= 0)
         {
             return;
         }
 
-        if (limit < MIN_MULTIPART_BYTES)
+        if (limitInMebibytes < MIN_MULTIPART_MEBIBYTES)
         {
-            _log.LogWarning($"GITHUB_OWNED_STORAGE_MULTIPART_BYTES is set to {limit} bytes, but the minimum value is {MIN_MULTIPART_BYTES} bytes. Using default value of {_streamSizeLimit} bytes.");
+            _log.LogWarning($"GITHUB_OWNED_STORAGE_MULTIPART_MEBIBYTES is set to {limitInMebibytes} MiB, but the minimum value is {MIN_MULTIPART_MEBIBYTES} MiB. Using default value of {DEFAULT_MULTIPART_MEBIBYTES} MiB.");
             return;
         }
 
-        _streamSizeLimit = limit;
-        _log.LogInformation($"Multipart upload part size set to {((long)_streamSizeLimit).ToLogFriendlySize()}.");
+        var limitBytes = (int)((long)limitInMebibytes * BYTES_PER_MEBIBYTE);
+        _streamSizeLimit = limitBytes;
+        _log.LogInformation($"Multipart upload part size set to {limitInMebibytes} MB.");
     }
 }
