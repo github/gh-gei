@@ -185,6 +185,6 @@ public class ArchiveUploader
 
         var limitBytes = (int)((long)limitInMebibytes * BYTES_PER_MEBIBYTE);
         _streamSizeLimit = limitBytes;
-        _log.LogInformation($"Multipart upload part size set to {limitInMebibytes} MB.");
+        _log.LogInformation($"Multipart upload part size set to {limitInMebibytes} MiB.");
     }
 }
