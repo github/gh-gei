@@ -1,1 +1,1 @@
-
+- Fixed an issue where repository existence checks would incorrectly retry on expected responses (200/404/301), causing unnecessary delays during migrations. The check now only retries on transient server errors (5xx status codes) while responding immediately to deterministic states.
