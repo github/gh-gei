@@ -36,12 +36,8 @@ jobs:
       - name: Extract PR Number
         run: |
           prnumber=$(jq -r '.pull_request.number' < 'artifacts/Event File/event.json')
-          sanitized_prnumber=$(echo "$prnumber" | grep -E '^[0-9]+$' || echo "")
-          if [ -n "$sanitized_prnumber" ]; then
-            echo "PR_NUMBER=$sanitized_prnumber" >> "$GITHUB_ENV"
-          else
-            echo "PR_NUMBER=" >> "$GITHUB_ENV"
-          fi
+          sanitized_prnumber=$(grep -E '^[0-9]+$' <<< "$prnumber")
+          echo "PR_NUMBER=$sanitized_prnumber" >> "$GITHUB_ENV"
       - name: Publish Unit Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
