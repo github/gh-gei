@@ -45,7 +45,8 @@ public class GithubClient
         }
     }
 
-    public virtual async Task<string> GetNonSuccessAsync(string url, HttpStatusCode status) => (await GetWithRetry(url, expectedStatus: status)).Content;
+    public virtual async Task<string> GetNonSuccessAsync(string url, HttpStatusCode status) =>
+        (await SendAsync(HttpMethod.Get, url, expectedStatus: status)).Content;
 
     public virtual async Task<string> GetAsync(string url, Dictionary<string, string> customHeaders = null) => (await GetWithRetry(url, customHeaders)).Content;
 

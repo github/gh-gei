@@ -1063,30 +1063,6 @@ public sealed class GithubClientTests
     }
 
     [Fact]
-    public async Task GetNonSuccessAsync_Retries_On_Non_Success()
-    {
-        // Arrange
-        var handlerMock = new Mock<HttpMessageHandler>();
-        handlerMock
-            .Protected()
-            .SetupSequence<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(CreateHttpResponseFactory(statusCode: HttpStatusCode.InternalServerError))
-            .ReturnsAsync(CreateHttpResponseFactory(statusCode: HttpStatusCode.Found, content: EXPECTED_RESPONSE_CONTENT));
-
-        using var httpClient = new HttpClient(handlerMock.Object);
-        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
-
-        // Act
-        var result = await githubClient.GetNonSuccessAsync(URL, HttpStatusCode.Found);
-
-        // Assert
-        result.Should().Be(EXPECTED_RESPONSE_CONTENT);
-    }
-
-    [Fact]
     public async Task DeleteAsync_Logs_The_Response_Status_Code_And_Content()
     {
         // Arrange
