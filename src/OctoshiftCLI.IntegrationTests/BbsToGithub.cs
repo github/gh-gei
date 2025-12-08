@@ -60,7 +60,8 @@ public sealed class BbsToGithub : IDisposable
         _targetGithubHttpClient = new HttpClient();
         _targetGithubClient = new GithubClient(_logger, _targetGithubHttpClient, new VersionChecker(_versionClient, _logger), new RetryPolicy(_logger), new DateTimeProvider(), targetGithubToken);
         var retryPolicy = new RetryPolicy(_logger);
-        _archiveUploader = new ArchiveUploader(_targetGithubClient, UPLOADS_URL, _logger, retryPolicy);
+        var environmentVariableProvider = new EnvironmentVariableProvider(_logger);
+        _archiveUploader = new ArchiveUploader(_targetGithubClient, UPLOADS_URL, _logger, retryPolicy, environmentVariableProvider);
         _targetGithubApi = new GithubApi(_targetGithubClient, "https://api.github.com", new RetryPolicy(_logger), _archiveUploader);
 
         _blobServiceClient = new BlobServiceClient(_azureStorageConnectionString);
