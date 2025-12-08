@@ -78,7 +78,7 @@ public class ArchiveUploaderTests
             .Returns(() => null);
 
         // Act
-        var archiveUploader = new ArchiveUploader(_githubClientMock.Object, UPLOADS_URL, _logMock.Object, retryPolicy, environmentVariableProviderMock.Object);
+        var archiveUploader = new ArchiveUploader(_githubClientMock.Object, UPLOADS_URL, logMock.Object, retryPolicy, environmentVariableProviderMock.Object);
 
         // Assert
         archiveUploader._streamSizeLimit.Should().Be(defaultSize);
@@ -98,7 +98,7 @@ public class ArchiveUploaderTests
             .Returns("invalid_value");
 
         // Act
-        var archiveUploader = new ArchiveUploader(_githubClientMock.Object, UPLOADS_URL, _logMock.Object, retryPolicy, environmentVariableProviderMock.Object);
+        var archiveUploader = new ArchiveUploader(_githubClientMock.Object, UPLOADS_URL, logMock.Object, retryPolicy, environmentVariableProviderMock.Object);
 
         // Assert
         archiveUploader._streamSizeLimit.Should().Be(defaultSize);
@@ -118,7 +118,7 @@ public class ArchiveUploaderTests
             .Returns("0");
 
         // Act
-        var archiveUploader = new ArchiveUploader(_githubClientMock.Object, UPLOADS_URL, _logMock.Object, retryPolicy, environmentVariableProviderMock.Object);
+        var archiveUploader = new ArchiveUploader(_githubClientMock.Object, UPLOADS_URL, logMock.Object, retryPolicy, environmentVariableProviderMock.Object);
 
         // Assert
         archiveUploader._streamSizeLimit.Should().Be(defaultSize);
@@ -138,7 +138,7 @@ public class ArchiveUploaderTests
             .Returns("-1000");
 
         // Act
-        var archiveUploader = new ArchiveUploader(_githubClientMock.Object, UPLOADS_URL, _logMock.Object, retryPolicy, environmentVariableProviderMock.Object);
+        var archiveUploader = new ArchiveUploader(_githubClientMock.Object, UPLOADS_URL, logMock.Object, retryPolicy, environmentVariableProviderMock.Object);
 
         // Assert
         archiveUploader._streamSizeLimit.Should().Be(defaultSize);
