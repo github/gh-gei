@@ -229,7 +229,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     {
         _log.LogInformation("Creating Migration Source...");
 
-        args.GithubPat ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
+        args.GithubPat ??= _environmentVariableProvider.TargetGithubPersonalAccessToken(throwIfNotFound: false);
         var githubOrgId = await _githubApi.GetOrganizationId(args.GithubOrg);
 
         try
@@ -252,7 +252,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         var bbsRepoUrl = GetBbsRepoUrl(args);
 
-        args.GithubPat ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
+        args.GithubPat ??= _environmentVariableProvider.TargetGithubPersonalAccessToken(throwIfNotFound: false);
         var githubOrgId = await _githubApi.GetOrganizationId(args.GithubOrg);
 
         string migrationId;
