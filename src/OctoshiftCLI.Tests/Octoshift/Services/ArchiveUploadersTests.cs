@@ -325,9 +325,9 @@ public class ArchiveUploaderTests
             .ThrowsAsync(new TimeoutException("The operation was canceled."))
             .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { secondUploadUrl }) }));
         _githubClientMock // second PATCH request
-             .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{secondUploadUrl}",
-                 It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 3 }.ToJson()), null))
-             .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { lastUrl }) }));
+            .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{secondUploadUrl}",
+                It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 3 }.ToJson()), null))
+            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { lastUrl }) }));
 
         // Mocking the final PUT request to complete the multipart upload
         _githubClientMock
@@ -388,7 +388,7 @@ public class ArchiveUploaderTests
         _githubClientMock // first PATCH request
             .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{firstUploadUrl}",
                 It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 1, 2 }.ToJson()), null))
-              .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { secondUploadUrl }) }));
+            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { secondUploadUrl }) }));
 
         _githubClientMock // second PATCH request
             .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{secondUploadUrl}",
@@ -452,12 +452,12 @@ public class ArchiveUploaderTests
         _githubClientMock // first PATCH request
             .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{firstUploadUrl}",
                 It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 1, 2 }.ToJson()), null))
-              .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { secondUploadUrl }) }));
+            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { secondUploadUrl }) }));
 
         _githubClientMock // second PATCH request
-             .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{secondUploadUrl}",
-                 It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 3 }.ToJson()), null))
-             .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { lastUrl }) }));
+            .Setup(m => m.PatchWithFullResponseAsync($"{baseUrl}{secondUploadUrl}",
+                It.Is<HttpContent>(x => x.ReadAsByteArrayAsync().Result.ToJson() == new byte[] { 3 }.ToJson()), null))
+            .ReturnsAsync((It.IsAny<string>(), new[] { new KeyValuePair<string, IEnumerable<string>>("Location", new[] { lastUrl }) }));
 
         // Mocking the final PUT request to complete the multipart upload
         _githubClientMock
