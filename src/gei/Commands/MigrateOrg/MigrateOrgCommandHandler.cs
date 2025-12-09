@@ -72,7 +72,7 @@ public class MigrateOrgCommandHandler : ICommandHandler<MigrateOrgCommandArgs>
     }
 
     private string GetSourceToken(MigrateOrgCommandArgs args) =>
-        args.GithubSourcePat ?? _environmentVariableProvider.SourceGithubPersonalAccessToken(throwIfNotFound: false);
+        args.GithubSourcePat ?? _environmentVariableProvider.SourceGithubPersonalAccessToken();
 
     private string GetGithubOrgUrl(string org, string baseUrl) => $"{baseUrl ?? DEFAULT_GITHUB_BASE_URL}/{org.EscapeDataString()}";
 }
