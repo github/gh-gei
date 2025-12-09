@@ -11,18 +11,26 @@ namespace OctoshiftCLI.Services;
 
 public class ArchiveUploader
 {
+    private const int BYTES_PER_MEBIBYTE = 1024 * 1024;
+    private const int MIN_MULTIPART_MEBIBYTES = 5; // 5 MiB minimum size for multipart upload. Don't allow overrides smaller than this.
+    private const int DEFAULT_MULTIPART_MEBIBYTES = 100;
+
     private readonly GithubClient _client;
     private readonly string _uploadsUrl;
     private readonly OctoLogger _log;
-    internal int _streamSizeLimit = 100 * 1024 * 1024; // 100 MiB
+    private readonly EnvironmentVariableProvider _environmentVariableProvider;
+    internal int _streamSizeLimit = DEFAULT_MULTIPART_MEBIBYTES * BYTES_PER_MEBIBYTE; // 100 MiB stored in bytes
     private readonly RetryPolicy _retryPolicy;
 
-    public ArchiveUploader(GithubClient client, string uploadsUrl, OctoLogger log, RetryPolicy retryPolicy)
+    public ArchiveUploader(GithubClient client, string uploadsUrl, OctoLogger log, RetryPolicy retryPolicy, EnvironmentVariableProvider environmentVariableProvider)
     {
         _client = client;
         _uploadsUrl = uploadsUrl;
         _log = log;
         _retryPolicy = retryPolicy;
+        _environmentVariableProvider = environmentVariableProvider;
+
+        SetStreamSizeLimitFromEnvironment();
     }
     public virtual async Task<string> Upload(Stream archiveContent, string archiveName, string orgDatabaseId)
     {
@@ -159,5 +167,24 @@ public class ArchiveUploader
             }
         }
         throw new OctoshiftCliException("Location header is missing in the response, unable to retrieve next URL for multipart upload.");
+    }
+
+    private void SetStreamSizeLimitFromEnvironment()
+    {
+        var envValue = _environmentVariableProvider.GithubOwnedStorageMultipartMebibytes();
+        if (!int.TryParse(envValue, out var limitInMebibytes) || limitInMebibytes <= 0)
+        {
+            return;
+        }
+
+        if (limitInMebibytes < MIN_MULTIPART_MEBIBYTES)
+        {
+            _log.LogWarning($"GITHUB_OWNED_STORAGE_MULTIPART_MEBIBYTES is set to {limitInMebibytes} MiB, but the minimum value is {MIN_MULTIPART_MEBIBYTES} MiB. Using default value of {DEFAULT_MULTIPART_MEBIBYTES} MiB.");
+            return;
+        }
+
+        var limitBytes = (int)((long)limitInMebibytes * BYTES_PER_MEBIBYTE);
+        _streamSizeLimit = limitBytes;
+        _log.LogInformation($"Multipart upload part size set to {limitInMebibytes} MiB.");
     }
 }
