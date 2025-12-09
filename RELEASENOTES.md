@@ -1,3 +1,2 @@
-
 - Fixed issue where alert migration commands (migrate-code-scanning-alerts, migrate-secret-alerts) required GH_PAT environment variable even when GitHub tokens were provided via command-line arguments (--github-source-pat, --github-target-pat). These commands now work correctly with CLI-only token authentication.
 - Added support for configurable multipart upload chunk size for GitHub-owned storage uploads via `GITHUB_OWNED_STORAGE_MULTIPART_MEBIBYTES` environment variable (minimum 5 MiB, default 100 MiB) to improve upload reliability in environments with proxies or slow connections
