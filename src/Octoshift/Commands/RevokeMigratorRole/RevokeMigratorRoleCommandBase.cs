@@ -10,7 +10,7 @@ public class RevokeMigratorRoleCommandBase : CommandBase<RevokeMigratorRoleComma
 {
     public RevokeMigratorRoleCommandBase() : base(
         name: "revoke-migrator-role",
-        description: "Allows an organization admin to revoke the migrator role for a USER or TEAM for a single GitHub organization. This will remove their ability to run a migration into the target organization.")
+        description: "Allows an organization owner to revoke the migrator role for a USER or TEAM for a single GitHub organization. This will remove their ability to run a migration into the target organization.")
     {
     }
 
@@ -42,7 +42,7 @@ public class RevokeMigratorRoleCommandBase : CommandBase<RevokeMigratorRoleComma
         var log = sp.GetRequiredService<OctoLogger>();
         var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
         var apiUrl = args.TargetApiUrl ?? args.GhesApiUrl;
-        var githubApi = githubApiFactory.Create(apiUrl, args.GithubPat);
+        var githubApi = githubApiFactory.Create(apiUrl, null, args.GithubPat);
 
         return new RevokeMigratorRoleCommandHandler(log, githubApi);
     }

@@ -95,6 +95,24 @@ When the CLI is launched, it logs if a newer version of the CLI is available. Yo
 
 When the CLI is launched, it logs a warning if there are any ongoing [GitHub incidents](https://www.githubstatus.com/) that might affect your use of the CLI. You can skip this check by setting the `GEI_SKIP_STATUS_CHECK` environment variable to `true`. 
 
+### Configuring multipart upload chunk size
+
+Set the `GITHUB_OWNED_STORAGE_MULTIPART_MEBIBYTES` environment variable to change the archive upload part size. Provide the value in mebibytes (MiB); For example:
+
+```powershell
+# Windows PowerShell
+$env:GITHUB_OWNED_STORAGE_MULTIPART_MEBIBYTES = "10"
+```
+
+```bash
+# macOS/Linux
+export GITHUB_OWNED_STORAGE_MULTIPART_MEBIBYTES=10
+```
+
+This sets the chunk size to 10 MiB (10,485,760 bytes). The minimum supported value is 5 MiB, and the default remains 100 MiB.
+
+This might be needed to improve upload reliability in environments with proxies or very slow connections.
+
 ## Contributions
 
 See [Contributing](CONTRIBUTING.md) for more info on how to get involved.

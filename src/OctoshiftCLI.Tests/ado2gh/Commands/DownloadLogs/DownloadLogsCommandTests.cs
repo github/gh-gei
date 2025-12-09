@@ -11,10 +11,11 @@ public class DownloadLogsCommandTests
         var command = new DownloadLogsCommand();
         Assert.NotNull(command);
         Assert.Equal("download-logs", command.Name);
-        Assert.Equal(7, command.Options.Count);
+        Assert.Equal(8, command.Options.Count);
 
-        TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
-        TestHelpers.VerifyCommandOption(command.Options, "github-repo", true);
+        TestHelpers.VerifyCommandOption(command.Options, "github-org", false);
+        TestHelpers.VerifyCommandOption(command.Options, "github-repo", false);
+        TestHelpers.VerifyCommandOption(command.Options, "migration-id", false);
         TestHelpers.VerifyCommandOption(command.Options, "github-api-url", false);
         TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
         TestHelpers.VerifyCommandOption(command.Options, "migration-log-file", false);

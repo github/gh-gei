@@ -50,6 +50,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(KeepArchive);
         AddOption(NoSslVerify);
         AddOption(TargetApiUrl);
+        AddOption(TargetUploadsUrl);
         AddOption(UseGithubStorage);
     }
 
@@ -190,13 +191,18 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
     {
         Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
     };
+    public Option<string> TargetUploadsUrl { get; } = new(
+        name: "--target-uploads-url",
+        description: "The URL of the target uploads API, if not migrating to github.com. Defaults to https://uploads.github.com")
+    { IsHidden = true };
     public Option<bool> NoSslVerify { get; } = new(
         name: "--no-ssl-verify",
         description: "Disables SSL verification when communicating with your Bitbucket Server/Data Center instance. All other migration steps will continue to verify SSL. " +
                      "If your Bitbucket instance has a self-signed SSL certificate then setting this flag will allow the migration archive to be exported.");
     public Option<bool> UseGithubStorage { get; } = new(
         name: "--use-github-storage",
-        description: "Enables multipart uploads to a GitHub owned storage for use during migration")
+        description: "Enables multipart uploads to a GitHub owned storage for use during migration. " +
+                     "Configure chunk size with the GITHUB_OWNED_STORAGE_MULTIPART_MEBIBYTES environment variable (default: 100 MiB, minimum: 5 MiB).")
     { IsHidden = true };
 
     public override MigrateRepoCommandHandler BuildHandler(MigrateRepoCommandArgs args, IServiceProvider sp)
@@ -223,7 +229,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         if (args.GithubOrg.HasValue())
         {
             var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
-            githubApi = githubApiFactory.Create(args.TargetApiUrl, args.GithubPat);
+            githubApi = githubApiFactory.Create(args.TargetApiUrl, args.TargetUploadsUrl, args.GithubPat);
         }
 
         if (args.BbsServerUrl.HasValue())

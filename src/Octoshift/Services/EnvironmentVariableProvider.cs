@@ -18,6 +18,7 @@ public class EnvironmentVariableProvider
     private const string SMB_PASSWORD = "SMB_PASSWORD";
     private const string GEI_SKIP_STATUS_CHECK = "GEI_SKIP_STATUS_CHECK";
     private const string GEI_SKIP_VERSION_CHECK = "GEI_SKIP_VERSION_CHECK";
+    private const string GITHUB_OWNED_STORAGE_MULTIPART_MEBIBYTES = "GITHUB_OWNED_STORAGE_MULTIPART_MEBIBYTES";
 
     private readonly OctoLogger _logger;
 
@@ -64,6 +65,9 @@ public class EnvironmentVariableProvider
 
     public virtual string SkipVersionCheck(bool throwIfNotFound = false) =>
         GetValue(GEI_SKIP_VERSION_CHECK, throwIfNotFound);
+
+    public virtual string GithubOwnedStorageMultipartMebibytes(bool throwIfNotFound = false) =>
+        GetValue(GITHUB_OWNED_STORAGE_MULTIPART_MEBIBYTES, throwIfNotFound);
 
     private string GetValue(string name, bool throwIfNotFound)
     {

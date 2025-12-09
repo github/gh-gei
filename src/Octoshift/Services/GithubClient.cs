@@ -22,6 +22,8 @@ public class GithubClient
 
     private const string DEFAULT_RATE_LIMIT_REMAINING = "5000";
     private const int MILLISECONDS_PER_SECOND = 1000;
+    private const int SECONDARY_RATE_LIMIT_MAX_RETRIES = 3;
+    private const int SECONDARY_RATE_LIMIT_DEFAULT_DELAY = 60; // 60 seconds default delay
 
     public GithubClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider, RetryPolicy retryPolicy, DateTimeProvider dateTimeProvider, string personalAccessToken)
     {
@@ -159,7 +161,8 @@ public class GithubClient
         string url,
         object body = null,
         HttpStatusCode expectedStatus = HttpStatusCode.OK,
-        Dictionary<string, string> customHeaders = null)
+        Dictionary<string, string> customHeaders = null,
+        int retryCount = 0)
     {
         await ApplyRetryDelayAsync();
         _log.LogVerbose($"HTTP {httpMethod}: {url}");
@@ -199,9 +202,15 @@ public class GithubClient
             SetRetryDelay(headers);
         }
 
+        // Check for secondary rate limits before handling primary rate limits
+        if (IsSecondaryRateLimit(response.StatusCode, content))
+        {
+            return await HandleSecondaryRateLimit(httpMethod, url, body, expectedStatus, customHeaders, headers, retryCount);
+        }
+
         if (response.StatusCode == HttpStatusCode.Forbidden && _retryDelay > 0)
         {
-            (content, headers) = await SendAsync(httpMethod, url, body, expectedStatus, customHeaders);
+            (content, headers) = await SendAsync(httpMethod, url, body, expectedStatus, customHeaders, retryCount);
         }
         else if (expectedStatus == HttpStatusCode.OK)
         {
@@ -279,5 +288,77 @@ public class GithubClient
             var errorMessage = error.TryGetValue("message", out var jMessage) ? (string)jMessage : null;
             throw new OctoshiftCliException($"{errorMessage ?? "UNKNOWN"}");
         }
+    }
+
+    private bool IsSecondaryRateLimit(HttpStatusCode statusCode, string content)
+    {
+        // Secondary rate limits return 403 or 429
+        if (statusCode is not HttpStatusCode.Forbidden and not HttpStatusCode.TooManyRequests)
+        {
+            return false;
+        }
+
+        // Check if this is a primary rate limit (which we handle separately)
+        if (content.ToUpper().Contains("API RATE LIMIT EXCEEDED"))
+        {
+            return false;
+        }
+
+        // Common secondary rate limit error patterns
+        var contentUpper = content.ToUpper();
+        return contentUpper.Contains("SECONDARY RATE LIMIT") ||
+               contentUpper.Contains("ABUSE DETECTION") ||
+               contentUpper.Contains("YOU HAVE TRIGGERED AN ABUSE DETECTION MECHANISM") ||
+               statusCode == HttpStatusCode.TooManyRequests;
+    }
+
+    private async Task<(string Content, KeyValuePair<string, IEnumerable<string>>[] ResponseHeaders)> HandleSecondaryRateLimit(
+        HttpMethod httpMethod,
+        string url,
+        object body,
+        HttpStatusCode expectedStatus,
+        Dictionary<string, string> customHeaders,
+        KeyValuePair<string, IEnumerable<string>>[] headers,
+        int retryCount = 0)
+    {
+        if (retryCount >= SECONDARY_RATE_LIMIT_MAX_RETRIES)
+        {
+            throw new OctoshiftCliException($"Secondary rate limit exceeded. Maximum retries ({SECONDARY_RATE_LIMIT_MAX_RETRIES}) reached. Please wait before retrying your request.");
+        }
+
+        var delaySeconds = GetSecondaryRateLimitDelay(headers, retryCount);
+
+        _log.LogWarning($"Secondary rate limit detected (attempt {retryCount + 1}/{SECONDARY_RATE_LIMIT_MAX_RETRIES}). Waiting {delaySeconds} seconds before retrying...");
+
+        await Task.Delay(delaySeconds * MILLISECONDS_PER_SECOND);
+
+        return await SendAsync(httpMethod, url, body, expectedStatus, customHeaders, retryCount + 1);
+    }
+
+    private int GetSecondaryRateLimitDelay(KeyValuePair<string, IEnumerable<string>>[] headers, int retryCount)
+    {
+        // First check for retry-after header
+        var retryAfterHeader = ExtractHeaderValue("Retry-After", headers);
+        if (!string.IsNullOrEmpty(retryAfterHeader) && int.TryParse(retryAfterHeader, out var retryAfterSeconds))
+        {
+            return retryAfterSeconds;
+        }
+
+        // Then check if x-ratelimit-remaining is 0 and use x-ratelimit-reset
+        var rateLimitRemaining = GetRateLimitRemaining(headers);
+        if (rateLimitRemaining <= 0)
+        {
+            var resetUnixSeconds = GetRateLimitReset(headers);
+            var currentUnixSeconds = _dateTimeProvider.CurrentUnixTimeSeconds();
+            var delayFromReset = (int)(resetUnixSeconds - currentUnixSeconds);
+
+            if (delayFromReset > 0)
+            {
+                return delayFromReset;
+            }
+        }
+
+        // Otherwise use exponential backoff: 1m → 2m → 4m
+        return SECONDARY_RATE_LIMIT_DEFAULT_DELAY * (int)Math.Pow(2, retryCount);
     }
 }

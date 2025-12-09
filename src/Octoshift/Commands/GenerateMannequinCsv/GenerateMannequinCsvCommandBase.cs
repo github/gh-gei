@@ -56,7 +56,7 @@ public class GenerateMannequinCsvCommandBase : CommandBase<GenerateMannequinCsvC
 
         var log = sp.GetRequiredService<OctoLogger>();
         var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
-        var githubApi = githubApiFactory.Create(args.TargetApiUrl, args.GithubPat);
+        var githubApi = githubApiFactory.Create(args.TargetApiUrl, null, args.GithubPat);
 
         return new GenerateMannequinCsvCommandHandler(log, githubApi);
     }

@@ -28,6 +28,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
         private const string REPO = "REPO";
         private const string AWS_BUCKET_NAME = "AWS_BUCKET_NAME";
         private const string AWS_REGION = "AWS_REGION";
+        private const string UPLOADS_URL = "UPLOADS-URL";
         private string _script;
 
         public GenerateScriptCommandHandlerTests()
@@ -1100,6 +1101,36 @@ if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
 
             // Assert
             _script.Should().NotContain(expected);
+        }
+
+        [Fact]
+        public async Task Sequential_Github_Single_Repo_With_TargetUploadsUrl()
+        {
+            // Arrange
+            var GHES_API_URL = "https://foo.com/api/v3";
+
+            _mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { (REPO, "private") });
+
+            var expected = $"Exec {{ gh gei migrate-repo --target-uploads-url \"{UPLOADS_URL}\" --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --ghes-api-url \"{GHES_API_URL}\" --target-repo-visibility private }}";
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                Sequential = true,
+                TargetUploadsUrl = UPLOADS_URL,
+                GhesApiUrl = GHES_API_URL,
+            };
+            await _handler.Handle(args);
+
+            _script = TrimNonExecutableLines(_script);
+
+            // Assert
+            _script.Should().Be(expected);
         }
 
         [Fact]

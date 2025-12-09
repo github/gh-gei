@@ -1,1 +1,2 @@
 - Added `--target-api-url` as an optional arg to the `add-team-to-repo`
+- Added support for configurable multipart upload chunk size for GitHub-owned storage uploads via `GITHUB_OWNED_STORAGE_MULTIPART_MEBIBYTES` environment variable (minimum 5 MiB, default 100 MiB) to improve upload reliability in environments with proxies or slow connections

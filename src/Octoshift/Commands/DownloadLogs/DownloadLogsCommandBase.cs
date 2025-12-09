@@ -18,14 +18,17 @@ public class DownloadLogsCommandBase : CommandBase<DownloadLogsCommandArgs, Down
 
     public virtual Option<string> GithubOrg { get; } = new("--github-org")
     {
-        IsRequired = true,
         Description = "GitHub organization to download logs from."
     };
 
     public virtual Option<string> GithubRepo { get; } = new("--github-repo")
     {
-        IsRequired = true,
         Description = "Target repository to download latest log for."
+    };
+
+    public virtual Option<string> MigrationId { get; } = new("--migration-id")
+    {
+        Description = "Migration ID to download logs for. If specified, --github-org and --github-repo are not required."
     };
 
     public virtual Option<string> GithubApiUrl { get; } = new("--github-api-url")
@@ -67,7 +70,7 @@ public class DownloadLogsCommandBase : CommandBase<DownloadLogsCommandArgs, Down
 
         var log = sp.GetRequiredService<OctoLogger>();
         var githubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
-        var githubApi = githubApiFactory.Create(args.GithubApiUrl, args.GithubPat);
+        var githubApi = githubApiFactory.Create(args.GithubApiUrl, null, args.GithubPat);
         var httpDownloadServiceFactory = sp.GetRequiredService<HttpDownloadServiceFactory>();
         var httpDownloadService = httpDownloadServiceFactory.CreateDefaultWithRedirects();
         var retryPolicy = sp.GetRequiredService<RetryPolicy>();
@@ -79,6 +82,7 @@ public class DownloadLogsCommandBase : CommandBase<DownloadLogsCommandArgs, Down
     {
         AddOption(GithubOrg);
         AddOption(GithubRepo);
+        AddOption(MigrationId);
         AddOption(GithubApiUrl);
         AddOption(GithubPat);
         AddOption(MigrationLogFile);

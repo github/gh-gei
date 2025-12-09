@@ -17,6 +17,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateOrg
             AddOption(GithubTargetOrg);
             AddOption(GithubTargetEnterprise);
             AddOption(TargetApiUrl);
+            AddOption(TargetUploadsUrl);
 
             AddOption(GithubSourcePat);
             AddOption(GithubTargetPat);
@@ -45,6 +46,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateOrg
         {
             Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
         };
+        public Option<string> TargetUploadsUrl { get; } = new(
+            name: "--target-uploads-url",
+            description: "The URL of the target uploads API, if not migrating to github.com. Defaults to https://uploads.github.com")
+        { IsHidden = true };
         public Option<bool> QueueOnly { get; } = new("--queue-only")
         {
             Description = "Only queues the migration, does not wait for it to finish. Use the wait-for-migration command to subsequently wait for it to finish and view the status."
@@ -67,7 +72,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateOrg
             var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
 
             var targetGithubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
-            var targetGithubApi = targetGithubApiFactory.Create(args.TargetApiUrl, args.GithubTargetPat);
+            var targetGithubApi = targetGithubApiFactory.Create(args.TargetApiUrl, args.TargetUploadsUrl, args.GithubTargetPat);
 
             return new MigrateOrgCommandHandler(log, targetGithubApi, environmentVariableProvider);
         }
