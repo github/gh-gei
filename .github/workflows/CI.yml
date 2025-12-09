@@ -142,6 +142,9 @@ jobs:
   e2e-test:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.owner.login == 'github'
     needs: [build-for-e2e-test]
+    permissions:
+      checks: write
+      contents: read
     strategy:
       fail-fast: false
       matrix:
