@@ -1,1 +1,2 @@
+- Added support for linux-arm64 architecture for all CLI binaries (gei, ado2gh, bbs2gh), enabling users to run GEI on ARM-based systems including MacOS with Apple Silicon inside ARC runners
 - Added support for configurable multipart upload chunk size for GitHub-owned storage uploads via `GITHUB_OWNED_STORAGE_MULTIPART_MEBIBYTES` environment variable (minimum 5 MiB, default 100 MiB) to improve upload reliability in environments with proxies or slow connections
