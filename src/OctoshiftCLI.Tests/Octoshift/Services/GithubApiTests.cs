@@ -18,7 +18,9 @@ namespace OctoshiftCLI.Tests.Octoshift.Services;
 public class GithubApiTests
 {
     private const string API_URL = "https://api.github.com";
+    private const string UPLOADS_URL = "https://uploads.github.com";
     private readonly RetryPolicy _retryPolicy = new(TestHelpers.CreateMock<OctoLogger>().Object) { _httpRetryInterval = 0, _retryInterval = 0 };
+    private readonly Mock<OctoLogger> _logMock = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<GithubClient> _githubClientMock = TestHelpers.CreateMock<GithubClient>();
     private readonly Mock<ArchiveUploader> _archiveUploader;
 
@@ -46,7 +48,12 @@ public class GithubApiTests
 
     public GithubApiTests()
     {
-        _archiveUploader = TestHelpers.CreateMock<ArchiveUploader>();
+        _archiveUploader = new Mock<ArchiveUploader>(
+            _githubClientMock.Object,
+            UPLOADS_URL,
+            _logMock.Object,
+            _retryPolicy,
+            TestHelpers.CreateMock<EnvironmentVariableProvider>().Object);
         _githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy, _archiveUploader.Object);
     }
 

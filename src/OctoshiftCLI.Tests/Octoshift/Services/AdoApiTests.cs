@@ -252,6 +252,30 @@ public class AdoApiTests
     }
 
     [Fact]
+    public async Task GetGithubAppId_Should_Recognize_GitHubProximaPipelines_Service_Connection()
+    {
+        var teamProjects = new List<string>() { ADO_TEAM_PROJECT };
+        var appId = Guid.NewGuid().ToString();
+
+        var json = new object[]
+        {
+            new
+            {
+                type = "GitHubProximaPipelines",
+                name = ADO_TEAM_PROJECT,
+                id = appId
+            }
+        };
+        var response = JArray.Parse(json.ToJson());
+
+        _mockAdoClient.Setup(x => x.GetWithPagingAsync($"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/serviceendpoint/endpoints?api-version=6.0-preview.4").Result).Returns(response);
+
+        var result = await sut.GetGithubAppId(ADO_ORG, GITHUB_ORG, teamProjects);
+
+        result.Should().Be(appId);
+    }
+
+    [Fact]
     public async Task GetGithubHandle_Should_Return_Handle()
     {
         var githubToken = Guid.NewGuid().ToString();

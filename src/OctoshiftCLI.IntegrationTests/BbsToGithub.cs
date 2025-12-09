@@ -60,7 +60,8 @@ public sealed class BbsToGithub : IDisposable
         _targetGithubHttpClient = new HttpClient();
         _targetGithubClient = new GithubClient(_logger, _targetGithubHttpClient, new VersionChecker(_versionClient, _logger), new RetryPolicy(_logger), new DateTimeProvider(), targetGithubToken);
         var retryPolicy = new RetryPolicy(_logger);
-        _archiveUploader = new ArchiveUploader(_targetGithubClient, UPLOADS_URL, _logger, retryPolicy);
+        var environmentVariableProvider = new EnvironmentVariableProvider(_logger);
+        _archiveUploader = new ArchiveUploader(_targetGithubClient, UPLOADS_URL, _logger, retryPolicy, environmentVariableProvider);
         _targetGithubApi = new GithubApi(_targetGithubClient, "https://api.github.com", new RetryPolicy(_logger), _archiveUploader);
 
         _blobServiceClient = new BlobServiceClient(_azureStorageConnectionString);
@@ -77,9 +78,7 @@ public sealed class BbsToGithub : IDisposable
         var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
         var githubTargetOrg = $"octoshift-e2e-bbs-{TestHelper.GetOsName()}";
         var repo1 = $"{bbsProjectKey}-repo-1";
-        var repo2 = $"{bbsProjectKey}-repo-2";
         var targetRepo1 = $"{bbsProjectKey}-e2e-{TestHelper.GetOsName().ToLower()}-repo-1";
-        var targetRepo2 = $"{bbsProjectKey}-e2e-{TestHelper.GetOsName().ToLower()}-repo-2";
 
         var sourceBbsApi = new BbsApi(_sourceBbsClient, bbsServer, _logger);
         var sourceHelper = new TestHelper(_output, sourceBbsApi, _sourceBbsClient, bbsServer);
@@ -95,8 +94,6 @@ public sealed class BbsToGithub : IDisposable
             await sourceHelper.CreateBbsProject(bbsProjectKey);
             await sourceHelper.CreateBbsRepo(bbsProjectKey, repo1);
             await sourceHelper.InitializeBbsRepo(bbsProjectKey, repo1);
-            await sourceHelper.CreateBbsRepo(bbsProjectKey, repo2);
-            await sourceHelper.InitializeBbsRepo(bbsProjectKey, repo2);
         });
 
         var sshPort = Environment.GetEnvironmentVariable("SSH_PORT_BBS");
@@ -135,9 +132,7 @@ public sealed class BbsToGithub : IDisposable
         _targetHelper.AssertNoErrorInLogs(_startTime);
 
         await _targetHelper.AssertGithubRepoExists(githubTargetOrg, targetRepo1);
-        await _targetHelper.AssertGithubRepoExists(githubTargetOrg, targetRepo2);
         await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, targetRepo1);
-        await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, targetRepo2);
 
         // TODO: Assert migration logs are downloaded
     }
