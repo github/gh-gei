@@ -23,7 +23,7 @@ jobs:
         target-os: [windows-latest, ubuntu-latest, macos-latest]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         ref: 'refs/pull/${{ github.event.inputs.pr_number }}/merge'
         fetch-depth: 0
@@ -95,7 +95,7 @@ jobs:
     runs-on: ${{ matrix.runner-os }}
     concurrency: integration-test-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         ref: 'refs/pull/${{ github.event.inputs.pr_number }}/merge'
         fetch-depth: 0
