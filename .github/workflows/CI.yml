@@ -74,7 +74,7 @@ jobs:
       # This is used by the subsequent publish-test-results.yml
       - name: Upload Unit Test Results
         if: always() && matrix.runner-os == 'ubuntu-latest' && matrix.language == 'csharp'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: Unit Test Results
           path: src/OctoshiftCLI.Tests/unit-tests.xml
@@ -82,7 +82,7 @@ jobs:
       # This is used by the subsequent publish-test-results.yml
       - name: Upload Code Coverage Report
         if: always() && matrix.runner-os == 'ubuntu-latest' && matrix.language == 'csharp'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: Code Coverage Report
           path: code-coverage-results.md
@@ -99,7 +99,7 @@ jobs:
     steps:
       # This is used by the subsequent publish-test-results.yaml
       - name: Upload Event File
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: Event File
           path: ${{ github.event_path }}
@@ -138,7 +138,7 @@ jobs:
         run: just publish-macos
 
       - name: Upload Binaries
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: binaries-${{ matrix.target-os }}
           path: |
@@ -274,7 +274,7 @@ jobs:
           comment_mode: off
 
       - name: Upload test logs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: integration-test-logs-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
