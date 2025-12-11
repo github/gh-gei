@@ -17,7 +17,7 @@ public class GenerateMannequinCsvCommandArgsTests
     {
         var args = new GenerateMannequinCsvCommandArgs
         {
-            GithubOrg = "www.github.com"
+            GithubOrg = "http://github.com/my-org"
         };
 
         FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))

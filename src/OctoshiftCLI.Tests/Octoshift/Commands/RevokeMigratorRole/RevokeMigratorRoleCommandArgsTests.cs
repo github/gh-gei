@@ -51,7 +51,7 @@ public class RevokeMigratorRoleCommandArgsTests
     {
         var args = new RevokeMigratorRoleCommandArgs
         {
-            GithubOrg = "github.com/my-org",
+            GithubOrg = "http://github.com/my-org",
             Actor = ACTOR,
             ActorType = "USER"
         };

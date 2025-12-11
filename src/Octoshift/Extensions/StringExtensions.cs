@@ -29,26 +29,9 @@ namespace OctoshiftCLI.Extensions
 
         public static bool IsUrl(this string s)
         {
-            if (s.IsNullOrWhiteSpace())
-            {
-                return false;
-            }
-
-            // Check if string starts with http:// or https://
-            if (s.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
-                s.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-
-            // Check if string contains common URL patterns like domain.com/path or www.
-            if (s.Contains("://") || s.StartsWith("www.", StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-
-            // Check if it looks like a URL path (contains / and .)
-            return s.Contains('/') && s.Contains('.');
+            return !s.IsNullOrWhiteSpace()
+                && Uri.TryCreate(s, UriKind.Absolute, out var uri)
+                && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
         }
     }
 }

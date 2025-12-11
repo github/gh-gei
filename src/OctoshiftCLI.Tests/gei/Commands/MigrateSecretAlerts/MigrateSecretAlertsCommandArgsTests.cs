@@ -52,7 +52,7 @@ public class MigrateSecretAlertsCommandArgsTests
         {
             SourceOrg = SOURCE_ORG,
             SourceRepo = SOURCE_REPO,
-            TargetOrg = "github.com/my-org",
+            TargetOrg = "http://github.com/my-org",
         };
 
         FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
@@ -67,7 +67,7 @@ public class MigrateSecretAlertsCommandArgsTests
         var args = new MigrateSecretAlertsCommandArgs
         {
             SourceOrg = SOURCE_ORG,
-            SourceRepo = "www.github.com/org/repo",
+            SourceRepo = "http://github.com/org/repo",
             TargetOrg = TARGET_ORG,
         };
 

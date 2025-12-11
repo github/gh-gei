@@ -22,8 +22,8 @@ public class IntegrateBoardsCommandArgsTests
         {
             AdoOrg = ADO_ORG,
             AdoTeamProject = ADO_TEAM_PROJECT,
-            GithubOrg = "github.com/my-org",
-            GithubRepo = GITHUB_REPO
+            GithubOrg = "http://github.com/my-org",
+            GithubRepo = GITHUB_REPO,
         };
 
         FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))

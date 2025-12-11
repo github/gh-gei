@@ -34,7 +34,7 @@ public class DownloadLogsCommandArgsTests
         var args = new DownloadLogsCommandArgs
         {
             GithubOrg = GITHUB_ORG,
-            GithubRepo = "github.com/org/repo"
+            GithubRepo = "http://github.com/org/repo"
         };
 
         FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))

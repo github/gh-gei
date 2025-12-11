@@ -52,7 +52,7 @@ public class MigrateCodeScanningAlertsCommandArgsTests
         {
             SourceOrg = SOURCE_ORG,
             SourceRepo = SOURCE_REPO,
-            TargetOrg = "www.github.com",
+            TargetOrg = "http://github.com/my-org",
         };
 
         FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
@@ -67,7 +67,7 @@ public class MigrateCodeScanningAlertsCommandArgsTests
         var args = new MigrateCodeScanningAlertsCommandArgs
         {
             SourceOrg = SOURCE_ORG,
-            SourceRepo = "github.com/org/repo",
+            SourceRepo = "http://github.com/org/repo",
             TargetOrg = TARGET_ORG,
         };
 

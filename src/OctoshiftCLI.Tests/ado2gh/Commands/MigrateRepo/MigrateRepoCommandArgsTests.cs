@@ -43,7 +43,7 @@ public class MigrateRepoCommandArgsTests
             AdoTeamProject = ADO_TEAM_PROJECT,
             AdoRepo = ADO_REPO,
             GithubOrg = GITHUB_ORG,
-            GithubRepo = "www.github.com/org/repo"
+            GithubRepo = "http://github.com/org/repo",
         };
 
         FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))

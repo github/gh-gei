@@ -27,7 +27,7 @@ public class ReclaimMannequinCommandArgsTests
     {
         var args = new ReclaimMannequinCommandArgs
         {
-            GithubOrg = "www.github.com/my-org",
+            GithubOrg = "http://github.com/my-org",
             Csv = "mannequins.csv"
         };
 
