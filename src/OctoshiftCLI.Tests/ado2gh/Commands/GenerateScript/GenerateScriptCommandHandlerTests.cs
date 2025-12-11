@@ -1331,6 +1331,42 @@ if ($Failed -ne 0) {
         _scriptOutput.Should().Be(expected.ToString());
     }
 
+    [Fact]
+    public async Task SequentialScript_CreateTeams_With_TargetApiUrl_Should_Include_TargetApiUrl_In_AddTeamToRepo_Commands()
+    {
+        // Arrange
+        const string TARGET_API_URL = "https://example.com/api/v3";
+
+        _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
+        _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
+        _mockAdoInspector.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
+        _mockAdoInspector.Setup(m => m.GetRepos(ADO_ORG, ADO_TEAM_PROJECT)).ReturnsAsync(ADO_REPOS);
+
+        var expected = new StringBuilder();
+        expected.AppendLine($"Exec {{ gh ado2gh create-team --target-api-url \"{TARGET_API_URL}\" --github-org \"{GITHUB_ORG}\" --team-name \"{ADO_TEAM_PROJECT}-Maintainers\" }}");
+        expected.AppendLine($"Exec {{ gh ado2gh create-team --target-api-url \"{TARGET_API_URL}\" --github-org \"{GITHUB_ORG}\" --team-name \"{ADO_TEAM_PROJECT}-Admins\" }}");
+        expected.AppendLine($"Exec {{ gh ado2gh migrate-repo --target-api-url \"{TARGET_API_URL}\" --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-repo \"{FOO_REPO}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --target-repo-visibility private }}");
+        expected.AppendLine($"Exec {{ gh ado2gh add-team-to-repo --target-api-url \"{TARGET_API_URL}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --team \"{ADO_TEAM_PROJECT}-Maintainers\" --role \"maintain\" }}");
+        expected.Append($"Exec {{ gh ado2gh add-team-to-repo --target-api-url \"{TARGET_API_URL}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --team \"{ADO_TEAM_PROJECT}-Admins\" --role \"admin\" }}");
+
+        // Act
+        var args = new GenerateScriptCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            AdoOrg = ADO_ORG,
+            Sequential = true,
+            Output = new FileInfo("unit-test-output"),
+            CreateTeams = true,
+            TargetApiUrl = TARGET_API_URL
+        };
+        await _handler.Handle(args);
+
+        _scriptOutput = TrimNonExecutableLines(_scriptOutput);
+
+        // Assert
+        _scriptOutput.Should().Be(expected.ToString());
+    }
+
     private string TrimNonExecutableLines(string script, int skipFirst = 21, int skipLast = 0)
     {
         var lines = script.Split(new[] { Environment.NewLine, "\n" }, StringSplitOptions.RemoveEmptyEntries).AsEnumerable();

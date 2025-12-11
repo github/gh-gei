@@ -108,7 +108,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
         public Option<bool> UseGithubStorage { get; } = new("--use-github-storage")
         {
             IsHidden = true,
-            Description = "Enables multipart uploads to a GitHub owned storage for use during migration",
+            Description = "Enables multipart uploads to a GitHub owned storage for use during migration. " +
+                          "Configure chunk size with the GITHUB_OWNED_STORAGE_MULTIPART_MEBIBYTES environment variable (default: 100 MiB, minimum: 5 MiB).",
         };
 
         public override GenerateScriptCommandHandler BuildHandler(GenerateScriptCommandArgs args, IServiceProvider sp)
