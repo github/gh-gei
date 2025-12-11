@@ -1,3 +1,4 @@
+- Added support for linux-arm64 architecture for all CLI binaries (gei, ado2gh, bbs2gh), enabling users to run GEI on ARM-based systems including MacOS with Apple Silicon inside ARC runners
+- Fixed issue where alert migration commands (migrate-code-scanning-alerts, migrate-secret-alerts) required GH_PAT environment variable even when GitHub tokens were provided via command-line arguments (--github-source-pat, --github-target-pat). These commands now work correctly with CLI-only token authentication.
+- Added support for configurable multipart upload chunk size for GitHub-owned storage uploads via `GITHUB_OWNED_STORAGE_MULTIPART_MEBIBYTES` environment variable (minimum 5 MiB, default 100 MiB) to improve upload reliability in environments with proxies or slow connections
 - Added validation to detect and return clear error messages when a URL is provided instead of a name for organization, repository, or enterprise arguments (e.g., `--github-org`, `--github-target-org`, `--source-repo`, `--github-target-enterprise`)
-
-- bbs2gh : Added validation for `--archive-path` and `--bbs-shared-home` options to fail fast with clear error messages if the provided paths do not exist or are not accessible. Archive path is now logged before upload operations to help with troubleshooting
