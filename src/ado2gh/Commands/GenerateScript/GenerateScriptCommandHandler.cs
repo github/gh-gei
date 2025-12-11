@@ -166,8 +166,8 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
                     AppendLine(content, Exec(LockAdoRepoScript(adoOrg, adoTeamProject, adoRepo.Name)));
                     AppendLine(content, Exec(MigrateRepoScript(adoOrg, adoTeamProject, adoRepo.Name, githubOrg, githubRepo, true, adoServerUrl, targetApiUrl)));
                     AppendLine(content, Exec(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo.Name)));
-                    AppendLine(content, Exec(AddMaintainersToGithubRepoScript(adoTeamProject, githubOrg, githubRepo)));
-                    AppendLine(content, Exec(AddAdminsToGithubRepoScript(adoTeamProject, githubOrg, githubRepo)));
+                    AppendLine(content, Exec(AddMaintainersToGithubRepoScript(adoTeamProject, githubOrg, githubRepo, targetApiUrl)));
+                    AppendLine(content, Exec(AddAdminsToGithubRepoScript(adoTeamProject, githubOrg, githubRepo, targetApiUrl)));
                     AppendLine(content, Exec(DownloadMigrationLogScript(githubOrg, githubRepo, targetApiUrl)));
 
                     foreach (var adoPipeline in await _adoInspectorService.GetPipelines(adoOrg, adoTeamProject, adoRepo.Name))
@@ -275,8 +275,8 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
                     {
                         AppendLine(content, "    ExecBatch @(");
                         AppendLine(content, "        " + Wrap(DisableAdoRepoScript(adoOrg, adoTeamProject, adoRepo.Name)));
-                        AppendLine(content, "        " + Wrap(AddMaintainersToGithubRepoScript(adoTeamProject, githubOrg, githubRepo)));
-                        AppendLine(content, "        " + Wrap(AddAdminsToGithubRepoScript(adoTeamProject, githubOrg, githubRepo)));
+                        AppendLine(content, "        " + Wrap(AddMaintainersToGithubRepoScript(adoTeamProject, githubOrg, githubRepo, targetApiUrl)));
+                        AppendLine(content, "        " + Wrap(AddAdminsToGithubRepoScript(adoTeamProject, githubOrg, githubRepo, targetApiUrl)));
                         AppendLine(content, "        " + Wrap(DownloadMigrationLogScript(githubOrg, githubRepo, targetApiUrl)));
 
                         appIds.TryGetValue(adoOrg, out var appId);
@@ -360,14 +360,14 @@ if ($Failed -ne 0) {
             ? $"gh ado2gh create-team{(targetApiUrl.HasValue() ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --github-org \"{githubOrg}\" --team-name \"{adoTeamProject.ReplaceInvalidCharactersWithDash()}-Admins\"{(_log.Verbose ? " --verbose" : string.Empty)}{(linkIdpGroups ? $" --idp-group \"{adoTeamProject.ReplaceInvalidCharactersWithDash()}-Admins\"" : string.Empty)}"
             : null;
 
-    private string AddMaintainersToGithubRepoScript(string adoTeamProject, string githubOrg, string githubRepo) =>
+    private string AddMaintainersToGithubRepoScript(string adoTeamProject, string githubOrg, string githubRepo, string targetApiUrl) =>
         _generateScriptOptions.CreateTeams
-            ? $"gh ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject.ReplaceInvalidCharactersWithDash()}-Maintainers\" --role \"maintain\"{(_log.Verbose ? " --verbose" : string.Empty)}"
+            ? $"gh ado2gh add-team-to-repo{(targetApiUrl.HasValue() ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject.ReplaceInvalidCharactersWithDash()}-Maintainers\" --role \"maintain\"{(_log.Verbose ? " --verbose" : string.Empty)}"
             : null;
 
-    private string AddAdminsToGithubRepoScript(string adoTeamProject, string githubOrg, string githubRepo) =>
+    private string AddAdminsToGithubRepoScript(string adoTeamProject, string githubOrg, string githubRepo, string targetApiUrl) =>
         _generateScriptOptions.CreateTeams
-            ? $"gh ado2gh add-team-to-repo --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject.ReplaceInvalidCharactersWithDash()}-Admins\" --role \"admin\"{(_log.Verbose ? " --verbose" : string.Empty)}"
+            ? $"gh ado2gh add-team-to-repo{(targetApiUrl.HasValue() ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject.ReplaceInvalidCharactersWithDash()}-Admins\" --role \"admin\"{(_log.Verbose ? " --verbose" : string.Empty)}"
             : null;
 
     private string RewireAzurePipelineScript(string adoOrg, string adoTeamProject, string adoPipeline, string githubOrg, string githubRepo, string appId) =>
