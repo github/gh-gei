@@ -1,4 +1,7 @@
-﻿namespace OctoshiftCLI.Commands.CreateTeam;
+﻿using OctoshiftCLI.Extensions;
+using OctoshiftCLI.Services;
+
+namespace OctoshiftCLI.Commands.CreateTeam;
 
 public class CreateTeamCommandArgs : CommandArgs
 {
@@ -8,4 +11,12 @@ public class CreateTeamCommandArgs : CommandArgs
     [Secret]
     public string GithubPat { get; set; }
     public string TargetApiUrl { get; set; }
+
+    public override void Validate(OctoLogger log)
+    {
+        if (GithubOrg.IsUrl())
+        {
+            throw new OctoshiftCliException($"The --github-org option expects an organization name, not a URL. Please provide just the organization name (e.g., 'my-org' instead of 'https://github.com/my-org').");
+        }
+    }
 }
