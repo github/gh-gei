@@ -1063,7 +1063,65 @@ public sealed class GithubClientTests
     }
 
     [Fact]
-    public async Task GetNonSuccessAsync_Retries_On_Non_Success()
+    public async Task GetNonSuccessAsync_Does_Not_Retry_On_Expected_Status()
+    {
+        // Arrange
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(CreateHttpResponseFactory(statusCode: HttpStatusCode.NotFound, content: "Not Found"));
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act
+        var result = await githubClient.GetNonSuccessAsync(URL, HttpStatusCode.NotFound);
+
+        // Assert
+        result.Should().Be("Not Found");
+        handlerMock.Protected().Verify(
+            "SendAsync",
+            Times.Once(),
+            ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+            ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetNonSuccessAsync_Does_Not_Retry_On_Unexpected_Success_Status()
+    {
+        // Arrange
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(CreateHttpResponseFactory(statusCode: HttpStatusCode.OK, content: "Success"));
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act & Assert - should throw immediately without retry
+        await FluentActions
+            .Invoking(async () => await githubClient.GetNonSuccessAsync(URL, HttpStatusCode.NotFound))
+            .Should()
+            .ThrowExactlyAsync<HttpRequestException>()
+            .WithMessage("*OK*");
+
+        handlerMock.Protected().Verify(
+            "SendAsync",
+            Times.Once(),
+            ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+            ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetNonSuccessAsync_Retries_On_Server_Error()
     {
         // Arrange
         var handlerMock = new Mock<HttpMessageHandler>();
@@ -1073,17 +1131,82 @@ public sealed class GithubClientTests
                 "SendAsync",
                 ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
                 ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(CreateHttpResponseFactory(statusCode: HttpStatusCode.InternalServerError))
-            .ReturnsAsync(CreateHttpResponseFactory(statusCode: HttpStatusCode.Found, content: EXPECTED_RESPONSE_CONTENT));
+            .ReturnsAsync(CreateHttpResponseFactory(statusCode: HttpStatusCode.InternalServerError, content: "Server Error"))
+            .ReturnsAsync(CreateHttpResponseFactory(statusCode: HttpStatusCode.NotFound, content: "Not Found"));
 
         using var httpClient = new HttpClient(handlerMock.Object);
         var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
-        // Act
-        var result = await githubClient.GetNonSuccessAsync(URL, HttpStatusCode.Found);
+        // Act - should retry on 5xx and eventually succeed
+        var result = await githubClient.GetNonSuccessAsync(URL, HttpStatusCode.NotFound);
 
         // Assert
-        result.Should().Be(EXPECTED_RESPONSE_CONTENT);
+        result.Should().Be("Not Found");
+        handlerMock.Protected().Verify(
+            "SendAsync",
+            Times.Exactly(2),
+            ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+            ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetNonSuccessAsync_Does_Not_Retry_On_Client_Error()
+    {
+        // Arrange
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(CreateHttpResponseFactory(statusCode: HttpStatusCode.BadRequest, content: "Bad Request"));
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act & Assert - should throw immediately without retry on 4xx
+        await FluentActions
+            .Invoking(async () => await githubClient.GetNonSuccessAsync(URL, HttpStatusCode.NotFound))
+            .Should()
+            .ThrowExactlyAsync<HttpRequestException>()
+            .WithMessage("*BadRequest*");
+
+        handlerMock.Protected().Verify(
+            "SendAsync",
+            Times.Once(),
+            ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+            ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetNonSuccessAsync_Does_Not_Retry_On_Redirect_Status()
+    {
+        // Arrange
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(CreateHttpResponseFactory(statusCode: HttpStatusCode.MovedPermanently, content: "Moved"));
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act & Assert - should throw immediately without retry on redirect
+        await FluentActions
+            .Invoking(async () => await githubClient.GetNonSuccessAsync(URL, HttpStatusCode.NotFound))
+            .Should()
+            .ThrowExactlyAsync<HttpRequestException>()
+            .WithMessage("*MovedPermanently*");
+
+        handlerMock.Protected().Verify(
+            "SendAsync",
+            Times.Once(),
+            ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+            ItExpr.IsAny<CancellationToken>());
     }
 
     [Fact]
