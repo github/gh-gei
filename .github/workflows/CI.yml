@@ -32,7 +32,8 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: extractions/setup-just@v3
+      # e33e0265a09d6d736e2ee1e0eb685ef1de4669ff is tag v3, pinned to avoid supply chain attacks
+      - uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
       - name: Initialize CodeQL
         if: matrix.runner-os == 'ubuntu-latest'
         uses: github/codeql-action/init@v4
@@ -63,7 +64,8 @@ jobs:
         run: cp coverage/**/coverage.cobertura.xml coverage/coverage.cobertura.xml
 
       - name: Code Coverage Summary Report
-        uses: irongut/CodeCoverageSummary@v1.3.0
+        # 51cc3a756ddcd398d447c044c02cb6aa83fdae95 is tag v1.3.0, pinned to avoid supply chain attacks
+        uses: irongut/CodeCoverageSummary@51cc3a756ddcd398d447c044c02cb6aa83fdae95
         if: always() && matrix.runner-os == 'ubuntu-latest' && matrix.language == 'csharp'
         with:
           filename: coverage/coverage.cobertura.xml
@@ -118,7 +120,8 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: extractions/setup-just@v3
+      # e33e0265a09d6d736e2ee1e0eb685ef1de4669ff is tag v3, pinned to avoid supply chain attacks
+      - uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
@@ -266,7 +269,8 @@ jobs:
         run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --filter "${{ matrix.source-vcs }}ToGithub" --logger:"junit;LogFilePath=integration-tests.xml" --logger "console;verbosity=normal" /p:VersionPrefix=9.9
 
       - name: Publish Integration Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v2
+        # 6e8f8c55b476f977d1c58cfbd7e337cbf86d917f is tag v2, pinned to avoid supply chain attacks
+        uses: EnricoMi/publish-unit-test-result-action@6e8f8c55b476f977d1c58cfbd7e337cbf86d917f
         if: always() && matrix.runner-os == 'ubuntu-latest' && github.actor != 'dependabot[bot]'
         with:
           files: "**/*-tests.xml"
@@ -333,7 +337,8 @@ jobs:
           CLI_VERSION: ${{ github.ref }}
 
       - name: Create gh-gei Release
-        uses: softprops/action-gh-release@v2
+        # a06a81a03ee405af7f2048a818ed3f03bbf83c7b is tag v2, pinned to avoid supply chain attacks
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b
         with:
           body_path: ./RELEASENOTES.md
           files: |
@@ -349,7 +354,8 @@ jobs:
             ./dist/osx-x64/gei-darwin-amd64
 
       - name: Create gh-ado2gh Release
-        uses: softprops/action-gh-release@v2
+        # a06a81a03ee405af7f2048a818ed3f03bbf83c7b is tag v2, pinned to avoid supply chain attacks
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b
         with:
           body_path: ./RELEASENOTES.md
           repository: github/gh-ado2gh
@@ -362,7 +368,8 @@ jobs:
             ./dist/osx-x64/ado2gh-darwin-amd64
 
       - name: Create gh-bbs2gh Release
-        uses: softprops/action-gh-release@v2
+        # a06a81a03ee405af7f2048a818ed3f03bbf83c7b is tag v2, pinned to avoid supply chain attacks
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b
         with:
           body_path: ./RELEASENOTES.md
           repository: github/gh-bbs2gh
