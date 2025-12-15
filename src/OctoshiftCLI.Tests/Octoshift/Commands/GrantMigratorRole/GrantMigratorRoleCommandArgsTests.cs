@@ -42,4 +42,20 @@ public class GrantMigratorRoleCommandArgsTests
         FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
             .Should().Throw<OctoshiftCliException>();
     }
+
+    [Fact]
+    public void Validate_Throws_When_GithubOrg_Is_Url()
+    {
+        var args = new GrantMigratorRoleCommandArgs
+        {
+            GithubOrg = "https://github.com/my-org",
+            Actor = ACTOR,
+            ActorType = "USER"
+        };
+
+        FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+            .Should()
+            .ThrowExactly<OctoshiftCliException>()
+            .WithMessage("The --github-org option expects an organization name, not a URL. Please provide just the organization name (e.g., 'my-org' instead of 'https://github.com/my-org').");
+    }
 }

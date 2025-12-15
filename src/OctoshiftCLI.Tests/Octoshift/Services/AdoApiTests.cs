@@ -262,7 +262,7 @@ public class AdoApiTests
             new
             {
                 type = "GitHubProximaPipelines",
-                name = GITHUB_ORG,
+                name = ADO_TEAM_PROJECT,
                 id = appId
             }
         };

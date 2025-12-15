@@ -23,7 +23,7 @@ jobs:
         target-os: [windows-latest, ubuntu-latest, macos-latest]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         ref: 'refs/pull/${{ github.event.inputs.pr_number }}/merge'
         fetch-depth: 0
@@ -71,7 +71,7 @@ jobs:
         SKIP_LINUX: "true"
 
     - name: Upload Binaries
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: binaries-${{ matrix.target-os }}
         path: |
@@ -95,7 +95,7 @@ jobs:
     runs-on: ${{ matrix.runner-os }}
     concurrency: integration-test-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         ref: 'refs/pull/${{ github.event.inputs.pr_number }}/merge'
         fetch-depth: 0
@@ -113,7 +113,7 @@ jobs:
         global-json-file: global.json
 
     - name: Download Binaries
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v6
       with:
         name: binaries-${{ matrix.runner-os }}
         path: dist
@@ -203,7 +203,8 @@ jobs:
       run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --filter "${{ matrix.source-vcs }}ToGithub" --logger:"junit;LogFilePath=integration-tests.xml" --logger "console;verbosity=normal" /p:VersionPrefix=9.9
 
     - name: Publish Integration Test Results
-      uses: EnricoMi/publish-unit-test-result-action@v2
+      # 6e8f8c55b476f977d1c58cfbd7e337cbf86d917f is tag v2, pinned to avoid supply chain attacks
+      uses: EnricoMi/publish-unit-test-result-action@6e8f8c55b476f977d1c58cfbd7e337cbf86d917f
       if: always() && matrix.runner-os == 'ubuntu-latest'
       with:
         files: "**/*-tests.xml"
@@ -212,7 +213,7 @@ jobs:
         commit: ${{ env.PR_SHA }}
 
     - name: Upload test logs
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       if: always()
       with:
         name: integration-test-logs-${{ matrix.source-vcs }}-${{ matrix.runner-os }}

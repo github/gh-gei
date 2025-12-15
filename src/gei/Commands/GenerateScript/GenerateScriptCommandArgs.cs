@@ -28,6 +28,16 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
 
         public override void Validate(OctoLogger log)
         {
+            if (GithubSourceOrg.IsUrl())
+            {
+                throw new OctoshiftCliException($"The --github-source-org option expects an organization name, not a URL. Please provide just the organization name (e.g., 'my-org' instead of 'https://github.com/my-org').");
+            }
+
+            if (GithubTargetOrg.IsUrl())
+            {
+                throw new OctoshiftCliException($"The --github-target-org option expects an organization name, not a URL. Please provide just the organization name (e.g., 'my-org' instead of 'https://github.com/my-org').");
+            }
+
             if (AwsBucketName.HasValue())
             {
                 if (GhesApiUrl.IsNullOrWhiteSpace())

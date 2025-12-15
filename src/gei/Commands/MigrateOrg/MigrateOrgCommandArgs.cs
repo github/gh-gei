@@ -19,6 +19,21 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateOrg
 
         public override void Validate(OctoLogger log)
         {
+            if (GithubSourceOrg.IsUrl())
+            {
+                throw new OctoshiftCliException($"The --github-source-org option expects an organization name, not a URL. Please provide just the organization name (e.g., 'my-org' instead of 'https://github.com/my-org').");
+            }
+
+            if (GithubTargetOrg.IsUrl())
+            {
+                throw new OctoshiftCliException($"The --github-target-org option expects an organization name, not a URL. Please provide just the organization name (e.g., 'my-org' instead of 'https://github.com/my-org').");
+            }
+
+            if (GithubTargetEnterprise.IsUrl())
+            {
+                throw new OctoshiftCliException($"The --github-target-enterprise option expects an enterprise name, not a URL. Please provide just the enterprise name (e.g., 'my-enterprise' instead of 'https://github.com/enterprises/my-enterprise').");
+            }
+
             if (GithubTargetPat.HasValue() && GithubSourcePat.IsNullOrWhiteSpace())
             {
                 GithubSourcePat = GithubTargetPat;

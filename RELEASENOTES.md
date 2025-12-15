@@ -5,3 +5,5 @@
 - Fixed monitor timeout minutes to only display when --dry-run mode is enabled, reducing confusion during regular pipeline rewiring operations
 - Check if pipeline is disabled before attempting to queue a test build, preventing 400 Bad Request errors and providing clear warning messages
 - bbs2gh : Added validation for `--archive-path` and `--bbs-shared-home` options to fail fast with clear error messages if the provided paths do not exist or are not accessible. Archive path is now logged before upload operations to help with troubleshooting
+- Added validation to detect and return clear error messages when a URL is provided instead of a name for organization, repository, or enterprise arguments (e.g., `--github-org`, `--github-target-org`, `--source-repo`, `--github-target-enterprise`)
+- Added `--target-api-url` as an optional arg to the `add-team-to-repo` command
