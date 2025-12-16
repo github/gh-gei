@@ -113,7 +113,7 @@ jobs:
         global-json-file: global.json
 
     - name: Download Binaries
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v7
       with:
         name: binaries-${{ matrix.runner-os }}
         path: dist
