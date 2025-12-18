@@ -270,7 +270,7 @@ jobs:
 
       - name: Publish Integration Test Results
         # 6e8f8c55b476f977d1c58cfbd7e337cbf86d917f is tag v2, pinned to avoid supply chain attacks
-        uses: EnricoMi/publish-unit-test-result-action@6e8f8c55b476f977d1c58cfbd7e337cbf86d917f
+        uses: EnricoMi/publish-unit-test-result-action@34d7c956a59aed1bfebf31df77b8de55db9bbaaf
         if: always() && matrix.runner-os == 'ubuntu-latest' && github.actor != 'dependabot[bot]'
         with:
           files: "**/*-tests.xml"
