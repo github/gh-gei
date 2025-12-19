@@ -138,7 +138,8 @@ public class AdoPipelineTriggerService
 
                 if (string.IsNullOrEmpty(repositoryId))
                 {
-                    _log.LogWarning($"Repository ID not found for {adoOrg}/{teamProject}/{repoName}. Branch policy check cannot be performed for pipeline {pipelineId}.");
+                    var repoIdentifier = repoName ?? repoId ?? "unknown";
+                    _log.LogWarning($"Repository ID not found for {adoOrg}/{teamProject}/{repoIdentifier}. Branch policy check cannot be performed for pipeline {pipelineId}.");
                     return false;
                 }
             }
@@ -156,7 +157,8 @@ public class AdoPipelineTriggerService
 
             if (policyData?.Value == null || policyData.Value.Count == 0)
             {
-                _log.LogVerbose($"No branch policies found for repository {adoOrg}/{teamProject}/{repoName}. ADO Pipeline ID = {pipelineId} is not required by branch policy.");
+                var repoIdentifier = repoName ?? repoId ?? "unknown";
+                _log.LogVerbose($"No branch policies found for repository {adoOrg}/{teamProject}/{repoIdentifier}. ADO Pipeline ID = {pipelineId} is not required by branch policy.");
                 return false;
             }
 
@@ -168,11 +170,13 @@ public class AdoPipelineTriggerService
 
             if (isPipelineRequired)
             {
-                _log.LogVerbose($"ADO Pipeline ID = {pipelineId} is required by branch policy in {adoOrg}/{teamProject}/{repoName}. Build status reporting will be enabled to support branch protection.");
+                var repoIdentifier = repoName ?? repoId ?? "unknown";
+                _log.LogVerbose($"ADO Pipeline ID = {pipelineId} is required by branch policy in {adoOrg}/{teamProject}/{repoIdentifier}. Build status reporting will be enabled to support branch protection.");
             }
             else
             {
-                _log.LogVerbose($"ADO Pipeline ID = {pipelineId} is not required by any branch policies in {adoOrg}/{teamProject}/{repoName}.");
+                var repoIdentifier = repoName ?? repoId ?? "unknown";
+                _log.LogVerbose($"ADO Pipeline ID = {pipelineId} is not required by any branch policies in {adoOrg}/{teamProject}/{repoIdentifier}.");
             }
 
             return isPipelineRequired;
@@ -180,31 +184,36 @@ public class AdoPipelineTriggerService
         catch (HttpRequestException ex)
         {
             // If we can't determine branch policy status due to network issues, default to false
-            _log.LogWarning($"HTTP error during branch policy check for pipeline {pipelineId} in {adoOrg}/{teamProject}/{repoName}: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
+            var repoIdentifier = repoName ?? repoId ?? "unknown";
+            _log.LogWarning($"HTTP error during branch policy check for pipeline {pipelineId} in {adoOrg}/{teamProject}/{repoIdentifier}: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
             return false;
         }
         catch (TaskCanceledException ex)
         {
             // If branch policy checking times out, consider check failed
-            _log.LogWarning($"Branch policy check timed out for pipeline {pipelineId} in {adoOrg}/{teamProject}/{repoName}: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
+            var repoIdentifier = repoName ?? repoId ?? "unknown";
+            _log.LogWarning($"Branch policy check timed out for pipeline {pipelineId} in {adoOrg}/{teamProject}/{repoIdentifier}: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
             return false;
         }
         catch (JsonException ex)
         {
             // If we can't determine branch policy status due to JSON parsing issues, default to false
-            _log.LogWarning($"JSON parsing error during branch policy check for pipeline {pipelineId} in {adoOrg}/{teamProject}/{repoName}: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
+            var repoIdentifier = repoName ?? repoId ?? "unknown";
+            _log.LogWarning($"JSON parsing error during branch policy check for pipeline {pipelineId} in {adoOrg}/{teamProject}/{repoIdentifier}: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
             return false;
         }
         catch (ArgumentException ex)
         {
             // If we can't determine branch policy status due to invalid arguments, default to false
-            _log.LogWarning($"Invalid argument error during branch policy check for pipeline {pipelineId} in {adoOrg}/{teamProject}/{repoName}: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
+            var repoIdentifier = repoName ?? repoId ?? "unknown";
+            _log.LogWarning($"Invalid argument error during branch policy check for pipeline {pipelineId} in {adoOrg}/{teamProject}/{repoIdentifier}: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
             return false;
         }
         catch (InvalidOperationException ex)
         {
             // If branch policy checking fails due to invalid state, consider check failed
-            _log.LogWarning($"Invalid operation error during branch policy check for pipeline {pipelineId} in {adoOrg}/{teamProject}/{repoName}: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
+            var repoIdentifier = repoName ?? repoId ?? "unknown";
+            _log.LogWarning($"Invalid operation error during branch policy check for pipeline {pipelineId} in {adoOrg}/{teamProject}/{repoIdentifier}: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
             return false;
         }
     }
