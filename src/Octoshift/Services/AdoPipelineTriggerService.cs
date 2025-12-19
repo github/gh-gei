@@ -116,34 +116,13 @@ public class AdoPipelineTriggerService
 
         try
         {
-            // Use repository ID directly if available, otherwise look it up by name
-            string repositoryId;
-            var isRepositoryDisabled = false;
+            var (repositoryId, isRepositoryDisabled) = await GetRepositoryIdAndStatus(adoOrg, teamProject, repoName, repoId, pipelineId);
 
-            if (!string.IsNullOrEmpty(repoId))
+            if (string.IsNullOrEmpty(repositoryId))
             {
-                _log.LogVerbose($"Using repository ID from pipeline definition for branch policy check: {repoId}");
-                repositoryId = repoId;
-
-                // Check if repository is disabled by fetching its details
-                var (_, disabled) = await GetRepositoryInfoWithCache(adoOrg, teamProject, repoId, repoName);
-                isRepositoryDisabled = disabled;
-            }
-            else
-            {
-                // Get repository information by name (with caching)
-                var (id, disabled) = await GetRepositoryInfoWithCache(adoOrg, teamProject, null, repoName);
-                repositoryId = id;
-                isRepositoryDisabled = disabled;
-
-                if (string.IsNullOrEmpty(repositoryId))
-                {
-                    _log.LogWarning($"Repository ID not found for {adoOrg}/{teamProject}/{repoName}. Branch policy check cannot be performed for pipeline {pipelineId}.");
-                    return false;
-                }
+                return false;
             }
 
-            // Skip branch policy check if repository is disabled
             if (isRepositoryDisabled)
             {
                 var repoIdentifier = repoName ?? repoId;
@@ -151,70 +130,82 @@ public class AdoPipelineTriggerService
                 return false;
             }
 
-            // Get branch policies for the repository (with caching)
-            var policyData = await GetBranchPoliciesWithCache(adoOrg, teamProject, repositoryId);
+            return await CheckBranchPoliciesForPipeline(adoOrg, teamProject, repositoryId, repoName, repoId, pipelineId);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or ArgumentException or InvalidOperationException)
+        {
+            LogBranchPolicyCheckError(ex, adoOrg, teamProject, repoName, repoId, pipelineId);
+            return false;
+        }
+    }
 
-            if (policyData?.Value == null || policyData.Value.Count == 0)
-            {
-                var repoIdentifier = repoName ?? repoId ?? "unknown";
-                _log.LogVerbose($"No branch policies found for repository {adoOrg}/{teamProject}/{repoIdentifier}. ADO Pipeline ID = {pipelineId} is not required by branch policy.");
-                return false;
-            }
+    private async Task<(string repositoryId, bool isDisabled)> GetRepositoryIdAndStatus(string adoOrg, string teamProject, string repoName, string repoId, int pipelineId)
+    {
+        if (!string.IsNullOrEmpty(repoId))
+        {
+            _log.LogVerbose($"Using repository ID from pipeline definition for branch policy check: {repoId}");
+            var (_, disabled) = await GetRepositoryInfoWithCache(adoOrg, teamProject, repoId, repoName);
+            return (repoId, disabled);
+        }
 
-            // Look for enabled build validation policies that reference our pipeline
-            var isPipelineRequired = policyData.Value.Any(policy =>
-                policy.Type?.DisplayName == "Build" &&
-                policy.IsEnabled &&
-                policy.Settings?.BuildDefinitionId == pipelineId.ToString());
+        var (id, disabledStatus) = await GetRepositoryInfoWithCache(adoOrg, teamProject, null, repoName);
+        if (string.IsNullOrEmpty(id))
+        {
+            _log.LogWarning($"Repository ID not found for {adoOrg}/{teamProject}/{repoName}. Branch policy check cannot be performed for pipeline {pipelineId}.");
+            return (null, false);
+        }
 
-            if (isPipelineRequired)
-            {
-                var repoIdentifier = repoName ?? repoId ?? "unknown";
-                _log.LogVerbose($"ADO Pipeline ID = {pipelineId} is required by branch policy in {adoOrg}/{teamProject}/{repoIdentifier}. Build status reporting will be enabled to support branch protection.");
-            }
-            else
-            {
-                var repoIdentifier = repoName ?? repoId ?? "unknown";
-                _log.LogVerbose($"ADO Pipeline ID = {pipelineId} is not required by any branch policies in {adoOrg}/{teamProject}/{repoIdentifier}.");
-            }
+        return (id, disabledStatus);
+    }
 
-            return isPipelineRequired;
-        }
-        catch (HttpRequestException ex)
+    private async Task<bool> CheckBranchPoliciesForPipeline(string adoOrg, string teamProject, string repositoryId, string repoName, string repoId, int pipelineId)
+    {
+        var policyData = await GetBranchPoliciesWithCache(adoOrg, teamProject, repositoryId);
+
+        if (policyData?.Value == null || policyData.Value.Count == 0)
         {
-            // If we can't determine branch policy status due to network issues, default to false
             var repoIdentifier = repoName ?? repoId ?? "unknown";
-            _log.LogWarning($"HTTP error during branch policy check for pipeline {pipelineId} in {adoOrg}/{teamProject}/{repoIdentifier}: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
+            _log.LogVerbose($"No branch policies found for repository {adoOrg}/{teamProject}/{repoIdentifier}. ADO Pipeline ID = {pipelineId} is not required by branch policy.");
             return false;
         }
-        catch (TaskCanceledException ex)
+
+        var isPipelineRequired = policyData.Value.Any(policy =>
+            policy.Type?.DisplayName == "Build" &&
+            policy.IsEnabled &&
+            policy.Settings?.BuildDefinitionId == pipelineId.ToString());
+
+        LogBranchPolicyCheckResult(isPipelineRequired, adoOrg, teamProject, repoName, repoId, pipelineId);
+        return isPipelineRequired;
+    }
+
+    private void LogBranchPolicyCheckResult(bool isPipelineRequired, string adoOrg, string teamProject, string repoName, string repoId, int pipelineId)
+    {
+        var repoIdentifier = repoName ?? repoId ?? "unknown";
+
+        if (isPipelineRequired)
         {
-            // If branch policy checking times out, consider check failed
-            var repoIdentifier = repoName ?? repoId ?? "unknown";
-            _log.LogWarning($"Branch policy check timed out for pipeline {pipelineId} in {adoOrg}/{teamProject}/{repoIdentifier}: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
-            return false;
+            _log.LogVerbose($"ADO Pipeline ID = {pipelineId} is required by branch policy in {adoOrg}/{teamProject}/{repoIdentifier}. Build status reporting will be enabled to support branch protection.");
         }
-        catch (JsonException ex)
+        else
         {
-            // If we can't determine branch policy status due to JSON parsing issues, default to false
-            var repoIdentifier = repoName ?? repoId ?? "unknown";
-            _log.LogWarning($"JSON parsing error during branch policy check for pipeline {pipelineId} in {adoOrg}/{teamProject}/{repoIdentifier}: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
-            return false;
+            _log.LogVerbose($"ADO Pipeline ID = {pipelineId} is not required by any branch policies in {adoOrg}/{teamProject}/{repoIdentifier}.");
         }
-        catch (ArgumentException ex)
+    }
+
+    private void LogBranchPolicyCheckError(Exception ex, string adoOrg, string teamProject, string repoName, string repoId, int pipelineId)
+    {
+        var repoIdentifier = repoName ?? repoId ?? "unknown";
+        var errorType = ex switch
         {
-            // If we can't determine branch policy status due to invalid arguments, default to false
-            var repoIdentifier = repoName ?? repoId ?? "unknown";
-            _log.LogWarning($"Invalid argument error during branch policy check for pipeline {pipelineId} in {adoOrg}/{teamProject}/{repoIdentifier}: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
-            return false;
-        }
-        catch (InvalidOperationException ex)
-        {
-            // If branch policy checking fails due to invalid state, consider check failed
-            var repoIdentifier = repoName ?? repoId ?? "unknown";
-            _log.LogWarning($"Invalid operation error during branch policy check for pipeline {pipelineId} in {adoOrg}/{teamProject}/{repoIdentifier}: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
-            return false;
-        }
+            HttpRequestException => "HTTP error",
+            TaskCanceledException => "Branch policy check timed out",
+            JsonException => "JSON parsing error",
+            ArgumentException => "Invalid argument error",
+            InvalidOperationException => "Invalid operation error",
+            _ => "Error"
+        };
+
+        _log.LogWarning($"{errorType} during branch policy check for pipeline {pipelineId} in {adoOrg}/{teamProject}/{repoIdentifier}: {ex.Message}. Pipeline trigger configuration may not preserve branch policy requirements.");
     }
 
     #region Private Helper Methods - Trigger Configuration Logic
@@ -545,7 +536,7 @@ public class AdoPipelineTriggerService
             // Log as verbose since the caller will log a more specific warning about the disabled repository
             // Return (null, true) to indicate repository ID is unknown but repository is disabled
             _log.LogVerbose($"Repository {adoOrg}/{teamProject}/{identifier} returned 404 - likely disabled or not found.");
-            var info = (null, true); // Mark as disabled with null ID since identifier may be a name
+            (string id, bool isDisabled) info = (null, true); // Mark as disabled with null ID since identifier may be a name
             _repositoryCache[cacheKey] = info;
             return info;
         }
