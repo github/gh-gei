@@ -1,9 +1,5 @@
-- Fixed branch policy check for classic pipelines with prefixed repository names to use repository ID directly when available, preventing 404 errors during rewiring
-- Skip branch policy checks for disabled repositories with a warning instead of attempting API calls that may fail
-- Skip pipeline rewiring entirely for disabled repositories, exiting early with an appropriate warning message
-- Fixed misleading success message that appeared even when pipeline rewiring was skipped for disabled repositories
-- Fixed monitor timeout minutes to only display when --dry-run mode is enabled, reducing confusion during regular pipeline rewiring operations
-- Check if pipeline is disabled before attempting to queue a test build, preventing 400 Bad Request errors and providing clear warning messages
-- bbs2gh : Added validation for `--archive-path` and `--bbs-shared-home` options to fail fast with clear error messages if the provided paths do not exist or are not accessible. Archive path is now logged before upload operations to help with troubleshooting
-- Added validation to detect and return clear error messages when a URL is provided instead of a name for organization, repository, or enterprise arguments (e.g., `--github-org`, `--github-target-org`, `--source-repo`, `--github-target-enterprise`)
-- Added `--target-api-url` as an optional arg to the `add-team-to-repo` command
+- **ado2gh**: Improved `rewire-pipeline` command to gracefully handle disabled repositories and pipelines with clear warnings instead of errors
+- **ado2gh**: Fixed 404 errors when checking branch policies for classic pipelines with prefixed repository names
+- **ado2gh**: Fixed 400 errors when running `rewire-pipeline --dry-run` on disabled pipelines
+- **ado2gh**: Fixed misleading success messages when pipeline rewiring was skipped
+- **ado2gh**: Fixed monitor timeout minutes to only display when --dry-run mode is enabled, reducing confusion during regular pipeline rewiring operations
