@@ -27,6 +27,9 @@ namespace OctoshiftCLI.AdoToGithub.Commands.RewirePipeline
             AddOption(TargetApiUrl);
             AddOption(DryRun);
             AddOption(MonitorTimeoutMinutes);
+
+            // Set default value for MonitorTimeoutMinutes since System.CommandLine doesn't use property defaults
+            MonitorTimeoutMinutes.SetDefaultValue(30);
         }
 
         public Option<string> AdoOrg { get; } = new("--ado-org")
@@ -71,7 +74,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands.RewirePipeline
         };
         public Option<int> MonitorTimeoutMinutes { get; } = new("--monitor-timeout-minutes")
         {
-            Description = "Timeout in minutes for monitoring build completion in dry-run mode. Defaults to 30 minutes."
+            Description = "(Dry-run mode only) Timeout in minutes for monitoring build completion. Defaults to 30 minutes."
         };
 
         public override RewirePipelineCommandHandler BuildHandler(RewirePipelineCommandArgs args, IServiceProvider sp)

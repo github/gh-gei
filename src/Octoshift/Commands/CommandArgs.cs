@@ -13,7 +13,7 @@ namespace OctoshiftCLI.Commands
         public virtual void Validate(OctoLogger log)
         { }
 
-        public void Log(OctoLogger log)
+        public virtual void Log(OctoLogger log)
         {
             if (log is null)
             {

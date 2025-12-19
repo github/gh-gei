@@ -103,6 +103,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.RewirePipeline
             _mockAdoApi.Setup(x => x.GetPipeline(ADO_ORG, ADO_TEAM_PROJECT, PIPELINE_ID))
                 .ReturnsAsync((defaultBranch, clean, checkoutSubmodules, triggers));
 
+            _mockAdoPipelineTriggerService.Setup(x => x.RewirePipelineToGitHub(
+                ADO_ORG, ADO_TEAM_PROJECT, PIPELINE_ID, defaultBranch, clean, checkoutSubmodules,
+                GITHUB_ORG, GITHUB_REPO, SERVICE_CONNECTION_ID, triggers, null))
+                .ReturnsAsync(true);
+
             var args = new RewirePipelineCommandArgs
             {
                 AdoOrg = ADO_ORG,
