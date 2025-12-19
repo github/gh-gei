@@ -138,8 +138,7 @@ public class AdoPipelineTriggerService
 
                 if (string.IsNullOrEmpty(repositoryId))
                 {
-                    var repoIdentifier = repoName ?? repoId ?? "unknown";
-                    _log.LogWarning($"Repository ID not found for {adoOrg}/{teamProject}/{repoIdentifier}. Branch policy check cannot be performed for pipeline {pipelineId}.");
+                    _log.LogWarning($"Repository ID not found for {adoOrg}/{teamProject}/{repoName}. Branch policy check cannot be performed for pipeline {pipelineId}.");
                     return false;
                 }
             }
@@ -147,7 +146,7 @@ public class AdoPipelineTriggerService
             // Skip branch policy check if repository is disabled
             if (isRepositoryDisabled)
             {
-                var repoIdentifier = repoName ?? repoId ?? "unknown";
+                var repoIdentifier = repoName ?? repoId;
                 _log.LogWarning($"Repository {adoOrg}/{teamProject}/{repoIdentifier} is disabled. Branch policy check skipped for pipeline {pipelineId}. Pipeline trigger configuration may not preserve branch policy requirements.");
                 return false;
             }
@@ -546,7 +545,7 @@ public class AdoPipelineTriggerService
             // Log as verbose since the caller will log a more specific warning about the disabled repository
             // Return (null, true) to indicate repository ID is unknown but repository is disabled
             _log.LogVerbose($"Repository {adoOrg}/{teamProject}/{identifier} returned 404 - likely disabled or not found.");
-            var info = ((string)null, true); // Mark as disabled with null ID since identifier may be a name
+            var info = (null, true); // Mark as disabled with null ID since identifier may be a name
             _repositoryCache[cacheKey] = info;
             return info;
         }
