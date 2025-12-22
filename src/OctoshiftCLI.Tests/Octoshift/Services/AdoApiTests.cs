@@ -986,6 +986,81 @@ public class AdoApiTests
     }
 
     [Fact]
+    public async Task IsPipelineEnabled_Should_Return_True_For_Enabled_Pipeline()
+    {
+        var pipelineId = 826263;
+
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
+        var response = new
+        {
+            id = pipelineId,
+            queueStatus = "enabled"
+        };
+
+        _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Returns(response.ToJson());
+
+        var result = await sut.IsPipelineEnabled(ADO_ORG, ADO_TEAM_PROJECT, pipelineId);
+
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task IsPipelineEnabled_Should_Return_False_For_Disabled_Pipeline()
+    {
+        var pipelineId = 826263;
+
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
+        var response = new
+        {
+            id = pipelineId,
+            queueStatus = "disabled"
+        };
+
+        _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Returns(response.ToJson());
+
+        var result = await sut.IsPipelineEnabled(ADO_ORG, ADO_TEAM_PROJECT, pipelineId);
+
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task IsPipelineEnabled_Should_Return_False_For_Paused_Pipeline()
+    {
+        var pipelineId = 826263;
+
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
+        var response = new
+        {
+            id = pipelineId,
+            queueStatus = "paused"
+        };
+
+        _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Returns(response.ToJson());
+
+        var result = await sut.IsPipelineEnabled(ADO_ORG, ADO_TEAM_PROJECT, pipelineId);
+
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task IsPipelineEnabled_Should_Return_True_For_Missing_QueueStatus()
+    {
+        var pipelineId = 826263;
+
+        var endpoint = $"https://dev.azure.com/{ADO_ORG.EscapeDataString()}/{ADO_TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
+        var response = new
+        {
+            id = pipelineId
+        };
+
+        _mockAdoClient.Setup(x => x.GetAsync(endpoint).Result).Returns(response.ToJson());
+
+        var result = await sut.IsPipelineEnabled(ADO_ORG, ADO_TEAM_PROJECT, pipelineId);
+
+        result.Should().BeTrue();
+    }
+
+    [Fact]
     public async Task GetBoardsGithubRepoId_Should_Return_RepoId()
     {
         var endpointId = Guid.NewGuid().ToString();

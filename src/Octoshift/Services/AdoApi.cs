@@ -562,6 +562,18 @@ public class AdoApi
         return (defaultBranch, clean, checkoutSubmodules, triggers);
     }
 
+    public virtual async Task<bool> IsPipelineEnabled(string org, string teamProject, int pipelineId)
+    {
+        var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/{teamProject.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
+
+        var response = await _client.GetAsync(url);
+        var data = JObject.Parse(response);
+
+        // Check the queueStatus field - it can be "enabled", "disabled", or "paused"
+        var queueStatus = (string)data["queueStatus"];
+        return string.IsNullOrEmpty(queueStatus) || queueStatus.Equals("enabled", StringComparison.OrdinalIgnoreCase);
+    }
+
     public virtual async Task<string> GetBoardsGithubRepoId(string org, string teamProject, string teamProjectId, string endpointId, string githubOrg, string githubRepo)
     {
         var url = $"{_adoBaseUrl}/{org.EscapeDataString()}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
