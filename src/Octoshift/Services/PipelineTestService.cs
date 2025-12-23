@@ -59,6 +59,16 @@ namespace OctoshiftCLI.Services
                     args.PipelineId = pipelineId;
                 }
 
+                // Check if pipeline is disabled before attempting to queue a build
+                var isEnabled = await _adoApi.IsPipelineEnabled(args.AdoOrg, args.AdoTeamProject, args.PipelineId.Value);
+                if (!isEnabled)
+                {
+                    _log.LogWarning($"Pipeline '{args.PipelineName}' (ID: {args.PipelineId.Value}) is disabled. Skipping pipeline test.");
+                    testResult.ErrorMessage = "Pipeline is disabled";
+                    testResult.EndTime = DateTime.UtcNow;
+                    return testResult;
+                }
+
                 // Get original repository information for restoration
                 (originalRepoName, _, originalDefaultBranch, originalClean, originalCheckoutSubmodules) =
                     await _adoApi.GetPipelineRepository(args.AdoOrg, args.AdoTeamProject, args.PipelineId.Value);
