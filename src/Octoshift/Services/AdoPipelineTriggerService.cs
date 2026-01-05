@@ -63,19 +63,6 @@ public class AdoPipelineTriggerService
             var currentRepoName = data["repository"]?["name"]?.ToString();
             var currentRepoId = data["repository"]?["id"]?.ToString();
 
-            // Check if repository is disabled - skip rewiring if it is
-            if (!string.IsNullOrEmpty(currentRepoId) || !string.IsNullOrEmpty(currentRepoName))
-            {
-                var identifier = !string.IsNullOrEmpty(currentRepoId) ? currentRepoId : currentRepoName;
-                var (_, isDisabled) = await GetRepositoryInfoWithCache(adoOrg, teamProject, currentRepoId, currentRepoName);
-
-                if (isDisabled)
-                {
-                    _log.LogWarning($"Repository {adoOrg}/{teamProject}/{identifier} is disabled. Skipping pipeline rewiring for pipeline {pipelineId}.");
-                    return false;
-                }
-            }
-
             var newRepo = CreateGitHubRepositoryConfiguration(githubOrg, githubRepo, defaultBranch, clean, checkoutSubmodules, connectedServiceId, targetApiUrl);
             var isPipelineRequiredByBranchPolicy = await IsPipelineRequiredByBranchPolicy(adoOrg, teamProject, currentRepoName, currentRepoId, pipelineId);
 
@@ -126,7 +113,7 @@ public class AdoPipelineTriggerService
             if (isRepositoryDisabled)
             {
                 var repoIdentifier = repoName ?? repoId;
-                _log.LogWarning($"Repository {adoOrg}/{teamProject}/{repoIdentifier} is disabled. Branch policy check skipped for pipeline {pipelineId}. Pipeline trigger configuration may not preserve branch policy requirements.");
+                _log.LogInformation($"Repository {adoOrg}/{teamProject}/{repoIdentifier} is disabled. Branch policy check skipped for pipeline {pipelineId} - will use default trigger configuration.");
                 return false;
             }
 

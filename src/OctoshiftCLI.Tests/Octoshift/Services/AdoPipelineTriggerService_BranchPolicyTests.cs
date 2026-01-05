@@ -462,14 +462,14 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             // Act
             var result = await _triggerService.RewirePipelineToGitHub(ADO_ORG, TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, "github-org", githubRepo, serviceConnectionId, null, null);
 
-            // Assert - Should NOT call PutAsync since repository is disabled
-            result.Should().BeFalse();
-            _mockAdoApi.Verify(m => m.PutAsync(It.IsAny<string>(), It.IsAny<object>()), Times.Never);
+            // Assert - Should succeed and call PutAsync even though repository is disabled
+            result.Should().BeTrue();
+            _mockAdoApi.Verify(m => m.PutAsync(It.IsAny<string>(), It.IsAny<object>()), Times.Once);
 
-            // Verify warning was logged
-            _mockOctoLogger.Verify(m => m.LogWarning(It.Is<string>(s =>
+            // Verify info message was logged about skipping branch policy check
+            _mockOctoLogger.Verify(m => m.LogInformation(It.Is<string>(s =>
                 s.Contains("disabled") &&
-                s.Contains("Skipping pipeline rewiring") &&
+                s.Contains("Branch policy check skipped") &&
                 s.Contains(pipelineId.ToString())
             )), Times.Once);
         }
@@ -506,13 +506,14 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             // Act
             var result = await _triggerService.RewirePipelineToGitHub(ADO_ORG, TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, "github-org", githubRepo, serviceConnectionId, null, null);
 
-            // Assert - Should NOT call PutAsync since repository returned 404
-            result.Should().BeFalse();
-            _mockAdoApi.Verify(m => m.PutAsync(It.IsAny<string>(), It.IsAny<object>()), Times.Never);
+            // Assert - Should succeed and call PutAsync even though repository returned 404
+            result.Should().BeTrue();
+            _mockAdoApi.Verify(m => m.PutAsync(It.IsAny<string>(), It.IsAny<object>()), Times.Once);
 
-            // Verify only one warning was logged about skipping pipeline rewiring (not the 404 warning)
-            _mockOctoLogger.Verify(m => m.LogWarning(It.Is<string>(s =>
-                s.Contains("Skipping pipeline rewiring") &&
+            // Verify info message was logged about skipping branch policy check (repo treated as disabled)
+            _mockOctoLogger.Verify(m => m.LogInformation(It.Is<string>(s =>
+                s.Contains("disabled") &&
+                s.Contains("Branch policy check skipped") &&
                 s.Contains(pipelineId.ToString())
             )), Times.Once);
         }
