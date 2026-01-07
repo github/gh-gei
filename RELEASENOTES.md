@@ -1,5 +1,4 @@
 - **ado2gh**: Improved `rewire-pipeline` command to gracefully handle disabled repositories and pipelines with clear warnings instead of errors
 - **ado2gh**: Fixed 404 errors when checking branch policies for classic pipelines with prefixed repository names
-- **ado2gh**: Fixed 400 errors when running `rewire-pipeline --dry-run` on disabled pipelines
 - **ado2gh**: Fixed misleading success messages when pipeline rewiring was skipped
 - **ado2gh**: Fixed monitor timeout minutes to only display when --dry-run mode is enabled, reducing confusion during regular pipeline rewiring operations
