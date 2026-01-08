@@ -52,6 +52,7 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
     private async Task HandleDryRun(RewirePipelineCommandArgs args)
     {
         _log.LogInformation("Starting dry-run mode: Testing pipeline rewiring to GitHub...");
+        _log.LogInformation($"Monitor timeout: {args.MonitorTimeoutMinutes} minutes");
 
         var pipelineTestArgs = new PipelineTestArgs
         {
@@ -103,7 +104,7 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
             var (defaultBranch, clean, checkoutSubmodules, triggers) = await _adoApi.GetPipeline(args.AdoOrg, args.AdoTeamProject, adoPipelineId);
 
             // Use the specialized service for complex trigger logic
-            await _pipelineTriggerService.RewirePipelineToGitHub(
+            var rewired = await _pipelineTriggerService.RewirePipelineToGitHub(
                 args.AdoOrg,
                 args.AdoTeamProject,
                 adoPipelineId,
@@ -116,7 +117,10 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
                 triggers,
                 args.TargetApiUrl);
 
-            _log.LogSuccess("Successfully rewired pipeline");
+            if (rewired)
+            {
+                _log.LogSuccess("Successfully rewired pipeline");
+            }
         }
         catch (HttpRequestException ex) when (ex.Message.Contains("404"))
         {
@@ -126,7 +130,7 @@ public class RewirePipelineCommandHandler : ICommandHandler<RewirePipelineComman
         }
         catch (ArgumentException ex) when (ex.ParamName == "pipeline")
         {
-            // Pipeline lookup failed - log error and fail gracefully  
+            // Pipeline lookup failed - log error and fail gracefully
             _log.LogError($"Pipeline lookup failed: {ex.Message}");
             throw new OctoshiftCliException($"Unable to find the specified pipeline. Please verify the pipeline name and try again.");
         }

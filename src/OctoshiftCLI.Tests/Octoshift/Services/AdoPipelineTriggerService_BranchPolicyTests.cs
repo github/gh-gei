@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
@@ -36,7 +37,8 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             var repoResponse = new
             {
                 id = repositoryId,
-                name = REPO_NAME
+                name = REPO_NAME,
+                isDisabled = "false"
             }.ToJson();
 
             var policyResponse = new
@@ -70,10 +72,65 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             _mockAdoApi.Setup(m => m.GetAsync(policyUrl)).ReturnsAsync(policyResponse);
 
             // Act
-            var result = await _triggerService.IsPipelineRequiredByBranchPolicy(ADO_ORG, TEAM_PROJECT, REPO_NAME, PIPELINE_ID);
+            var result = await _triggerService.IsPipelineRequiredByBranchPolicy(ADO_ORG, TEAM_PROJECT, REPO_NAME, null, PIPELINE_ID);
 
             // Assert
             result.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task IsPipelineRequiredByBranchPolicy_Should_Use_Repository_Id_Directly_When_Provided()
+        {
+            // Arrange
+            var repositoryId = Guid.NewGuid().ToString();
+
+            var repoResponse = new
+            {
+                id = repositoryId,
+                name = REPO_NAME,
+                isDisabled = "false"
+            }.ToJson();
+
+            var policyResponse = new
+            {
+                count = 1,
+                value = new[]
+                {
+                    new
+                    {
+                        id = 1,
+                        type = new
+                        {
+                            id = "0609b952-1397-4640-95ec-e00a01b2c241",
+                            displayName = "Build"
+                        },
+                        isEnabled = true,
+                        settings = new
+                        {
+                            buildDefinitionId = PIPELINE_ID,
+                            displayName = PIPELINE_NAME,
+                            validDuration = 0
+                        }
+                    }
+                }
+            }.ToJson();
+
+            // When repository ID is provided, we still need to fetch repo details to check if it's disabled
+            var repoByIdUrl = $"{ADO_SERVICE_URL}/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{repositoryId.EscapeDataString()}?api-version=6.0";
+            var policyUrl = $"{ADO_SERVICE_URL}/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/policy/configurations?repositoryId={repositoryId}&api-version=6.0";
+
+            _mockAdoApi.Setup(m => m.GetAsync(repoByIdUrl)).ReturnsAsync(repoResponse);
+            _mockAdoApi.Setup(m => m.GetAsync(policyUrl)).ReturnsAsync(policyResponse);
+
+            // Act - Pass repository ID directly instead of name
+            var result = await _triggerService.IsPipelineRequiredByBranchPolicy(ADO_ORG, TEAM_PROJECT, REPO_NAME, repositoryId, PIPELINE_ID);
+
+            // Assert
+            result.Should().BeTrue();
+
+            // Verify that repository lookup by name was NOT called since we provided the ID
+            var repoByNameUrl = $"{ADO_SERVICE_URL}/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{REPO_NAME.EscapeDataString()}?api-version=6.0";
+            _mockAdoApi.Verify(m => m.GetAsync(repoByNameUrl), Times.Never);
         }
 
         [Fact]
@@ -84,7 +141,8 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             var repoResponse = new
             {
                 id = repositoryId,
-                name = REPO_NAME
+                name = REPO_NAME,
+                isDisabled = "false"
             }.ToJson();
 
             var policyResponse = new
@@ -118,7 +176,7 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             _mockAdoApi.Setup(m => m.GetAsync(policyUrl)).ReturnsAsync(policyResponse);
 
             // Act
-            var result = await _triggerService.IsPipelineRequiredByBranchPolicy(ADO_ORG, TEAM_PROJECT, REPO_NAME, PIPELINE_ID);
+            var result = await _triggerService.IsPipelineRequiredByBranchPolicy(ADO_ORG, TEAM_PROJECT, REPO_NAME, null, PIPELINE_ID);
 
             // Assert
             result.Should().BeFalse();
@@ -132,7 +190,8 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             var repoResponse = new
             {
                 id = repositoryId,
-                name = REPO_NAME
+                name = REPO_NAME,
+                isDisabled = "false"
             }.ToJson();
 
             var policyResponse = new
@@ -166,7 +225,7 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             _mockAdoApi.Setup(m => m.GetAsync(policyUrl)).ReturnsAsync(policyResponse);
 
             // Act
-            var result = await _triggerService.IsPipelineRequiredByBranchPolicy(ADO_ORG, TEAM_PROJECT, REPO_NAME, PIPELINE_ID);
+            var result = await _triggerService.IsPipelineRequiredByBranchPolicy(ADO_ORG, TEAM_PROJECT, REPO_NAME, null, PIPELINE_ID);
 
             // Assert
             result.Should().BeFalse();
@@ -180,7 +239,8 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             var repoResponse = new
             {
                 id = repositoryId,
-                name = REPO_NAME
+                name = REPO_NAME,
+                isDisabled = "false"
             }.ToJson();
 
             var policyResponse = new
@@ -196,10 +256,56 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             _mockAdoApi.Setup(m => m.GetAsync(policyUrl)).ReturnsAsync(policyResponse);
 
             // Act
-            var result = await _triggerService.IsPipelineRequiredByBranchPolicy(ADO_ORG, TEAM_PROJECT, REPO_NAME, PIPELINE_ID);
+            var result = await _triggerService.IsPipelineRequiredByBranchPolicy(ADO_ORG, TEAM_PROJECT, REPO_NAME, null, PIPELINE_ID);
 
             // Assert
             result.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task IsPipelineRequiredByBranchPolicy_Should_Return_False_When_Repository_Is_Disabled()
+        {
+            // Arrange
+            var repositoryId = Guid.NewGuid().ToString();
+            var repoResponse = new
+            {
+                id = repositoryId,
+                name = REPO_NAME,
+                isDisabled = "true"
+            }.ToJson();
+
+            var repoUrl = $"{ADO_SERVICE_URL}/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{REPO_NAME.EscapeDataString()}?api-version=6.0";
+
+            _mockAdoApi.Setup(m => m.GetAsync(repoUrl)).ReturnsAsync(repoResponse);
+
+            // Act
+            var result = await _triggerService.IsPipelineRequiredByBranchPolicy(ADO_ORG, TEAM_PROJECT, REPO_NAME, null, PIPELINE_ID);
+
+            // Assert
+            result.Should().BeFalse();
+
+            // Verify that branch policy check was NOT performed since repository is disabled
+            var policyUrl = $"{ADO_SERVICE_URL}/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/policy/configurations?repositoryId={repositoryId}&api-version=6.0";
+            _mockAdoApi.Verify(m => m.GetAsync(policyUrl), Times.Never);
+        }
+
+        [Fact]
+        public async Task IsPipelineRequiredByBranchPolicy_Should_Return_False_When_Repository_Returns_404()
+        {
+            // Arrange - Disabled repositories often return 404 when queried directly
+            var repoUrl = $"{ADO_SERVICE_URL}/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{REPO_NAME.EscapeDataString()}?api-version=6.0";
+
+            _mockAdoApi.Setup(m => m.GetAsync(repoUrl))
+                .ThrowsAsync(new HttpRequestException("Response status code does not indicate success: 404 (Not Found)."));
+
+            // Act
+            var result = await _triggerService.IsPipelineRequiredByBranchPolicy(ADO_ORG, TEAM_PROJECT, REPO_NAME, null, PIPELINE_ID);
+
+            // Assert
+            result.Should().BeFalse();
+
+            // Verify that branch policy check was NOT performed since repository returned 404
+            _mockAdoApi.Verify(m => m.GetAsync(It.Is<string>(url => url.Contains("policy/configurations"))), Times.Never);
         }
 
         [Fact]
@@ -235,8 +341,8 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
 
             // Mock repository lookup - return valid repository
             var repositoryId = "repo-123";
-            var repoResponse = new { id = repositoryId, name = REPO_NAME }.ToJson();
-            var repoUrl = $"/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{REPO_NAME.EscapeDataString()}?api-version=6.0";
+            var repoResponse = new { id = repositoryId, name = REPO_NAME, isDisabled = "false" }.ToJson();
+            var repoUrl = $"{ADO_SERVICE_URL}/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{REPO_NAME.EscapeDataString()}?api-version=6.0";
 
             // Mock branch policies - return empty policies (not required by branch policy)
             var policies = new
@@ -244,7 +350,7 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
                 count = 0,
                 value = Array.Empty<object>()
             }.ToJson();
-            var policyUrl = $"/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/policy/configurations?repositoryId={repositoryId}&api-version=6.0";
+            var policyUrl = $"{ADO_SERVICE_URL}/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/policy/configurations?repositoryId={repositoryId}&api-version=6.0";
 
             var pipelineUrl = $"{ADO_SERVICE_URL}/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
 
@@ -253,9 +359,10 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             _mockAdoApi.Setup(m => m.GetAsync(policyUrl)).ReturnsAsync(policies);
 
             // Act
-            await _triggerService.RewirePipelineToGitHub(ADO_ORG, TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, "github-org", githubRepo, serviceConnectionId, originalTriggers, null);
+            var result = await _triggerService.RewirePipelineToGitHub(ADO_ORG, TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, "github-org", githubRepo, serviceConnectionId, originalTriggers, null);
 
             // Assert - Should preserve original triggers (both CI and PR, with build status reporting)
+            result.Should().BeTrue();
             _mockAdoApi.Verify(m => m.PutAsync(pipelineUrl, It.Is<object>(payload =>
                 VerifyTriggersPreserved(payload, true, true)
             )), Times.Once);
@@ -282,8 +389,8 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
 
             // Mock repository lookup - return valid repository
             var repositoryId = "repo-123";
-            var repoResponse = new { id = repositoryId, name = REPO_NAME }.ToJson();
-            var repoUrl = $"/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{REPO_NAME.EscapeDataString()}?api-version=6.0";
+            var repoResponse = new { id = repositoryId, name = REPO_NAME, isDisabled = "false" }.ToJson();
+            var repoUrl = $"{ADO_SERVICE_URL}/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{REPO_NAME.EscapeDataString()}?api-version=6.0";
 
             // Mock branch policies - return policy that requires this pipeline
             var policies = new
@@ -300,7 +407,7 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
                     }
                 }
             }.ToJson();
-            var policyUrl = $"/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/policy/configurations?repositoryId={repositoryId}&api-version=6.0";
+            var policyUrl = $"{ADO_SERVICE_URL}/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/policy/configurations?repositoryId={repositoryId}&api-version=6.0";
 
             var pipelineUrl = $"{ADO_SERVICE_URL}/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
 
@@ -309,11 +416,105 @@ namespace OctoshiftCLI.Tests.Octoshift.Services
             _mockAdoApi.Setup(m => m.GetAsync(policyUrl)).ReturnsAsync(policies);
 
             // Act
-            await _triggerService.RewirePipelineToGitHub(ADO_ORG, TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, "github-org", githubRepo, serviceConnectionId, null, null);
+            var result = await _triggerService.RewirePipelineToGitHub(ADO_ORG, TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, "github-org", githubRepo, serviceConnectionId, null, null);
 
             // Assert - Should enable both CI and PR triggers WITH build status reporting
+            result.Should().BeTrue();
             _mockAdoApi.Verify(m => m.PutAsync(pipelineUrl, It.Is<object>(payload =>
                 VerifyTriggersPreserved(payload, true, true)
+            )), Times.Once);
+        }
+
+        [Fact]
+        public async Task RewirePipelineToGitHub_Should_Skip_When_Repository_Is_Disabled()
+        {
+            // Arrange
+            var githubRepo = "test-repo";
+            var serviceConnectionId = Guid.NewGuid().ToString();
+            var defaultBranch = "main";
+            var pipelineId = PIPELINE_ID;
+            var clean = "true";
+            var checkoutSubmodules = "false";
+            var repositoryId = Guid.NewGuid().ToString();
+
+            // Mock existing pipeline with disabled repository
+            var existingPipelineData = new
+            {
+                name = PIPELINE_NAME,
+                repository = new { name = REPO_NAME, id = repositoryId },
+                someOtherProperty = "value"
+            };
+
+            // Mock repository lookup - return disabled repository
+            var repoResponse = new
+            {
+                id = repositoryId,
+                name = REPO_NAME,
+                isDisabled = "true"
+            }.ToJson();
+            var repoUrl = $"{ADO_SERVICE_URL}/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{repositoryId.EscapeDataString()}?api-version=6.0";
+
+            var pipelineUrl = $"{ADO_SERVICE_URL}/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
+
+            _mockAdoApi.Setup(m => m.GetAsync(pipelineUrl)).ReturnsAsync(existingPipelineData.ToJson());
+            _mockAdoApi.Setup(m => m.GetAsync(repoUrl)).ReturnsAsync(repoResponse);
+
+            // Act
+            var result = await _triggerService.RewirePipelineToGitHub(ADO_ORG, TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, "github-org", githubRepo, serviceConnectionId, null, null);
+
+            // Assert - Should succeed and call PutAsync even though repository is disabled
+            result.Should().BeTrue();
+            _mockAdoApi.Verify(m => m.PutAsync(It.IsAny<string>(), It.IsAny<object>()), Times.Once);
+
+            // Verify info message was logged about skipping branch policy check
+            _mockOctoLogger.Verify(m => m.LogInformation(It.Is<string>(s =>
+                s.Contains("disabled") &&
+                s.Contains("Branch policy check skipped") &&
+                s.Contains(pipelineId.ToString())
+            )), Times.Once);
+        }
+
+        [Fact]
+        public async Task RewirePipelineToGitHub_Should_Skip_When_Repository_Returns_404()
+        {
+            // Arrange
+            var githubRepo = "test-repo";
+            var serviceConnectionId = Guid.NewGuid().ToString();
+            var defaultBranch = "main";
+            var pipelineId = PIPELINE_ID;
+            var clean = "true";
+            var checkoutSubmodules = "false";
+            var repositoryId = Guid.NewGuid().ToString();
+
+            // Mock existing pipeline
+            var existingPipelineData = new
+            {
+                name = PIPELINE_NAME,
+                repository = new { name = REPO_NAME, id = repositoryId },
+                someOtherProperty = "value"
+            };
+
+            // Mock repository lookup - return 404 (likely disabled)
+            var repoUrl = $"{ADO_SERVICE_URL}/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/git/repositories/{repositoryId.EscapeDataString()}?api-version=6.0";
+
+            var pipelineUrl = $"{ADO_SERVICE_URL}/{ADO_ORG.EscapeDataString()}/{TEAM_PROJECT.EscapeDataString()}/_apis/build/definitions/{pipelineId}?api-version=6.0";
+
+            _mockAdoApi.Setup(m => m.GetAsync(pipelineUrl)).ReturnsAsync(existingPipelineData.ToJson());
+            _mockAdoApi.Setup(m => m.GetAsync(repoUrl))
+                .ThrowsAsync(new HttpRequestException("Response status code does not indicate success: 404 (Not Found)."));
+
+            // Act
+            var result = await _triggerService.RewirePipelineToGitHub(ADO_ORG, TEAM_PROJECT, pipelineId, defaultBranch, clean, checkoutSubmodules, "github-org", githubRepo, serviceConnectionId, null, null);
+
+            // Assert - Should succeed and call PutAsync even though repository returned 404
+            result.Should().BeTrue();
+            _mockAdoApi.Verify(m => m.PutAsync(It.IsAny<string>(), It.IsAny<object>()), Times.Once);
+
+            // Verify info message was logged about skipping branch policy check (repo treated as disabled)
+            _mockOctoLogger.Verify(m => m.LogInformation(It.Is<string>(s =>
+                s.Contains("disabled") &&
+                s.Contains("Branch policy check skipped") &&
+                s.Contains(pipelineId.ToString())
             )), Times.Once);
         }
 

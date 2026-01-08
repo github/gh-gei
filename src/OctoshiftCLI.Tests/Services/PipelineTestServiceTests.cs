@@ -65,6 +65,9 @@ namespace OctoshiftCLI.Tests.Services
             var buildId = 456;
             var buildUrl = "https://dev.azure.com/build/456";
 
+            _mockAdoApi.Setup(x => x.IsPipelineEnabled(ADO_ORG, ADO_TEAM_PROJECT, PIPELINE_ID))
+                .ReturnsAsync(true);
+
             _mockAdoApi.Setup(x => x.GetPipelineRepository(ADO_ORG, ADO_TEAM_PROJECT, PIPELINE_ID))
                 .ReturnsAsync((originalRepoName, "repo-id", originalDefaultBranch, originalClean, originalCheckoutSubmodules));
 
@@ -126,6 +129,9 @@ namespace OctoshiftCLI.Tests.Services
             _mockAdoApi.Setup(x => x.GetPipelineId(ADO_ORG, ADO_TEAM_PROJECT, PIPELINE_NAME))
                 .ReturnsAsync(PIPELINE_ID);
 
+            _mockAdoApi.Setup(x => x.IsPipelineEnabled(ADO_ORG, ADO_TEAM_PROJECT, PIPELINE_ID))
+                .ReturnsAsync(true);
+
             _mockAdoApi.Setup(x => x.GetPipelineRepository(ADO_ORG, ADO_TEAM_PROJECT, PIPELINE_ID))
                 .ReturnsAsync(("repo", "id", "refs/heads/main", "true", "false"));
 
@@ -159,6 +165,9 @@ namespace OctoshiftCLI.Tests.Services
                 MonitorTimeoutMinutes = 1
             };
 
+            _mockAdoApi.Setup(x => x.IsPipelineEnabled(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
+                .ReturnsAsync(true);
+
             _mockAdoApi.Setup(x => x.GetPipelineRepository(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
                 .ReturnsAsync(("repo", "id", "refs/heads/main", "true", "false"));
 
@@ -182,6 +191,46 @@ namespace OctoshiftCLI.Tests.Services
             result.RewiredSuccessfully.Should().BeTrue();
             result.RestoredSuccessfully.Should().BeFalse();
             result.ErrorMessage.Should().Contain("Failed to restore: Restore failed");
+        }
+
+        [Fact]
+        public async Task TestPipeline_Should_Skip_Test_For_Disabled_Pipeline()
+        {
+            // Arrange
+            var args = new PipelineTestArgs
+            {
+                AdoOrg = ADO_ORG,
+                AdoTeamProject = ADO_TEAM_PROJECT,
+                PipelineName = PIPELINE_NAME,
+                PipelineId = PIPELINE_ID,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                ServiceConnectionId = SERVICE_CONNECTION_ID,
+                MonitorTimeoutMinutes = 1
+            };
+
+            _mockAdoApi.Setup(x => x.IsPipelineEnabled(ADO_ORG, ADO_TEAM_PROJECT, PIPELINE_ID))
+                .ReturnsAsync(false);
+
+            // Act
+            var result = await _service.TestPipeline(args);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.ErrorMessage.Should().Be("Pipeline is disabled");
+            result.EndTime.Should().NotBeNull();
+
+            // Verify that no pipeline operations were attempted
+            _mockAdoApi.Verify(x => x.GetPipelineRepository(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Never);
+            _mockAdoApi.Verify(x => x.GetPipeline(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Never);
+            _mockPipelineTriggerService.Verify(x => x.RewirePipelineToGitHub(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(),
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<JToken>(), It.IsAny<string>()), Times.Never);
+            _mockAdoApi.Verify(x => x.QueueBuild(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+            _mockAdoApi.Verify(x => x.RestorePipelineToAdoRepo(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(),
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<JToken>()), Times.Never);
+
+            _mockOctoLogger.Verify(x => x.LogWarning(It.Is<string>(s => s.Contains("is disabled"))), Times.Once);
         }
     }
 }
