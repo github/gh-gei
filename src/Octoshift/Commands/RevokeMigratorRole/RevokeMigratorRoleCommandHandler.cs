@@ -22,7 +22,7 @@ public class RevokeMigratorRoleCommandHandler : ICommandHandler<RevokeMigratorRo
             throw new ArgumentNullException(nameof(args));
         }
 
-        _log.LogInformation("Granting migrator role ...");
+        _log.LogInformation("Revoking migrator role ...");
 
         var githubOrgId = await _githubApi.GetOrganizationId(args.GithubOrg);
         var success = await _githubApi.RevokeMigratorRole(githubOrgId, args.Actor, args.ActorType);
