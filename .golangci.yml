@@ -1,0 +1,104 @@
+# golangci-lint configuration for gh-gei Go port
+# See https://golangci-lint.run/usage/configuration/
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+    - gofumpt
+
+linters:
+  enable:
+    - govet         # Reports suspicious constructs
+    - errcheck      # Checks for unchecked errors
+    - staticcheck   # Static analysis (includes gosimple, stylecheck)
+    - unused        # Checks for unused code
+    - ineffassign   # Detects ineffectual assignments
+    - bodyclose     # Checks for HTTP response body close
+    - noctx         # Finds HTTP requests without context
+    - misspell      # Finds commonly misspelled English words
+    - unconvert     # Removes unnecessary type conversions
+    - goconst       # Finds repeated strings that could be constants
+    - gocyclo       # Computes cyclomatic complexities
+    - revive        # Fast, configurable, extensible linter
+    - gosec         # Security-focused linter
+    - errname       # Checks error naming
+    - errorlint     # Finds misuses of errors
+    - whitespace    # Detects leading/trailing whitespace
+
+  settings:
+    gocyclo:
+      min-complexity: 15
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+    misspell:
+      locale: US
+    revive:
+      rules:
+        - name: exported
+          severity: warning
+          disabled: false
+        - name: package-comments
+          severity: warning
+          disabled: false
+    gosec:
+      excludes:
+        - G104  # Audit errors not checked (too noisy)
+
+  exclusions:
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      # Exclude some linters from running on tests files
+      - path: _test\.go
+        linters:
+          - gocyclo
+          - errcheck
+          - gosec
+          - revive
+      # Exclude error checks in main.go files (handled by cobra)
+      - path: cmd/.*/main\.go
+        text: "Error return value"
+        linters:
+          - errcheck
+      # Unused functions in skeleton main.go files will be wired up in future PRs
+      - path: cmd/.*/main\.go
+        linters:
+          - unused
+      # SA1029: context key type - will be replaced with proper type in later phases
+      - path: cmd/.*/main\.go
+        text: "SA1029"
+        linters:
+          - staticcheck
+      # G101 false positives on template constant names containing "Password", "Secret", etc.
+      - path: pkg/scriptgen/templates\.go
+        text: "G101"
+        linters:
+          - gosec
+      # Cyclomatic complexity for generate-script command will be addressed when refactoring
+      - path: cmd/gei/generate_script\.go
+        linters:
+          - gocyclo
+      # TLS InsecureSkipVerify is user-configurable for GHES with self-signed certs
+      - path: pkg/http/client\.go
+        text: "G402"
+        linters:
+          - gosec
+
+output:
+  formats:
+    text:
+      path: stdout
+      colors: true
+      print-issued-lines: true
+      print-linter-name: true
