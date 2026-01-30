@@ -40,7 +40,10 @@ func newRootCmd() *cobra.Command {
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose logging")
 	rootCmd.Version = version
 
-	// Add commands (will be implemented in phases)
+	// Add commands
+	rootCmd.AddCommand(newGenerateScriptCmd())
+
+	// Additional commands will be implemented in subsequent phases
 	// rootCmd.AddCommand(newMigrateRepoCmd())
 	// rootCmd.AddCommand(newMigrateOrgCmd())
 	// rootCmd.AddCommand(newWaitForMigrationCmd())
