@@ -158,7 +158,7 @@ namespace OctoshiftCLI.IntegrationTests
 
         public async Task InitializeBbsRepo(string bbsProjectKey, string repoName)
         {
-            var repoPath = Path.Combine(Path.GetTempPath(), $"{repoName}-{Guid.NewGuid()}");
+            var repoPath = Path.Join(Path.GetTempPath(), $"{repoName}-{Guid.NewGuid()}");
 
             Directory.CreateDirectory(repoPath);
 

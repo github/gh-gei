@@ -70,18 +70,36 @@ public class GithubApi
         var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/teams";
         var payload = new { name = teamName, privacy = "closed" };
 
-        var response = await _client.PostAsync(url, payload);
-        var data = JObject.Parse(response);
-
-        return ((string)data["id"], (string)data["slug"]);
+        return await _retryPolicy.HttpRetry(async () =>
+        {
+            try
+            {
+                var response = await _client.PostAsync(url, payload);
+                var data = JObject.Parse(response);
+                return ((string)data["id"], (string)data["slug"]);
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode >= HttpStatusCode.InternalServerError)
+            {
+                // Before retrying, check if the team was actually created
+                var teams = await GetTeams(org);
+                var (Id, Name, Slug) = teams.FirstOrDefault(t => t.Name == teamName);
+                if (Name != null)
+                {
+                    // Team exists, return its details instead of retrying
+                    return (Id, Slug);
+                }
+                // Team doesn't exist, let the retry mechanism handle it
+                throw;
+            }
+        }, ex => ex.StatusCode >= HttpStatusCode.InternalServerError);
     }
 
-    public virtual async Task<IEnumerable<(string Name, string Slug)>> GetTeams(string org)
+    public virtual async Task<IEnumerable<(string Id, string Name, string Slug)>> GetTeams(string org)
     {
         var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}/teams";
 
         return await _client.GetAllAsync(url)
-            .Select(t => ((string)t["name"], (string)t["slug"]))
+            .Select(t => ((string)t["id"], (string)t["name"], (string)t["slug"]))
             .ToListAsync();
     }
 
@@ -1182,31 +1200,36 @@ public class GithubApi
             ResolutionComment = (string)secretAlert["resolution_comment"],
             SecretType = (string)secretAlert["secret_type"],
             Secret = (string)secretAlert["secret"],
+            ResolverName = secretAlert["resolved_by"]?.Type != JTokenType.Null
+                ? (string)secretAlert["resolved_by"]["login"]
+                : null
         };
 
-    private static GithubSecretScanningAlertLocation BuildSecretScanningAlertLocation(JToken alertLocation) =>
-        new()
+    private static GithubSecretScanningAlertLocation BuildSecretScanningAlertLocation(JToken alertLocation)
+    {
+        var details = alertLocation["details"];
+        return new GithubSecretScanningAlertLocation
         {
             LocationType = (string)alertLocation["type"],
-            Path = (string)alertLocation["details"]["path"],
-            StartLine = (int)alertLocation["details"]["start_line"],
-            EndLine = (int)alertLocation["details"]["end_line"],
-            StartColumn = (int)alertLocation["details"]["start_column"],
-            EndColumn = (int)alertLocation["details"]["end_column"],
-            BlobSha = (string)alertLocation["details"]["blob_sha"],
-            IssueTitleUrl = (string)alertLocation["details"]["issue_title_url"],
-            IssueBodyUrl = (string)alertLocation["details"]["issue_body_url"],
-            IssueCommentUrl = (string)alertLocation["details"]["issue_comment_url"],
-            DiscussionTitleUrl = (string)alertLocation["details"]["discussion_title_url"],
-            DiscussionBodyUrl = (string)alertLocation["details"]["discussion_body_url"],
-            DiscussionCommentUrl = (string)alertLocation["details"]["discussion_comment_url"],
-            PullRequestTitleUrl = (string)alertLocation["details"]["pull_request_title_url"],
-            PullRequestBodyUrl = (string)alertLocation["details"]["pull_request_body_url"],
-            PullRequestCommentUrl = (string)alertLocation["details"]["pull_request_comment_url"],
-            PullRequestReviewUrl = (string)alertLocation["details"]["pull_request_review_url"],
-            PullRequestReviewCommentUrl = (string)alertLocation["details"]["pull_request_review_comment_url"],
+            Path = (string)details["path"],
+            StartLine = (int?)details["start_line"] ?? 0,
+            EndLine = (int?)details["end_line"] ?? 0,
+            StartColumn = (int?)details["start_column"] ?? 0,
+            EndColumn = (int?)details["end_column"] ?? 0,
+            BlobSha = (string)details["blob_sha"],
+            IssueTitleUrl = (string)details["issue_title_url"],
+            IssueBodyUrl = (string)details["issue_body_url"],
+            IssueCommentUrl = (string)details["issue_comment_url"],
+            DiscussionTitleUrl = (string)details["discussion_title_url"],
+            DiscussionBodyUrl = (string)details["discussion_body_url"],
+            DiscussionCommentUrl = (string)details["discussion_comment_url"],
+            PullRequestTitleUrl = (string)details["pull_request_title_url"],
+            PullRequestBodyUrl = (string)details["pull_request_body_url"],
+            PullRequestCommentUrl = (string)details["pull_request_comment_url"],
+            PullRequestReviewUrl = (string)details["pull_request_review_url"],
+            PullRequestReviewCommentUrl = (string)details["pull_request_review_comment_url"],
         };
-
+    }
     private static CodeScanningAnalysis BuildCodeScanningAnalysis(JToken codescan) =>
         new()
         {

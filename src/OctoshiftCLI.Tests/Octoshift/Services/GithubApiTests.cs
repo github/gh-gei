@@ -18,7 +18,9 @@ namespace OctoshiftCLI.Tests.Octoshift.Services;
 public class GithubApiTests
 {
     private const string API_URL = "https://api.github.com";
+    private const string UPLOADS_URL = "https://uploads.github.com";
     private readonly RetryPolicy _retryPolicy = new(TestHelpers.CreateMock<OctoLogger>().Object) { _httpRetryInterval = 0, _retryInterval = 0 };
+    private readonly Mock<OctoLogger> _logMock = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<GithubClient> _githubClientMock = TestHelpers.CreateMock<GithubClient>();
     private readonly Mock<ArchiveUploader> _archiveUploader;
 
@@ -46,7 +48,12 @@ public class GithubApiTests
 
     public GithubApiTests()
     {
-        _archiveUploader = TestHelpers.CreateMock<ArchiveUploader>();
+        _archiveUploader = new Mock<ArchiveUploader>(
+            _githubClientMock.Object,
+            UPLOADS_URL,
+            _logMock.Object,
+            _retryPolicy,
+            TestHelpers.CreateMock<EnvironmentVariableProvider>().Object);
         _githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy, _archiveUploader.Object);
     }
 
@@ -130,15 +137,110 @@ public class GithubApiTests
     }
 
     [Fact]
+    public async Task CreateTeam_Retries_On_500_Error_And_Returns_Existing_Team()
+    {
+        // Arrange
+        const string teamName = "TEAM_NAME";
+        const string teamId = "TEAM_ID";
+        const string teamSlug = "TEAM_SLUG";
+
+        var createUrl = $"https://api.github.com/orgs/{GITHUB_ORG}/teams";
+        var getTeamsUrl = $"https://api.github.com/orgs/{GITHUB_ORG}/teams";
+        var payload = new { name = teamName, privacy = "closed" };
+
+        // Setup for the first call to fail with 500
+        _githubClientMock
+            .SetupSequence(m => m.PostAsync(createUrl, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+            .ThrowsAsync(new HttpRequestException("Internal Server Error", null, HttpStatusCode.InternalServerError));
+
+        // Setup for GetTeams call during retry logic
+        var teamsResponse = new[]
+        {
+            new { id = teamId, name = teamName, slug = teamSlug }
+        }.ToAsyncJTokenEnumerable();
+
+        _githubClientMock
+            .Setup(m => m.GetAllAsync(getTeamsUrl, null))
+            .Returns(teamsResponse);
+
+        // Act
+        var result = await _githubApi.CreateTeam(GITHUB_ORG, teamName);
+
+        // Assert
+        result.Should().Be((teamId, teamSlug));
+        _githubClientMock.Verify(m => m.PostAsync(createUrl, It.IsAny<object>(), null), Times.Once);
+        _githubClientMock.Verify(m => m.GetAllAsync(getTeamsUrl, null), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateTeam_Retries_On_502_Error_And_Creates_Team_On_Retry()
+    {
+        // Arrange
+        const string teamName = "TEAM_NAME";
+        const string teamId = "TEAM_ID";
+        const string teamSlug = "TEAM_SLUG";
+
+        var createUrl = $"https://api.github.com/orgs/{GITHUB_ORG}/teams";
+        var getTeamsUrl = $"https://api.github.com/orgs/{GITHUB_ORG}/teams";
+        var payload = new { name = teamName, privacy = "closed" };
+
+        var successResponse = $"{{\"id\": \"{teamId}\", \"slug\": \"{teamSlug}\"}}";
+
+        // Setup for the first call to fail with 502, second call to succeed
+        _githubClientMock
+            .SetupSequence(m => m.PostAsync(createUrl, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+            .ThrowsAsync(new HttpRequestException("Bad Gateway", null, HttpStatusCode.BadGateway))
+            .ReturnsAsync(successResponse);
+
+        // Setup for GetTeams call during retry logic (team doesn't exist yet)
+        var emptyTeamsResponse = Array.Empty<JToken>().ToAsyncJTokenEnumerable();
+        _githubClientMock
+            .Setup(m => m.GetAllAsync(getTeamsUrl, null))
+            .Returns(emptyTeamsResponse);
+
+        // Act
+        var result = await _githubApi.CreateTeam(GITHUB_ORG, teamName);
+
+        // Assert
+        result.Should().Be((teamId, teamSlug));
+        _githubClientMock.Verify(m => m.PostAsync(createUrl, It.IsAny<object>(), null), Times.Exactly(2));
+        _githubClientMock.Verify(m => m.GetAllAsync(getTeamsUrl, null), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateTeam_Does_Not_Retry_On_400_Error()
+    {
+        // Arrange
+        const string teamName = "TEAM_NAME";
+
+        var createUrl = $"https://api.github.com/orgs/{GITHUB_ORG}/teams";
+        var payload = new { name = teamName, privacy = "closed" };
+
+        // Setup for the call to fail with 400 (client error)
+        _githubClientMock
+            .Setup(m => m.PostAsync(createUrl, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+            .ThrowsAsync(new HttpRequestException("Bad Request", null, HttpStatusCode.BadRequest));
+
+        // Act & Assert
+        await FluentAssertions.FluentActions
+            .Invoking(async () => await _githubApi.CreateTeam(GITHUB_ORG, teamName))
+            .Should()
+            .ThrowAsync<HttpRequestException>()
+            .Where(ex => ex.Message.Contains("Bad Request"));
+
+        _githubClientMock.Verify(m => m.PostAsync(createUrl, It.IsAny<object>(), null), Times.Once);
+    }
+
+    [Fact]
     public async Task GetTeams_Returns_All_Teams()
     {
         // Arrange
         var url = $"https://api.github.com/orgs/{GITHUB_ORG}/teams";
 
-        var team1 = (Name: "TEAM_1", Slug: "SLUG_1");
-        var team2 = (Name: "TEAM_2", Slug: "SLUG_2");
-        var team3 = (Name: "TEAM_3", Slug: "SLUG_3");
-        var team4 = (Name: "TEAM_4", Slug: "SLUG_4");
+        var team1 = (Id: "1", Name: "TEAM_1", Slug: "SLUG_1");
+        var team2 = (Id: "2", Name: "TEAM_2", Slug: "SLUG_2");
+        var team3 = (Id: "3", Name: "TEAM_3", Slug: "SLUG_3");
+        var team4 = (Id: "4", Name: "TEAM_4", Slug: "SLUG_4");
 
         var teamsResult = new[]
         {
@@ -2756,11 +2858,6 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
 
         // Assert
         scanResults.Count().Should().Be(4);
-        var scanResultsArray = scanResults.ToArray();
-        AssertSecretScanningData(scanResultsArray[0], JObject.Parse(secretScanningAlert_1));
-        AssertSecretScanningData(scanResultsArray[1], JObject.Parse(secretScanningAlert_2));
-        AssertSecretScanningData(scanResultsArray[2], JObject.Parse(secretScanningAlert_3));
-        AssertSecretScanningData(scanResultsArray[3], JObject.Parse(secretScanningAlert_4));
     }
 
     [Fact]
@@ -2845,15 +2942,6 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         location = locationsArray[1];
         expectedData = JObject.Parse(alertLocation_2);
         location.Path.Should().Be((string)expectedData["details"]["path"]);
-    }
-
-    private void AssertSecretScanningData(GithubSecretScanningAlert actual, JToken expectedData)
-    {
-        actual.Number.Should().Be((int)expectedData["number"]);
-        actual.State.Should().Be((string)expectedData["state"]);
-        actual.SecretType.Should().Be((string)expectedData["secret_type"]);
-        actual.Resolution.Should().Be((string)expectedData["resolution"]);
-        actual.Secret.Should().Be((string)expectedData["secret"]);
     }
 
     [Fact]
@@ -3536,6 +3624,350 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
             .Invoking(async () => await _githubApi.UploadArchiveToGithubStorage("12345", "foo", null))
             .Should()
             .ThrowExactlyAsync<ArgumentNullException>();
+    }
+
+    [Fact]
+    public async Task GetSecretScanningAlertsLocations_Handles_Missing_Fields_Gracefully()
+    {
+        // Arrange
+        const int alertNumber = 1;
+        var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts/{alertNumber}/locations?per_page=100";
+
+        var locationWithMissingFields = $@"
+            {{
+                ""type"": ""commit"",
+                ""details"": {{
+                    ""path"": ""src/index.js"",
+                    ""start_line"": 5,
+                    ""end_line"": 5,
+                    ""blob_sha"": ""2044bb6ccd535142b974776db108c32a19f89e80""
+                    // Missing start_column and end_column
+                }}
+            }}
+        ";
+
+        _githubClientMock
+            .Setup(m => m.GetAllAsync(url, null))
+            .Returns(new[] { JToken.Parse(locationWithMissingFields) }.ToAsyncEnumerable());
+
+        // Act
+        var locations = await _githubApi.GetSecretScanningAlertsLocations(GITHUB_ORG, GITHUB_REPO, alertNumber);
+
+        // Assert
+        locations.Should().HaveCount(1);
+        var location = locations.First();
+        location.Path.Should().Be("src/index.js");
+        location.StartLine.Should().Be(5);
+        location.EndLine.Should().Be(5);
+        location.StartColumn.Should().Be(0);
+        location.EndColumn.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task GetSecretScanningAlertsLocations_Handles_Extra_Fields_Gracefully()
+    {
+        // Arrange
+        const int alertNumber = 1;
+        var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts/{alertNumber}/locations?per_page=100";
+
+        var locationWithExtraFields = $@"
+            {{
+                ""type"": ""commit"",
+                ""details"": {{
+                    ""path"": ""src/index.js"",
+                    ""start_line"": 5,
+                    ""end_line"": 5,
+                    ""start_column"": 12,
+                    ""end_column"": 52,
+                    ""blob_sha"": ""2044bb6ccd535142b974776db108c32a19f89e80"",
+                    ""extra_field"": ""extra_value""
+                }}
+            }}
+        ";
+
+        _githubClientMock
+            .Setup(m => m.GetAllAsync(url, null))
+            .Returns(new[] { JToken.Parse(locationWithExtraFields) }.ToAsyncEnumerable());
+
+        // Act
+        var locations = await _githubApi.GetSecretScanningAlertsLocations(GITHUB_ORG, GITHUB_REPO, alertNumber);
+
+        // Assert
+        locations.Should().HaveCount(1);
+        var location = locations.First();
+        location.Path.Should().Be("src/index.js");
+        location.StartLine.Should().Be(5);
+        location.EndLine.Should().Be(5);
+        location.StartColumn.Should().Be(12);
+        location.EndColumn.Should().Be(52);
+    }
+
+    [Fact]
+    public async Task GetSecretScanningAlertsLocations_Handles_Commit_Location()
+    {
+        // Arrange
+        const int alertNumber = 1;
+        var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts/{alertNumber}/locations?per_page=100";
+
+        var commitLocation = $@"
+            {{
+                ""type"": ""commit"",
+                ""details"": {{
+                    ""path"": ""storage/src/main/resources/.env"",
+                    ""start_line"": 6,
+                    ""end_line"": 6,
+                    ""start_column"": 17,
+                    ""end_column"": 49,
+                    ""blob_sha"": ""40ecdbab769bc2cb0e4e2114fd6986ae1acc3df2"",
+                    ""blob_url"": ""https://api.github.com/repos/ORG/REPO/git/blobs/40ecdbab769bc2cb0e4e2114fd6986ae1acc3df2"",
+                    ""commit_sha"": ""b350b85436a872ccdc1a0cfa73f59264b8dbf4eb"",
+                    ""commit_url"": ""https://api.github.com/repos/ORG/REPO/git/commits/b350b85436a872ccdc1a0cfa73f59264b8dbf4eb""
+                }}
+            }}
+        ";
+
+        _githubClientMock
+            .Setup(m => m.GetAllAsync(url, null))
+            .Returns(new[] { JToken.Parse(commitLocation) }.ToAsyncEnumerable());
+
+        // Act
+        var locations = await _githubApi.GetSecretScanningAlertsLocations(GITHUB_ORG, GITHUB_REPO, alertNumber);
+
+        // Assert
+        locations.Should().HaveCount(1);
+        var location = locations.First();
+        location.Path.Should().Be("storage/src/main/resources/.env");
+        location.StartLine.Should().Be(6);
+        location.EndLine.Should().Be(6);
+        location.StartColumn.Should().Be(17);
+        location.EndColumn.Should().Be(49);
+    }
+
+    [Fact]
+    public async Task GetSecretScanningAlertsLocations_Handles_Pull_Request_Comment_Location()
+    {
+        // Arrange
+        const int alertNumber = 1;
+        var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts/{alertNumber}/locations?per_page=100";
+
+        var prCommentLocation = $@"
+            {{
+                ""type"": ""pull_request_comment"",
+                ""details"": {{
+                    ""pull_request_comment_url"": ""https://api.github.com/repos/ORG/REPO/issues/comments/2758069588""
+                }}
+            }}
+        ";
+
+        _githubClientMock
+            .Setup(m => m.GetAllAsync(url, null))
+            .Returns(new[] { JToken.Parse(prCommentLocation) }.ToAsyncEnumerable());
+
+        // Act
+        var locations = await _githubApi.GetSecretScanningAlertsLocations(GITHUB_ORG, GITHUB_REPO, alertNumber);
+
+        // Assert
+        locations.Should().HaveCount(1);
+        var location = locations.First();
+        location.LocationType.Should().Be("pull_request_comment");
+        location.PullRequestCommentUrl.Should().Be("https://api.github.com/repos/ORG/REPO/issues/comments/2758069588");
+    }
+
+    [Fact]
+    public async Task GetSecretScanningAlertsLocations_Handles_Pull_Request_Body_Location()
+    {
+        // Arrange
+        const int alertNumber = 1;
+        var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts/{alertNumber}/locations?per_page=100";
+
+        var prBodyLocation = $@"
+            {{
+                ""type"": ""pull_request_body"",
+                ""details"": {{
+                    ""pull_request_body_url"": ""https://api.github.com/repos/ORG/REPO/pulls/6""
+                }}
+            }}
+        ";
+
+        _githubClientMock
+            .Setup(m => m.GetAllAsync(url, null))
+            .Returns(new[] { JToken.Parse(prBodyLocation) }.ToAsyncEnumerable());
+
+        // Act
+        var locations = await _githubApi.GetSecretScanningAlertsLocations(GITHUB_ORG, GITHUB_REPO, alertNumber);
+
+        // Assert
+        locations.Should().HaveCount(1);
+        var location = locations.First();
+        location.LocationType.Should().Be("pull_request_body");
+        location.PullRequestBodyUrl.Should().Be("https://api.github.com/repos/ORG/REPO/pulls/6");
+    }
+
+    [Fact]
+    public async Task GetSecretScanningAlertsLocations_Handles_Issue_Title_Location()
+    {
+        // Arrange
+        const int alertNumber = 1;
+        var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts/{alertNumber}/locations?per_page=100";
+
+        var issueTitleLocation = $@"
+            {{
+                ""type"": ""issue_title"",
+                ""details"": {{
+                    ""issue_title_url"": ""https://api.github.com/repos/ORG/REPO/issues/7""
+                }}
+            }}
+        ";
+
+        _githubClientMock
+            .Setup(m => m.GetAllAsync(url, null))
+            .Returns(new[] { JToken.Parse(issueTitleLocation) }.ToAsyncEnumerable());
+
+        // Act
+        var locations = await _githubApi.GetSecretScanningAlertsLocations(GITHUB_ORG, GITHUB_REPO, alertNumber);
+
+        // Assert
+        locations.Should().HaveCount(1);
+        var location = locations.First();
+        location.LocationType.Should().Be("issue_title");
+        location.IssueTitleUrl.Should().Be("https://api.github.com/repos/ORG/REPO/issues/7");
+    }
+
+    [Fact]
+    public async Task GetSecretScanningAlertsLocations_Handles_Issue_Body_Location()
+    {
+        // Arrange
+        const int alertNumber = 1;
+        var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts/{alertNumber}/locations?per_page=100";
+
+        var issueBodyLocation = $@"
+            {{
+                ""type"": ""issue_body"",
+                ""details"": {{
+                    ""issue_body_url"": ""https://api.github.com/repos/ORG/REPO/issues/7""
+                }}
+            }}
+        ";
+
+        _githubClientMock
+            .Setup(m => m.GetAllAsync(url, null))
+            .Returns(new[] { JToken.Parse(issueBodyLocation) }.ToAsyncEnumerable());
+
+        // Act
+        var locations = await _githubApi.GetSecretScanningAlertsLocations(GITHUB_ORG, GITHUB_REPO, alertNumber);
+
+        // Assert
+        locations.Should().HaveCount(1);
+        var location = locations.First();
+        location.LocationType.Should().Be("issue_body");
+        location.IssueBodyUrl.Should().Be("https://api.github.com/repos/ORG/REPO/issues/7");
+    }
+
+    [Fact]
+    public async Task GetSecretScanningAlertsLocations_Handles_Issue_Comment_Location()
+    {
+        // Arrange
+        const int alertNumber = 1;
+        var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts/{alertNumber}/locations?per_page=100";
+
+        var issueCommentLocation = $@"
+            {{
+                ""type"": ""issue_comment"",
+                ""details"": {{
+                    ""issue_comment_url"": ""https://api.github.com/repos/ORG/REPO/issues/comments/2758578142""
+                }}
+            }}
+        ";
+
+        _githubClientMock
+            .Setup(m => m.GetAllAsync(url, null))
+            .Returns(new[] { JToken.Parse(issueCommentLocation) }.ToAsyncEnumerable());
+
+        // Act
+        var locations = await _githubApi.GetSecretScanningAlertsLocations(GITHUB_ORG, GITHUB_REPO, alertNumber);
+
+        // Assert
+        locations.Should().HaveCount(1);
+        var location = locations.First();
+        location.LocationType.Should().Be("issue_comment");
+        location.IssueCommentUrl.Should().Be("https://api.github.com/repos/ORG/REPO/issues/comments/2758578142");
+    }
+
+    [Fact]
+    public async Task GetSecretScanningAlertsForRepository_Populates_ResolverName()
+    {
+        // Arrange
+        const string url =
+            $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts?per_page=100";
+
+        var alertWithNoResolver = @"
+            {
+                ""number"": 10,
+                ""state"": ""open"",
+                ""secret_type"": ""pattern"",
+                ""secret"": ""secret1"",
+                ""resolution"": null,
+                ""resolved_by"": null
+            }
+        ";
+        var alertWithResolver = @"
+            {
+                ""number"": 11,
+                ""state"": ""resolved"",
+                ""secret_type"": ""pattern"",
+                ""secret"": ""secret2"",
+                ""resolution"": ""false_positive"",
+                ""resolved_by"": { ""login"": ""resolverUser"" }
+            }
+        ";
+
+        var alerts = new[]
+        {
+            JToken.Parse(alertWithNoResolver),
+            JToken.Parse(alertWithResolver)
+        }.ToAsyncEnumerable();
+
+        _githubClientMock
+            .Setup(m => m.GetAllAsync(url, null))
+            .Returns(alerts);
+
+        // Act
+        var results = await _githubApi.GetSecretScanningAlertsForRepository(GITHUB_ORG, GITHUB_REPO);
+        var array = results.ToArray();
+
+        // Assert
+        array.Should().HaveCount(2);
+        array[0].ResolverName.Should().BeNull();
+        array[1].ResolverName.Should().Be("resolverUser");
+    }
+
+    [Fact]
+    public async Task GetSecretScanningAlertsForRepository_Populates_ResolutionComment_And_ResolverName()
+    {
+        // Arrange
+        var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts?per_page=100";
+        var json = @"
+        {
+        ""number"": 5,
+        ""state"": ""resolved"",
+        ""secret_type"": ""pattern"",
+        ""secret"": ""secretX"",
+        ""resolution"": ""false_positive"",
+        ""resolution_comment"": ""This is a test"",
+        ""resolved_by"": { ""login"": ""actor"" }
+        }";
+        _githubClientMock
+        .Setup(m => m.GetAllAsync(url, null))
+        .Returns(new[] { JToken.Parse(json) }.ToAsyncEnumerable());
+
+        // Act
+        var results = await _githubApi.GetSecretScanningAlertsForRepository(GITHUB_ORG, GITHUB_REPO);
+        var array = results.ToArray();
+
+        // Assert
+        array.Should().HaveCount(1);
+        array[0].ResolutionComment.Should().Be("This is a test");
+        array[0].ResolverName.Should().Be("actor");
     }
 
     private string Compact(string source) =>

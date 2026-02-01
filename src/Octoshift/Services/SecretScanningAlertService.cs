@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Octoshift.Models;
+using OctoshiftCLI.Extensions;
 
 namespace OctoshiftCLI.Services;
 
@@ -73,9 +75,17 @@ public class SecretScanningAlertService
 
                         _log.LogInformation($"  updating target alert:{targetAlert.Alert.Number} to state:{sourceAlert.Alert.State} and resolution:{sourceAlert.Alert.Resolution}");
 
+                        var prefix = $"[@{sourceAlert.Alert.ResolverName}] ";
+                        var originalComment = sourceAlert.Alert.ResolutionComment ?? string.Empty;
+                        var prefixedComment = prefix + originalComment;
+
+                        var targetResolutionComment = prefixedComment.Length <= 270
+                            ? prefixedComment
+                            : prefix + originalComment[..Math.Max(0, 270 - prefix.Length)];
+
                         await _targetGithubApi.UpdateSecretScanningAlert(targetOrg, targetRepo, targetAlert.Alert.Number, sourceAlert.Alert.State,
-                            sourceAlert.Alert.Resolution, sourceAlert.Alert.ResolutionComment);
-                        _log.LogSuccess($"  target alert successfully updated to {sourceAlert.Alert.Resolution}.");
+                            sourceAlert.Alert.Resolution, targetResolutionComment);
+                        _log.LogSuccess($"  target alert successfully updated to {sourceAlert.Alert.Resolution} with comment {targetResolutionComment}.");
                     }
                     else
                     {
@@ -108,7 +118,7 @@ public class SecretScanningAlertService
     // Check if the locations of the source and target alerts match exactly
     // We compare the type of location and the corresponding fields based on the type
     // Each type has different fields that need to be compared for equality so we use a switch statement
-    // Note: Discussions are commented out as we don't miggate them currently
+    // Note: Discussions are commented out as we don't migrate them currently
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0075: Conditional expression can be simplified", Justification = "Want to keep guard for better performance.")]
     private bool AreLocationsEqual(GithubSecretScanningAlertLocation sourceLocation, GithubSecretScanningAlertLocation targetLocation)
     {
@@ -122,15 +132,9 @@ public class SecretScanningAlertService
                                             sourceLocation.StartColumn == targetLocation.StartColumn &&
                                             sourceLocation.EndColumn == targetLocation.EndColumn &&
                                             sourceLocation.BlobSha == targetLocation.BlobSha,
-                "issue_title" => sourceLocation.IssueTitleUrl == targetLocation.IssueTitleUrl,
-                "issue_body" => sourceLocation.IssueBodyUrl == targetLocation.IssueBodyUrl,
-                "issue_comment" => sourceLocation.IssueCommentUrl == targetLocation.IssueCommentUrl,
-                "pull_request_title" => sourceLocation.PullRequestTitleUrl == targetLocation.PullRequestTitleUrl,
-                "pull_request_body" => sourceLocation.PullRequestBodyUrl == targetLocation.PullRequestBodyUrl,
-                "pull_request_comment" => sourceLocation.PullRequestCommentUrl == targetLocation.PullRequestCommentUrl,
-                "pull_request_review" => sourceLocation.PullRequestReviewUrl == targetLocation.PullRequestReviewUrl,
-                "pull_request_review_comment" => sourceLocation.PullRequestReviewCommentUrl == targetLocation.PullRequestReviewCommentUrl,
-                _ => false
+                // For all other location types, we match on the final path segment of the relevant URL
+                // because the rest of the URL is going to be different between source and target org/repo
+                _ => CompareUrlIds(GetLocationUrl(sourceLocation), GetLocationUrl(targetLocation))
             };
     }
 
@@ -152,6 +156,30 @@ public class SecretScanningAlertService
         return alertsWithLocations
             .GroupBy(alert => (alert.Alert.SecretType, alert.Alert.Secret))
             .ToDictionary(group => group.Key, group => group.ToList());
+    }
+
+    // Compares the final segment of an URL which is relevant for the comparison
+    private bool CompareUrlIds(string sourceUrl, string targetUrl)
+    {
+        return sourceUrl.HasValue() && targetUrl.HasValue() && sourceUrl.TrimEnd('/').Split('/').Last()
+            == targetUrl.TrimEnd('/').Split('/').Last();
+    }
+
+    // Get the URL of the location based on its type
+    private string GetLocationUrl(GithubSecretScanningAlertLocation location)
+    {
+        return location.LocationType switch
+        {
+            "issue_title" => location.IssueTitleUrl,
+            "issue_body" => location.IssueBodyUrl,
+            "issue_comment" => location.IssueCommentUrl,
+            "pull_request_title" => location.PullRequestTitleUrl,
+            "pull_request_body" => location.PullRequestBodyUrl,
+            "pull_request_comment" => location.PullRequestCommentUrl,
+            "pull_request_review" => location.PullRequestReviewUrl,
+            "pull_request_review_comment" => location.PullRequestReviewCommentUrl,
+            _ => null
+        };
     }
 }
 

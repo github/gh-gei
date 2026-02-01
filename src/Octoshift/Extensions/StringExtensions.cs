@@ -26,5 +26,12 @@ namespace OctoshiftCLI.Extensions
         public static string EscapeDataString(this string value) => Uri.EscapeDataString(value);
 
         public static byte[] ToBytes(this string s) => Encoding.UTF8.GetBytes(s);
+
+        public static bool IsUrl(this string s)
+        {
+            return !s.IsNullOrWhiteSpace()
+                && Uri.TryCreate(s, UriKind.Absolute, out var uri)
+                && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+        }
     }
 }

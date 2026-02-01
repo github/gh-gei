@@ -21,6 +21,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands.AddTeamToRepo
             AddOption(Role.FromAmong("pull", "push", "admin", "maintain", "triage"));
             AddOption(GithubPat);
             AddOption(Verbose);
+            AddOption(TargetApiUrl);
         }
 
         public Option<string> GithubOrg { get; } = new("--github-org")
@@ -42,7 +43,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands.AddTeamToRepo
         };
         public Option<string> GithubPat { get; } = new("--github-pat");
         public Option<bool> Verbose { get; } = new("--verbose");
-
+        public Option<string> TargetApiUrl { get; } = new("--target-api-url")
+        {
+            Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
+        };
         public override AddTeamToRepoCommandHandler BuildHandler(AddTeamToRepoCommandArgs args, IServiceProvider sp)
         {
             if (args is null)
@@ -57,7 +61,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands.AddTeamToRepo
 
             var log = sp.GetRequiredService<OctoLogger>();
             var targetGithubApiFactory = sp.GetRequiredService<ITargetGithubApiFactory>();
-            var githubApi = targetGithubApiFactory.Create(targetPersonalAccessToken: args.GithubPat);
+            var githubApi = targetGithubApiFactory.Create(apiUrl: args.TargetApiUrl, targetPersonalAccessToken: args.GithubPat);
 
             return new AddTeamToRepoCommandHandler(log, githubApi);
         }

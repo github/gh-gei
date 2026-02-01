@@ -70,7 +70,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.MigrateRepo
 
             _command.BuildHandler(args, _serviceProvider);
 
-            _mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
+            _mockGithubApiFactory.Verify(m => m.Create(null, It.IsAny<string>(), githubPat));
         }
         [Fact]
         public void It_Uses_Target_Api_Url_When_Provided()
@@ -93,7 +93,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.MigrateRepo
 
             _command.BuildHandler(args, _serviceProvider);
 
-            _mockGithubApiFactory.Verify(m => m.Create(targetApiUrl, githubPat));
+            _mockGithubApiFactory.Verify(m => m.Create(targetApiUrl, It.IsAny<string>(), githubPat));
         }
     }
 }

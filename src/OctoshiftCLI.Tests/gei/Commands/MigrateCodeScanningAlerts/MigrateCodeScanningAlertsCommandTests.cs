@@ -49,7 +49,7 @@ public class MigrateCodeScanningAlertsCommandTests
     }
 
     [Fact]
-    public void Source_Pat_Should_Default_To_Target_Pat()
+    public void Should_Pass_Target_Pat_From_Cli_Args_To_Factory()
     {
         var targetToken = "target-token";
 
@@ -65,5 +65,26 @@ public class MigrateCodeScanningAlertsCommandTests
         _command.BuildHandler(args, _serviceProvider);
 
         _mockCodeScanningAlertServiceFactory.Verify(m => m.Create(It.IsAny<string>(), targetToken, It.IsAny<string>(), targetToken, It.IsAny<bool>()));
+    }
+
+    [Fact]
+    public void Should_Pass_Source_Pat_From_Cli_Args_To_Factory()
+    {
+        var sourceToken = "source-token";
+        var targetToken = "target-token";
+
+        var args = new MigrateCodeScanningAlertsCommandArgs()
+        {
+            SourceOrg = "source-org",
+            SourceRepo = "source-repo",
+            TargetOrg = "target-org",
+            TargetRepo = "target-repo",
+            GithubSourcePat = sourceToken,
+            GithubTargetPat = targetToken,
+        };
+
+        _command.BuildHandler(args, _serviceProvider);
+
+        _mockCodeScanningAlertServiceFactory.Verify(m => m.Create(It.IsAny<string>(), sourceToken, It.IsAny<string>(), targetToken, It.IsAny<bool>()));
     }
 }

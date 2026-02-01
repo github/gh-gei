@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -81,7 +80,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         }
 
         var projects = args.BbsProject.HasValue()
-            ? new List<string>() { args.BbsProject }
+            ? [args.BbsProject]
             : (await _bbsApi.GetProjects()).Select(x => x.Key);
 
         foreach (var projectKey in projects)
@@ -135,9 +134,10 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         var noSslVerify = args.NoSslVerify ? " --no-ssl-verify" : "";
         var targetRepoVisibility = " --target-repo-visibility private";
         var targetApiUrlOption = args.TargetApiUrl.HasValue() ? $" --target-api-url \"{args.TargetApiUrl}\"" : "";
+        var targetUploadsUrlOption = args.TargetUploadsUrl.HasValue() ? $" --target-uploads-url \"{args.TargetUploadsUrl}\"" : "";
         var githubStorageOption = args.UseGithubStorage ? " --use-github-storage" : "";
 
-        return $"gh bbs2gh migrate-repo{targetApiUrlOption}{bbsServerUrlOption}{bbsUsernameOption}{bbsSharedHomeOption}{bbsProjectOption}{bbsRepoOption}{sshArchiveDownloadOptions}" +
+        return $"gh bbs2gh migrate-repo{targetApiUrlOption}{targetUploadsUrlOption}{bbsServerUrlOption}{bbsUsernameOption}{bbsSharedHomeOption}{bbsProjectOption}{bbsRepoOption}{sshArchiveDownloadOptions}" +
                $"{smbArchiveDownloadOptions}{githubOrgOption}{githubRepoOption}{verboseOption}{waitOption}{kerberosOption}{awsBucketNameOption}{awsRegionOption}{keepArchive}{noSslVerify}{targetRepoVisibility}{githubStorageOption}";
     }
 

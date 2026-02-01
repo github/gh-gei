@@ -9,6 +9,8 @@ public class FileSystemProvider
 {
     public virtual bool FileExists(string path) => File.Exists(path);
 
+    public virtual bool DirectoryExists(string path) => Directory.Exists(path);
+
     public virtual Task<byte[]> ReadAllBytesAsync(string path) => File.ReadAllBytesAsync(path);
 
     public virtual DirectoryInfo CreateDirectory(string path) => Directory.CreateDirectory(path);

@@ -21,7 +21,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         private readonly Mock<AdoInspectorServiceFactory> _mockAdoInspectorServiceFactory = TestHelpers.CreateMock<AdoInspectorServiceFactory>();
 
         private const string ADO_ORG = "foo-org";
-        private readonly IEnumerable<string> _adoOrgs = new List<string>() { ADO_ORG };
+        private readonly IEnumerable<string> _adoOrgs = [ADO_ORG];
 
         private readonly OrgsCsvGeneratorService _service;
 

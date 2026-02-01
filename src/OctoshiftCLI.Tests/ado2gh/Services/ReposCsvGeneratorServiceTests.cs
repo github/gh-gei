@@ -22,11 +22,11 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands
         private readonly Mock<AdoInspectorServiceFactory> _mockAdoInspectorServiceFactory = TestHelpers.CreateMock<AdoInspectorServiceFactory>();
 
         private const string ADO_ORG = "foo-org";
-        private readonly IEnumerable<string> _adoOrgs = new List<string>() { ADO_ORG };
+        private readonly IEnumerable<string> _adoOrgs = [ADO_ORG];
         private const string ADO_TEAM_PROJECT = "foo-tp";
-        private readonly IEnumerable<string> _adoTeamProjects = new List<string>() { ADO_TEAM_PROJECT };
+        private readonly IEnumerable<string> _adoTeamProjects = [ADO_TEAM_PROJECT];
         private const string ADO_REPO = "foo-repo";
-        private readonly IEnumerable<AdoRepository> _adoRepos = new List<AdoRepository> { new() { Name = ADO_REPO, Size = 12345 } };
+        private readonly IEnumerable<AdoRepository> _adoRepos = [new() { Name = ADO_REPO, Size = 12345 }];
 
         private readonly ReposCsvGeneratorService _service;
 

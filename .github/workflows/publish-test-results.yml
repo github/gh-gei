@@ -35,12 +35,12 @@ jobs:
 
       - name: Extract PR Number
         run: |
-          eventjson=`cat 'artifacts/Event File/event.json'`
-          prnumber=`echo $(jq -r '.pull_request.number' <<< "$eventjson")`
-          echo "PR_NUMBER=$(echo $prnumber | tr -cd '[0-9]')" >> $GITHUB_ENV
-      
+          prnumber=$(jq -r '.pull_request.number' < 'artifacts/Event File/event.json')
+          sanitized_prnumber=$(grep -E '^[0-9]+$' <<< "$prnumber")
+          echo "PR_NUMBER=$sanitized_prnumber" >> "$GITHUB_ENV"
       - name: Publish Unit Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v2
+        # 6e8f8c55b476f977d1c58cfbd7e337cbf86d917f is tag v2, pinned to avoid supply chain attacks
+        uses: EnricoMi/publish-unit-test-result-action@34d7c956a59aed1bfebf31df77b8de55db9bbaaf
         with:
           commit: ${{ github.event.workflow_run.head_sha }}
           event_file: artifacts/Event File/event.json
@@ -49,7 +49,8 @@ jobs:
           check_name: "Unit Test Results"
 
       - name: Add Coverage PR Comment
-        uses: marocchino/sticky-pull-request-comment@v2
+        # 773744901bac0e8cbb5a0dc842800d45e9b2b405 is tag v2, pinned to avoid supply chain attacks
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405
         with:
           recreate: true
           path: artifacts/Code Coverage Report/code-coverage-results.md

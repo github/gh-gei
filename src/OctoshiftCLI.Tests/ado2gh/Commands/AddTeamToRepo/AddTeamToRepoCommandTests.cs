@@ -33,7 +33,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.AddTeamToRepo
             var command = new AddTeamToRepoCommand();
             Assert.NotNull(command);
             Assert.Equal("add-team-to-repo", command.Name);
-            Assert.Equal(6, command.Options.Count);
+            Assert.Equal(7, command.Options.Count);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "github-repo", true);
@@ -41,6 +41,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.AddTeamToRepo
             TestHelpers.VerifyCommandOption(command.Options, "role", true);
             TestHelpers.VerifyCommandOption(command.Options, "github-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
+            TestHelpers.VerifyCommandOption(command.Options, "target-api-url", false);
         }
 
         [Fact]
@@ -59,7 +60,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.AddTeamToRepo
 
             _command.BuildHandler(args, _serviceProvider);
 
-            _mockGithubApiFactory.Verify(m => m.Create(null, githubPat));
+            _mockGithubApiFactory.Verify(m => m.Create(null, null, githubPat));
         }
 
         [Fact]
@@ -73,7 +74,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.AddTeamToRepo
             command.SetHandler(async x => await command.BuildHandler(x, _serviceProvider).Handle(x), argsBinder);
             await command.InvokeAsync(args);
 
-            _mockGithubApiFactory.Verify(x => x.Create(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            _mockGithubApiFactory.Verify(x => x.Create(It.IsAny<string>(), null, It.IsAny<string>()), Times.Never);
         }
     }
 }

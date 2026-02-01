@@ -6,6 +6,14 @@ on:
       pr_number:
         type: number
         required: true
+      sha:
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
 
 jobs:
   build-for-e2e-test:
@@ -15,10 +23,23 @@ jobs:
         target-os: [windows-latest, ubuntu-latest, macos-latest]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         ref: 'refs/pull/${{ github.event.inputs.pr_number }}/merge'
         fetch-depth: 0
+
+    - name: Check SHA
+      run: |
+        git fetch origin refs/pull/${{ github.event.inputs.pr_number }}/head:pr-head
+        prsha=`git rev-parse pr-head | awk '{ print $1 }'`
+
+        echo "PR SHA: $prsha"
+        echo "expected SHA: ${{ github.event.inputs.SHA }}"
+
+        if [ "$prsha" != "${{ github.event.inputs.SHA }}" ]; then
+          echo "SHA must match" >&2
+          exit 1
+        fi
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v2
@@ -50,7 +71,7 @@ jobs:
         SKIP_LINUX: "true"
 
     - name: Upload Binaries
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: binaries-${{ matrix.target-os }}
         path: |
@@ -67,13 +88,14 @@ jobs:
   e2e-test:
     needs: [ build-for-e2e-test ]
     strategy:
+      fail-fast: false
       matrix:
         runner-os: [windows-latest, ubuntu-latest, macos-latest]
         source-vcs: [AdoBasic, AdoCsv, Bbs, Ghes, Github]
     runs-on: ${{ matrix.runner-os }}
     concurrency: integration-test-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         ref: 'refs/pull/${{ github.event.inputs.pr_number }}/merge'
         fetch-depth: 0
@@ -91,7 +113,7 @@ jobs:
         global-json-file: global.json
 
     - name: Download Binaries
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         name: binaries-${{ matrix.runner-os }}
         path: dist
@@ -164,8 +186,8 @@ jobs:
         ADO_SERVER_PAT: ${{ secrets.ADO_SERVER_PAT }}
         BBS_USERNAME: ${{ secrets.BBS_USERNAME }}
         BBS_PASSWORD: ${{ secrets.BBS_PASSWORD }}
-        SSH_KEY_BBS_8_5_0: ${{ secrets.SSH_KEY_BBS_8_5_0 }}
-        SSH_KEY_BBS_5_14_0: ${{ secrets.SSH_KEY_BBS_5_14_0 }}
+        SSH_KEY_BBS: ${{ secrets.SSH_KEY_BBS }}
+        SSH_PORT_BBS: ${{ secrets.SSH_PORT_BBS }}
         SMB_PASSWORD: ${{ secrets.SMB_PASSWORD }}
         AZURE_STORAGE_CONNECTION_STRING_BBS_LINUX: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_BBS_LINUX }}
         AZURE_STORAGE_CONNECTION_STRING_BBS_MACOS: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_BBS_MACOS }}
@@ -181,7 +203,8 @@ jobs:
       run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --filter "${{ matrix.source-vcs }}ToGithub" --logger:"junit;LogFilePath=integration-tests.xml" --logger "console;verbosity=normal" /p:VersionPrefix=9.9
 
     - name: Publish Integration Test Results
-      uses: EnricoMi/publish-unit-test-result-action@v2
+      # 6e8f8c55b476f977d1c58cfbd7e337cbf86d917f is tag v2, pinned to avoid supply chain attacks
+      uses: EnricoMi/publish-unit-test-result-action@34d7c956a59aed1bfebf31df77b8de55db9bbaaf
       if: always() && matrix.runner-os == 'ubuntu-latest'
       with:
         files: "**/*-tests.xml"
@@ -190,7 +213,7 @@ jobs:
         commit: ${{ env.PR_SHA }}
 
     - name: Upload test logs
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       if: always()
       with:
         name: integration-test-logs-${{ matrix.source-vcs }}-${{ matrix.runner-os }}

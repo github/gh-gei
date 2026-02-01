@@ -21,4 +21,19 @@ public class ReclaimMannequinCommandArgsTests
             .Invoking(() => args.Validate(_mockOctoLogger.Object))
             .Should().Throw<OctoshiftCliException>();
     }
+
+    [Fact]
+    public void Validate_Throws_When_GithubOrg_Is_Url()
+    {
+        var args = new ReclaimMannequinCommandArgs
+        {
+            GithubOrg = "http://github.com/my-org",
+            Csv = "mannequins.csv"
+        };
+
+        FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+            .Should()
+            .ThrowExactly<OctoshiftCliException>()
+            .WithMessage("The --github-org option expects an organization name, not a URL. Please provide just the organization name (e.g., 'my-org' instead of 'https://github.com/my-org').");
+    }
 }

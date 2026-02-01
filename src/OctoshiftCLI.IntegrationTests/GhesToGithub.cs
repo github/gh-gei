@@ -13,6 +13,7 @@ namespace OctoshiftCLI.IntegrationTests;
 public sealed class GhesToGithub : IDisposable
 {
     private const string GHES_API_URL = "https://octoshift-ghe.westus2.cloudapp.azure.com/api/v3";
+    private const string UPLOADS_URL = "https://uploads.github.com";
 
     private readonly ITestOutputHelper _output;
     private readonly TestHelper _targetHelper;
@@ -47,10 +48,12 @@ public sealed class GhesToGithub : IDisposable
         };
 
         _versionClient = new HttpClient();
-        _archiveUploader = new ArchiveUploader(_targetGithubClient, logger);
+        var retryPolicy = new RetryPolicy(logger);
+        var environmentVariableProvider = new EnvironmentVariableProvider(logger);
 
         _sourceGithubHttpClient = new HttpClient();
         _sourceGithubClient = new GithubClient(logger, _sourceGithubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), sourceGithubToken);
+        _archiveUploader = new ArchiveUploader(_targetGithubClient, UPLOADS_URL, logger, retryPolicy, environmentVariableProvider);
         _sourceGithubApi = new GithubApi(_sourceGithubClient, GHES_API_URL, new RetryPolicy(logger), _archiveUploader);
 
         _targetGithubHttpClient = new HttpClient();

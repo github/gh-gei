@@ -308,5 +308,73 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 .ThrowExactly<OctoshiftCliException>()
                 .WithMessage("*--metadata-archive-url and --metadata-archive-path may not be used together*");
         }
+
+        [Fact]
+        public void Validate_Throws_When_GithubSourceOrg_Is_Url()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = "https://github.com/my-org",
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO
+            };
+
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("The --github-source-org option expects an organization name, not a URL. Please provide just the organization name (e.g., 'my-org' instead of 'https://github.com/my-org').");
+        }
+
+        [Fact]
+        public void Validate_Throws_When_GithubTargetOrg_Is_Url()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = "https://github.com/my-org",
+                TargetRepo = TARGET_REPO
+            };
+
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("The --github-target-org option expects an organization name, not a URL. Please provide just the organization name (e.g., 'my-org' instead of 'https://github.com/my-org').");
+        }
+
+        [Fact]
+        public void Validate_Throws_When_SourceRepo_Is_Url()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = "https://github.com/my-org/my-repo",
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO
+            };
+
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("The --source-repo option expects a repository name, not a URL. Please provide just the repository name (e.g., 'my-repo' instead of 'https://github.com/my-org/my-repo').");
+        }
+
+        [Fact]
+        public void Validate_Throws_When_TargetRepo_Is_Url()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = "https://github.com/my-org/my-repo"
+            };
+
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("The --target-repo option expects a repository name, not a URL. Please provide just the repository name (e.g., 'my-repo' instead of 'https://github.com/my-org/my-repo').");
+        }
     }
 }

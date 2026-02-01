@@ -11,6 +11,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
         public string GithubTargetOrg { get; set; }
         public string TargetRepo { get; set; }
         public string TargetApiUrl { get; set; }
+        public string TargetUploadsUrl { get; set; }
         public string GhesApiUrl { get; set; }
         [Secret]
         public string AzureStorageConnectionString { get; set; }
@@ -40,6 +41,26 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
 
         public override void Validate(OctoLogger log)
         {
+            if (GithubSourceOrg.IsUrl())
+            {
+                throw new OctoshiftCliException($"The --github-source-org option expects an organization name, not a URL. Please provide just the organization name (e.g., 'my-org' instead of 'https://github.com/my-org').");
+            }
+
+            if (GithubTargetOrg.IsUrl())
+            {
+                throw new OctoshiftCliException($"The --github-target-org option expects an organization name, not a URL. Please provide just the organization name (e.g., 'my-org' instead of 'https://github.com/my-org').");
+            }
+
+            if (SourceRepo.IsUrl())
+            {
+                throw new OctoshiftCliException($"The --source-repo option expects a repository name, not a URL. Please provide just the repository name (e.g., 'my-repo' instead of 'https://github.com/my-org/my-repo').");
+            }
+
+            if (TargetRepo.IsUrl())
+            {
+                throw new OctoshiftCliException($"The --target-repo option expects a repository name, not a URL. Please provide just the repository name (e.g., 'my-repo' instead of 'https://github.com/my-org/my-repo').");
+            }
+
             DefaultSourcePat(log);
             DefaultTargetRepo(log);
 
