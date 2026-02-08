@@ -6,7 +6,7 @@ using OctoshiftCLI.Commands.DownloadLogs;
 
 namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.DownloadLogs;
 
-public class DownloadLogsCommand : DownloadLogsCommandBase
+public sealed class DownloadLogsCommand : DownloadLogsCommandBase
 {
     public DownloadLogsCommand() : base() => AddOptions();
 
