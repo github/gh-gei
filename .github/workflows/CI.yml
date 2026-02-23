@@ -395,7 +395,7 @@ jobs:
           $TAG_NAME | Out-File ./LATEST-VERSION.txt
 
       - name: Commit Release Notes and Version
-        uses: stefanzweifel/git-auto-commit-action@28e16e81777b558cc906c8750092100bbb34c5e3
+        uses: stefanzweifel/git-auto-commit-action@04702edda442b2e678b25b537cec683a1493fcb9
         with:
           commit_message: Automated commit of archived release notes and version file [skip ci]
           file_pattern: RELEASENOTES.md releasenotes/*.md LATEST-VERSION.txt

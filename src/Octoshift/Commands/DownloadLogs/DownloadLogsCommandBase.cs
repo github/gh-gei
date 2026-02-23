@@ -31,9 +31,9 @@ public class DownloadLogsCommandBase : CommandBase<DownloadLogsCommandArgs, Down
         Description = "Migration ID to download logs for. If specified, --github-org and --github-repo are not required."
     };
 
-    public virtual Option<string> GithubApiUrl { get; } = new("--github-api-url")
+    public virtual Option<string> GithubApiUrl { get; } = new("--target-api-url")
     {
-        Description = "Target GitHub API URL if not targeting github.com (default: https://api.github.com)."
+        Description = "Target GitHub API URL if not targeting github.com (default: https://api.github.com). Also accepts --github-api-url for backward compatibility."
     };
 
     public virtual Option<string> GithubPat { get; } = new("--github-pat")

@@ -5,7 +5,13 @@ using OctoshiftCLI.Commands.DownloadLogs;
 
 namespace OctoshiftCLI.BbsToGithub.Commands.DownloadLogs;
 
-public class DownloadLogsCommand : DownloadLogsCommandBase
+public sealed class DownloadLogsCommand : DownloadLogsCommandBase
 {
-    public DownloadLogsCommand() => AddOptions();
+    public DownloadLogsCommand()
+    {
+        // Add backward compatibility alias for --github-api-url
+        GithubApiUrl.AddAlias("--github-api-url");
+
+        AddOptions();
+    }
 }

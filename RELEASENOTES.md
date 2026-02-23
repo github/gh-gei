@@ -1,1 +1,3 @@
-
+- Fixed `ado2gh generate-script --download-migration-logs` to generate valid commands using `--target-api-url` that work with the `ado2gh download-logs` command
+- Added `--target-api-url` support to `ado2gh download-logs` and `bbs2gh download-logs` commands for GHEC data residency scenarios
+- Maintained backward compatibility: `--github-api-url` continues to work as an alias for `--target-api-url` in `ado2gh` and `bbs2gh` CLIs
