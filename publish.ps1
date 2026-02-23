@@ -93,6 +93,21 @@ else {
     }
 
     Copy-Item ./dist/osx-x64/ado2gh ./dist/osx-x64/ado2gh-darwin-amd64
+
+    # osx-arm64 build
+    dotnet publish src/ado2gh/ado2gh.csproj -c Release -o dist/osx-arm64/ -r osx-arm64 -p:PublishSingleFile=true -p:PublishTrimmed=true -p:TrimMode=partial --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
+
+    if ($LASTEXITCODE -ne 0) {
+        exit $LASTEXITCODE
+    }
+
+    tar -cvzf ./dist/ado2gh.$AssemblyVersion.osx-arm64.tar.gz -C ./dist/osx-arm64 ado2gh
+
+    if (Test-Path -Path ./dist/osx-arm64/ado2gh-darwin-arm64) {
+        Remove-Item ./dist/osx-arm64/ado2gh-darwin-arm64
+    }
+
+    Copy-Item ./dist/osx-arm64/ado2gh ./dist/osx-arm64/ado2gh-darwin-arm64
 }  
 
 
@@ -171,6 +186,19 @@ else {
     }
 
     Rename-Item ./dist/osx-x64/gei gei-darwin-amd64
+
+    # osx-arm64 build
+    dotnet publish src/gei/gei.csproj -c Release -o dist/osx-arm64/ -r osx-arm64 -p:PublishSingleFile=true -p:PublishTrimmed=true -p:TrimMode=partial --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
+
+    if ($LASTEXITCODE -ne 0) {
+        exit $LASTEXITCODE
+    }
+
+    if (Test-Path -Path ./dist/osx-arm64/gei-darwin-arm64) {
+        Remove-Item ./dist/osx-arm64/gei-darwin-arm64
+    }
+
+    Rename-Item ./dist/osx-arm64/gei gei-darwin-arm64
 }
 
 ### bbs2gh ###
@@ -248,4 +276,17 @@ else {
     }
 
     Rename-Item ./dist/osx-x64/bbs2gh bbs2gh-darwin-amd64
+
+    # osx-arm64 build
+    dotnet publish src/bbs2gh/bbs2gh.csproj -c Release -o dist/osx-arm64/ -r osx-arm64 -p:PublishSingleFile=true -p:PublishTrimmed=true -p:TrimMode=partial --self-contained true /p:DebugType=None /p:IncludeNativeLibrariesForSelfExtract=true /p:VersionPrefix=$AssemblyVersion
+
+    if ($LASTEXITCODE -ne 0) {
+        exit $LASTEXITCODE
+    }
+
+    if (Test-Path -Path ./dist/osx-arm64/bbs2gh-darwin-arm64) {
+        Remove-Item ./dist/osx-arm64/bbs2gh-darwin-arm64
+    }
+
+    Rename-Item ./dist/osx-arm64/bbs2gh bbs2gh-darwin-arm64
 }
