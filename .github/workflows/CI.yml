@@ -33,7 +33,7 @@ jobs:
         with:
           persist-credentials: false
       # e33e0265a09d6d736e2ee1e0eb685ef1de4669ff is tag v3, pinned to avoid supply chain attacks
-      - uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
+      - uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
       - name: Initialize CodeQL
         if: matrix.runner-os == 'ubuntu-latest'
         uses: github/codeql-action/init@v4
@@ -121,7 +121,7 @@ jobs:
         with:
           persist-credentials: false
       # e33e0265a09d6d736e2ee1e0eb685ef1de4669ff is tag v3, pinned to avoid supply chain attacks
-      - uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
+      - uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
@@ -270,7 +270,7 @@ jobs:
 
       - name: Publish Integration Test Results
         # 6e8f8c55b476f977d1c58cfbd7e337cbf86d917f is tag v2, pinned to avoid supply chain attacks
-        uses: EnricoMi/publish-unit-test-result-action@34d7c956a59aed1bfebf31df77b8de55db9bbaaf
+        uses: EnricoMi/publish-unit-test-result-action@c950f6fb443cb5af20a377fd0dfaa78838901040
         if: always() && matrix.runner-os == 'ubuntu-latest' && github.actor != 'dependabot[bot]'
         with:
           files: "**/*-tests.xml"
@@ -347,11 +347,13 @@ jobs:
             ./dist/ado2gh.*.linux-x64.tar.gz
             ./dist/ado2gh.*.linux-arm64.tar.gz
             ./dist/ado2gh.*.osx-x64.tar.gz
+            ./dist/ado2gh.*.osx-arm64.tar.gz
             ./dist/win-x64/gei-windows-amd64.exe
             ./dist/win-x86/gei-windows-386.exe
             ./dist/linux-x64/gei-linux-amd64
             ./dist/linux-arm64/gei-linux-arm64
             ./dist/osx-x64/gei-darwin-amd64
+            ./dist/osx-arm64/gei-darwin-arm64
 
       - name: Create gh-ado2gh Release
         # a06a81a03ee405af7f2048a818ed3f03bbf83c7b is tag v2, pinned to avoid supply chain attacks
@@ -366,6 +368,7 @@ jobs:
             ./dist/linux-x64/ado2gh-linux-amd64
             ./dist/linux-arm64/ado2gh-linux-arm64
             ./dist/osx-x64/ado2gh-darwin-amd64
+            ./dist/osx-arm64/ado2gh-darwin-arm64
 
       - name: Create gh-bbs2gh Release
         # a06a81a03ee405af7f2048a818ed3f03bbf83c7b is tag v2, pinned to avoid supply chain attacks
@@ -380,6 +383,7 @@ jobs:
             ./dist/linux-x64/bbs2gh-linux-amd64
             ./dist/linux-arm64/bbs2gh-linux-arm64
             ./dist/osx-x64/bbs2gh-darwin-amd64
+            ./dist/osx-arm64/bbs2gh-darwin-arm64
 
       - name: Archive Release Notes
         shell: pwsh
