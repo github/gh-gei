@@ -131,3 +131,72 @@ install-extensions: publish-linux
     cd gh-bbs2gh && gh extension install . && cd ..
     
     echo "Extensions installed successfully!"
+
+# ============================================================================
+# Go-based CLI targets
+# ============================================================================
+
+# Build Go binaries
+go-build:
+    go build -o dist/gei ./cmd/gei
+    go build -o dist/ado2gh ./cmd/ado2gh
+    go build -o dist/bbs2gh ./cmd/bbs2gh
+
+# Run Go tests
+go-test:
+    go test -v -race ./...
+
+# Run Go tests with coverage
+go-test-coverage:
+    go test -v -race -coverprofile=coverage.out ./...
+    go tool cover -html=coverage.out -o coverage.html
+    go tool cover -func=coverage.out
+
+# Format Go code
+go-format:
+    gofmt -w -s .
+    goimports -w . || echo "goimports not installed, skipping"
+
+# Check Go code formatting
+go-format-check:
+    @test -z "$$(gofmt -l .)" || (echo "Go files need formatting, run 'just go-format'" && exit 1)
+
+# Lint Go code
+go-lint:
+    golangci-lint run ./... || echo "golangci-lint not installed, skipping"
+
+# Build Go binaries for Linux
+go-publish-linux:
+    mkdir -p dist/linux-x64
+    GOOS=linux GOARCH=amd64 go build -o dist/linux-x64/gei-linux-amd64 ./cmd/gei
+    GOOS=linux GOARCH=amd64 go build -o dist/linux-x64/ado2gh-linux-amd64 ./cmd/ado2gh
+    GOOS=linux GOARCH=amd64 go build -o dist/linux-x64/bbs2gh-linux-amd64 ./cmd/bbs2gh
+    GOOS=linux GOARCH=arm64 go build -o dist/linux-arm64/gei-linux-arm64 ./cmd/gei
+    GOOS=linux GOARCH=arm64 go build -o dist/linux-arm64/ado2gh-linux-arm64 ./cmd/ado2gh
+    GOOS=linux GOARCH=arm64 go build -o dist/linux-arm64/bbs2gh-linux-arm64 ./cmd/bbs2gh
+
+# Build Go binaries for Windows
+go-publish-windows:
+    mkdir -p dist/win-x64 dist/win-x86
+    GOOS=windows GOARCH=amd64 go build -o dist/win-x64/gei-windows-amd64.exe ./cmd/gei
+    GOOS=windows GOARCH=amd64 go build -o dist/win-x64/ado2gh-windows-amd64.exe ./cmd/ado2gh
+    GOOS=windows GOARCH=amd64 go build -o dist/win-x64/bbs2gh-windows-amd64.exe ./cmd/bbs2gh
+    GOOS=windows GOARCH=386 go build -o dist/win-x86/gei-windows-386.exe ./cmd/gei
+    GOOS=windows GOARCH=386 go build -o dist/win-x86/ado2gh-windows-386.exe ./cmd/ado2gh
+    GOOS=windows GOARCH=386 go build -o dist/win-x86/bbs2gh-windows-386.exe ./cmd/bbs2gh
+
+# Build Go binaries for macOS
+go-publish-macos:
+    mkdir -p dist/osx-x64
+    GOOS=darwin GOARCH=amd64 go build -o dist/osx-x64/gei-darwin-amd64 ./cmd/gei
+    GOOS=darwin GOARCH=amd64 go build -o dist/osx-x64/ado2gh-darwin-amd64 ./cmd/ado2gh
+    GOOS=darwin GOARCH=amd64 go build -o dist/osx-x64/bbs2gh-darwin-amd64 ./cmd/bbs2gh
+
+# Build Go binaries for all platforms
+go-publish-all: go-publish-linux go-publish-windows go-publish-macos
+
+# Run Go CI pipeline
+go-ci: go-format-check go-build go-test
+
+# Run both C# and Go CI pipelines
+ci-all: ci go-ci
