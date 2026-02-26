@@ -200,7 +200,7 @@ public class GithubApiFactoryTests
             .Returns(httpClient);
 
         // Act
-        var githubApi = _sourceGithubApiFactory.Create(null, SOURCE_GH_PAT);
+        var githubApi = _sourceGithubApiFactory.Create(null, null, SOURCE_GH_PAT);
         await githubApi.DeleteRepo("org", "repo"); // call a simple/random API method just for the sake of verifying the base API url
 
         // Assert
@@ -230,7 +230,7 @@ public class GithubApiFactoryTests
             .Returns(httpClient);
 
         // Act
-        var githubApi = _targetGithubApiFactory.Create(null, TARGET_GH_PAT);
+        var githubApi = _targetGithubApiFactory.Create(null, null, TARGET_GH_PAT);
         await githubApi.DeleteRepo("org", "repo"); // call a simple/random API method just for the sake of verifying the base API url
 
         // Assert
@@ -261,7 +261,7 @@ public class GithubApiFactoryTests
             .Returns(httpClient);
 
         // Act
-        var githubApi = _sourceGithubApiFactory.CreateClientNoSsl(null, SOURCE_GH_PAT);
+        var githubApi = _sourceGithubApiFactory.CreateClientNoSsl(null, null, SOURCE_GH_PAT);
         await githubApi.DeleteRepo("org", "repo"); // call a simple/random API method just for the sake of verifying the base API url
 
         // Assert
