@@ -1057,6 +1057,39 @@ public class GithubApi
             .ToListAsync();
     }
 
+    public virtual async Task<IEnumerable<DependabotAlert>> GetDependabotAlertsForRepository(string org, string repo)
+    {
+        var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/dependabot/alerts?per_page=100";
+        return await _client.GetAllAsync(url)
+            .Select(BuildDependabotAlert)
+            .ToListAsync();
+    }
+
+    public virtual async Task UpdateDependabotAlert(string org, string repo, int alertNumber, string state, string dismissedReason = null, string dismissedComment = null)
+    {
+        if (!DependabotAlertState.IsOpenOrDismissed(state))
+        {
+            throw new ArgumentException($"Invalid value for {nameof(state)}");
+        }
+
+        if (DependabotAlertState.IsDismissed(state) && !DependabotAlertState.IsValidDismissedReason(dismissedReason))
+        {
+            throw new ArgumentException($"Invalid value for {nameof(dismissedReason)}");
+        }
+
+        var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/dependabot/alerts/{alertNumber}";
+
+        var payload = state == "open"
+            ? (new { state })
+            : (object)(new
+            {
+                state,
+                dismissed_reason = dismissedReason,
+                dismissed_comment = dismissedComment ?? string.Empty
+            });
+        await _client.PatchAsync(url, payload);
+    }
+
     public virtual async Task<string> GetEnterpriseServerVersion()
     {
         var url = $"{_apiUrl}/meta";
@@ -1263,5 +1296,49 @@ public class GithubApi
             EndLine = (int)scanningAlertInstance["location"]["end_line"],
             StartColumn = (int)scanningAlertInstance["location"]["start_column"],
             EndColumn = (int)scanningAlertInstance["location"]["end_column"]
+        };
+
+    private static DependabotAlert BuildDependabotAlert(JToken dependabotAlert) =>
+        new()
+        {
+            Number = (int)dependabotAlert["number"],
+            State = (string)dependabotAlert["state"],
+            DismissedReason = dependabotAlert.Value<string>("dismissed_reason"),
+            DismissedComment = dependabotAlert.Value<string>("dismissed_comment"),
+            DismissedAt = dependabotAlert.Value<string>("dismissed_at"),
+            Url = (string)dependabotAlert["url"],
+            HtmlUrl = (string)dependabotAlert["html_url"],
+            CreatedAt = (string)dependabotAlert["created_at"],
+            UpdatedAt = (string)dependabotAlert["updated_at"],
+            Dependency = BuildDependabotAlertDependency(dependabotAlert["dependency"]),
+            SecurityAdvisory = BuildDependabotAlertSecurityAdvisory(dependabotAlert["security_advisory"]),
+            SecurityVulnerability = BuildDependabotAlertSecurityVulnerability(dependabotAlert["security_vulnerability"])
+        };
+
+    private static DependabotAlertDependency BuildDependabotAlertDependency(JToken dependency) =>
+        new()
+        {
+            Package = (string)dependency["package"]?["name"],
+            Manifest = (string)dependency["manifest_path"],
+            Scope = (string)dependency["scope"]
+        };
+
+    private static DependabotAlertSecurityAdvisory BuildDependabotAlertSecurityAdvisory(JToken securityAdvisory) =>
+        new()
+        {
+            GhsaId = (string)securityAdvisory["ghsa_id"],
+            CveId = (string)securityAdvisory["cve_id"],
+            Summary = (string)securityAdvisory["summary"],
+            Description = (string)securityAdvisory["description"],
+            Severity = (string)securityAdvisory["severity"]
+        };
+
+    private static DependabotAlertSecurityVulnerability BuildDependabotAlertSecurityVulnerability(JToken securityVulnerability) =>
+        new()
+        {
+            Package = (string)securityVulnerability["package"]?["name"],
+            Severity = (string)securityVulnerability["severity"],
+            VulnerableVersionRange = (string)securityVulnerability["vulnerable_version_range"],
+            FirstPatchedVersion = (string)securityVulnerability["first_patched_version"]?["identifier"]
         };
 }
