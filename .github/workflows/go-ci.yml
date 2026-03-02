@@ -1,0 +1,98 @@
+name: Go CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  go-build-and-test:
+    name: Go Build and Test
+    strategy:
+      fail-fast: false
+      matrix:
+        runner-os: [windows-latest, ubuntu-latest, macos-latest]
+
+    runs-on: ${{ matrix.runner-os }}
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Setup Just
+        uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff # v3
+
+      - name: Check Go formatting
+        if: matrix.runner-os == 'ubuntu-latest'
+        run: |
+          if [ -n "$(gofmt -l .)" ]; then
+            echo "Go files need formatting:"
+            gofmt -l .
+            exit 1
+          fi
+
+      - name: Go Vet
+        run: go vet ./...
+
+      - name: Build Go binaries
+        run: just go-build
+
+      - name: Create coverage directory
+        run: mkdir -p coverage
+        shell: bash
+
+      - name: Run Go tests
+        run: go test -v -race -coverprofile=./coverage/coverage.out ./...
+
+      - name: Generate coverage report
+        if: matrix.runner-os == 'ubuntu-latest'
+        run: |
+          go tool cover -html=./coverage/coverage.out -o coverage.html
+          go tool cover -func=./coverage/coverage.out
+
+      - name: Upload coverage artifact
+        if: matrix.runner-os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v6
+        with:
+          name: go-coverage-report
+          path: coverage.html
+
+      - name: Test binaries
+        run: |
+          ./dist/gei --version
+          ./dist/ado2gh --version
+          ./dist/bbs2gh --version
+        shell: bash
+
+  go-lint:
+    name: Go Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
+        with:
+          version: latest
+          args: --timeout=5m

@@ -359,3 +359,8 @@ MigrationBackup/
 /src/gei/Properties/launchSettings.json
 /src/OctoshiftCLI.IntegrationTests/Properties/launchSettings.json
 /src/ado2gh/Properties/launchSettings.json
+
+# Go coverage reports
+coverage/
+*.out
+coverage.html

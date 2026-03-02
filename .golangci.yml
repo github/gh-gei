@@ -1,0 +1,76 @@
+# golangci-lint configuration for gh-gei Go port
+# See https://golangci-lint.run/usage/configuration/
+
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    - gofmt         # Checks formatting
+    - goimports     # Checks imports
+    - govet         # Reports suspicious constructs
+    - errcheck      # Checks for unchecked errors
+    - staticcheck   # Static analysis
+    - unused        # Checks for unused code
+    - gosimple      # Simplify code
+    - ineffassign   # Detects ineffectual assignments
+    - typecheck     # Type-checks code
+    - bodyclose     # Checks for HTTP response body close
+    - noctx         # Finds HTTP requests without context
+    - misspell      # Finds commonly misspelled English words
+    - unconvert     # Removes unnecessary type conversions
+    - goconst       # Finds repeated strings that could be constants
+    - gocyclo       # Computes cyclomatic complexities
+    - gofumpt       # Stricter gofmt
+    - revive        # Fast, configurable, extensible linter
+    - gosec         # Security-focused linter
+    - errname       # Checks error naming
+    - errorlint     # Finds misuses of errors
+    - exportloopref # Checks for pointers to enclosing loop variables
+    - whitespace    # Detects leading/trailing whitespace
+
+linters-settings:
+  gocyclo:
+    min-complexity: 15
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+  misspell:
+    locale: US
+  revive:
+    rules:
+      - name: exported
+        severity: warning
+        disabled: false
+      - name: package-comments
+        severity: warning
+        disabled: false
+  gosec:
+    excludes:
+      - G104  # Audit errors not checked (too noisy)
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - gosec
+    
+    # Exclude error checks in main.go files (handled by cobra)
+    - path: cmd/.*/main\.go
+      text: "Error return value"
+      linters:
+        - errcheck
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
