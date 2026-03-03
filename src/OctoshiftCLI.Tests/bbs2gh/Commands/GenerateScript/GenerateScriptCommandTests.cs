@@ -58,7 +58,7 @@ public class GenerateScriptCommandTests
         TestHelpers.VerifyCommandOption(_command.Options, "keep-archive", false);
         TestHelpers.VerifyCommandOption(_command.Options, "no-ssl-verify", false);
         TestHelpers.VerifyCommandOption(_command.Options, "target-api-url", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "use-github-storage", false, true);
+        TestHelpers.VerifyCommandOption(_command.Options, "use-github-storage", false);
     }
 
     [Fact]
