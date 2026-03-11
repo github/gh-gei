@@ -75,14 +75,14 @@ jobs:
 
       - name: Upload Unit Test Results
         if: always() && matrix.runner-os == 'ubuntu-latest' && matrix.language == 'csharp'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: Unit Test Results
           path: src/OctoshiftCLI.Tests/unit-tests.xml
 
       - name: Upload Code Coverage Report
         if: always() && matrix.runner-os == 'ubuntu-latest' && matrix.language == 'csharp'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: Code Coverage Report
           path: code-coverage-results.md
