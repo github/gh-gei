@@ -63,12 +63,15 @@ public class AdoPipelineTriggerService
             var currentRepoName = data["repository"]?["name"]?.ToString();
             var currentRepoId = data["repository"]?["id"]?.ToString();
 
+            // Detect pipeline process type: 1 = Classic/Designer, 2 = YAML
+            var processType = (int)(data["process"]?["type"] ?? 2);
+
             var newRepo = CreateGitHubRepositoryConfiguration(githubOrg, githubRepo, defaultBranch, clean, checkoutSubmodules, connectedServiceId, targetApiUrl);
             var isPipelineRequiredByBranchPolicy = await IsPipelineRequiredByBranchPolicy(adoOrg, teamProject, currentRepoName, currentRepoId, pipelineId);
 
             LogBranchPolicyCheckResults(pipelineId, isPipelineRequiredByBranchPolicy);
 
-            var payload = BuildPipelinePayload(data, newRepo, originalTriggers, isPipelineRequiredByBranchPolicy);
+            var payload = BuildPipelinePayload(data, newRepo, originalTriggers, isPipelineRequiredByBranchPolicy, processType);
 
             await _adoApi.PutAsync(url, payload.ToObject(typeof(object)));
             return true;
@@ -206,8 +209,9 @@ public class AdoPipelineTriggerService
         _log.LogInformation(branchPolicyMessage);
     }
 
-    private JObject BuildPipelinePayload(JObject data, object newRepo, JToken originalTriggers, bool isPipelineRequiredByBranchPolicy)
+    private JObject BuildPipelinePayload(JObject data, object newRepo, JToken originalTriggers, bool isPipelineRequiredByBranchPolicy, int processType)
     {
+        var isClassicPipeline = processType == 1;
         var payload = new JObject();
 
         foreach (var prop in data.Properties())
@@ -218,18 +222,23 @@ public class AdoPipelineTriggerService
             }
             else if (prop.Name == "triggers")
             {
-                prop.Value = DetermineTriggerConfiguration(originalTriggers, isPipelineRequiredByBranchPolicy);
+                // Classic pipelines keep their original triggers; YAML pipelines get reconfigured
+                prop.Value = isClassicPipeline
+                    ? (originalTriggers ?? prop.Value)
+                    : DetermineTriggerConfiguration(originalTriggers, isPipelineRequiredByBranchPolicy);
             }
 
             payload.Add(prop.Name, prop.Value);
         }
 
-        // Add triggers if no triggers property exists
-        payload["triggers"] ??= DetermineTriggerConfiguration(originalTriggers, isPipelineRequiredByBranchPolicy);
+        if (!isClassicPipeline)
+        {
+            // Add triggers if no triggers property exists (YAML pipelines only)
+            payload["triggers"] ??= DetermineTriggerConfiguration(originalTriggers, isPipelineRequiredByBranchPolicy);
+        }
 
-        // Use YAML definitions instead of UI override settings
-        // settingsSourceType: 2 = Use YAML definitions, 1 = Override from UI
-        payload["settingsSourceType"] = 2;
+        // settingsSourceType: 1 = UI/Designer override (Classic), 2 = YAML definitions
+        payload["settingsSourceType"] = isClassicPipeline ? 1 : 2;
 
         return payload;
     }
