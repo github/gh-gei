@@ -957,6 +957,7 @@ public class GithubApi
         try
         {
             return await _client.GetAllAsync(url)
+                .Where(x => string.IsNullOrEmpty((string)x["error"]))
                 .Select(BuildCodeScanningAnalysis)
                 .ToListAsync();
         }
