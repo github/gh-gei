@@ -1,1 +1,1 @@
-* **Bug Fix:** `migrate-code-scanning-alerts` now excludes code scanning analyses that have errors, preventing failed analyses from being migrated to the target repository.
+* **Bug Fix:** `migrate-code-scanning-alerts` now excludes code scanning analyses that had processing errors on initial uplaods, preventing the CLI from failing to continue when it encounters a failed SARIF retrieval because no SARIF exists.
