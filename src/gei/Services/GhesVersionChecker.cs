@@ -23,6 +23,12 @@ public class GhesVersionChecker
 
         if (ghesApiUrl.HasValue())
         {
+            if (IsGheHost(ghesApiUrl))
+            {
+                _log.LogInformation("Source is a ghe.com host - skipping GHES version check");
+                return false;
+            }
+
             blobCredentialsRequired = true;
 
             _log.LogInformation("Using GitHub Enterprise Server - verifying server version");
@@ -44,5 +50,11 @@ public class GhesVersionChecker
         }
 
         return blobCredentialsRequired;
+    }
+
+    private static bool IsGheHost(string ghesApiUrl)
+    {
+        return Uri.TryCreate(ghesApiUrl, UriKind.Absolute, out var uri) &&
+               uri.Host.EndsWith(".ghe.com", StringComparison.OrdinalIgnoreCase);
     }
 }
