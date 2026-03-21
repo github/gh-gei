@@ -101,10 +101,8 @@ public class GithubClient
     {
         var (response, headers) = await PostWithRetry(url, body, customHeaders);
 
-        _log.LogWarning("checking IsGraphQLSecondaryRateLimit");
         if (IsGraphQLSecondaryRateLimit(response))
         {
-            _log.LogWarning("calling HandleSecondaryRateLimit");
             (response, headers) = await HandleSecondaryRateLimit(HttpMethod.Post, url, body, HttpStatusCode.OK, customHeaders, headers, retryCount);
         }
 
