@@ -93,6 +93,25 @@ public class GithubClient
         return data;
     }
 
+    public virtual async Task<JToken> PostGraphQLWithRetryAsync(
+        string url,
+        object body,
+        Dictionary<string, string> customHeaders = null,
+        int retryCount = 0)
+    {
+        var (response, headers) = await PostWithRetry(url, body, customHeaders);
+
+        if (IsGraphQLSecondaryRateLimit(response))
+        {
+            (response, headers) = await HandleSecondaryRateLimit(HttpMethod.Post, url, body, HttpStatusCode.OK, customHeaders, headers, retryCount);
+        }
+
+        var data = JObject.Parse(response);
+        EnsureSuccessGraphQLResponse(data);
+
+        return data;
+    }
+
     public virtual async IAsyncEnumerable<JToken> PostGraphQLWithPaginationAsync(
         string url,
         object body,
@@ -155,6 +174,13 @@ public class GithubClient
         Dictionary<string, string> customHeaders = null,
         HttpStatusCode expectedStatus = HttpStatusCode.OK) =>
         await _retryPolicy.Retry(async () => await SendAsync(HttpMethod.Get, url, customHeaders: customHeaders, expectedStatus: expectedStatus));
+
+    private async Task<(string Content, KeyValuePair<string, IEnumerable<string>>[] ResponseHeaders)> PostWithRetry(
+        string url,
+        object body,
+        Dictionary<string, string> customHeaders = null,
+        HttpStatusCode expectedStatus = HttpStatusCode.OK) =>
+        await _retryPolicy.Retry(async () => await SendAsync(HttpMethod.Post, url, body, customHeaders: customHeaders, expectedStatus: expectedStatus));
 
     private async Task<(string Content, KeyValuePair<string, IEnumerable<string>>[] ResponseHeaders)> SendAsync(
         HttpMethod httpMethod,
@@ -310,6 +336,22 @@ public class GithubClient
                contentUpper.Contains("ABUSE DETECTION") ||
                contentUpper.Contains("YOU HAVE TRIGGERED AN ABUSE DETECTION MECHANISM") ||
                statusCode == HttpStatusCode.TooManyRequests;
+    }
+
+    private bool IsGraphQLSecondaryRateLimit(string content)
+    {
+        var response = JObject.Parse(content);
+
+        if (response.TryGetValue("errors", out var jErrors) && jErrors is JArray { Count: > 0 } errors)
+        {
+            var error = (JObject)errors[0];
+            if (error.TryGetValue("type", out var jType) && jType.Type == JTokenType.String)
+            {
+                return ((string)jType) == "RATE_LIMIT";
+            }
+        }
+
+        return false;
     }
 
     private async Task<(string Content, KeyValuePair<string, IEnumerable<string>>[] ResponseHeaders)> HandleSecondaryRateLimit(

@@ -561,7 +561,7 @@ public class GithubApi
         {
             return await _retryPolicy.Retry(async () =>
             {
-                var data = await _client.PostGraphQLAsync(url, payload);
+                var data = await _client.PostGraphQLWithRetryAsync(url, payload);
 
                 return (
                     State: (string)data["data"]["node"]["state"],
