@@ -25,6 +25,9 @@ public class GithubClient
     private const int SECONDARY_RATE_LIMIT_MAX_RETRIES = 3;
     private const int SECONDARY_RATE_LIMIT_DEFAULT_DELAY = 60; // 60 seconds default delay
 
+    internal int _secondaryRateLimitMaxRetries = SECONDARY_RATE_LIMIT_MAX_RETRIES; // Exposed for testing purposes
+    internal int _secondaryRateLimitDefaultDelay = SECONDARY_RATE_LIMIT_DEFAULT_DELAY; // Exposed for testing purposes
+
     public GithubClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider, RetryPolicy retryPolicy, DateTimeProvider dateTimeProvider, string personalAccessToken)
     {
         _log = log;
@@ -99,17 +102,28 @@ public class GithubClient
         Dictionary<string, string> customHeaders = null,
         int retryCount = 0)
     {
-        var (response, headers) = await PostWithRetry(url, body, customHeaders);
+        var currentRetryCount = retryCount;
 
-        if (IsGraphQLSecondaryRateLimit(response))
+        while (true)
         {
-            (response, headers) = await HandleSecondaryRateLimit(HttpMethod.Post, url, body, HttpStatusCode.OK, customHeaders, headers, retryCount);
+            var (response, headers) = await PostWithRetry(url, body, customHeaders);
+
+            if (IsGraphQLSecondaryRateLimit(response))
+            {
+                (response, _) = await HandleSecondaryRateLimit(HttpMethod.Post, url, body, HttpStatusCode.OK, customHeaders, headers, currentRetryCount);
+
+                if (IsGraphQLSecondaryRateLimit(response))
+                {
+                    currentRetryCount++;
+                    continue;
+                }
+            }
+
+            var data = JObject.Parse(response);
+            EnsureSuccessGraphQLResponse(data);
+
+            return data;
         }
-
-        var data = JObject.Parse(response);
-        EnsureSuccessGraphQLResponse(data);
-
-        return data;
     }
 
     public virtual async IAsyncEnumerable<JToken> PostGraphQLWithPaginationAsync(
@@ -363,7 +377,7 @@ public class GithubClient
         KeyValuePair<string, IEnumerable<string>>[] headers,
         int retryCount = 0)
     {
-        if (retryCount >= SECONDARY_RATE_LIMIT_MAX_RETRIES)
+        if (retryCount >= _secondaryRateLimitMaxRetries)
         {
             throw new OctoshiftCliException($"Secondary rate limit exceeded. Maximum retries ({SECONDARY_RATE_LIMIT_MAX_RETRIES}) reached. Please wait before retrying your request.");
         }
@@ -401,6 +415,6 @@ public class GithubClient
         }
 
         // Otherwise use exponential backoff: 1m → 2m → 4m
-        return SECONDARY_RATE_LIMIT_DEFAULT_DELAY * (int)Math.Pow(2, retryCount);
+        return _secondaryRateLimitDefaultDelay * (int)Math.Pow(2, retryCount);
     }
 }

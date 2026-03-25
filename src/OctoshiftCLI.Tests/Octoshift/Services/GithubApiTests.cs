@@ -1282,7 +1282,7 @@ public class GithubApiTests
             }}");
 
         _githubClientMock
-            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+            .Setup(m => m.PostGraphQLWithRetryAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null, 0))
             .ReturnsAsync(response);
 
         // Act
@@ -1341,7 +1341,7 @@ public class GithubApiTests
             }}");
 
         _githubClientMock
-            .SetupSequence(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+            .SetupSequence(m => m.PostGraphQLWithRetryAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null, 0))
             .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
             .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
             .ReturnsAsync(response);
@@ -1399,7 +1399,7 @@ public class GithubApiTests
             }}");
 
         _githubClientMock
-            .SetupSequence(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+            .SetupSequence(m => m.PostGraphQLWithRetryAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null, 0))
             .ReturnsAsync(GQL_ERROR_RESPONSE)
             .ReturnsAsync(GQL_ERROR_RESPONSE)
             .ReturnsAsync(response);
@@ -1457,7 +1457,7 @@ public class GithubApiTests
             }}");
 
         _githubClientMock
-            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+            .Setup(m => m.PostGraphQLWithRetryAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null, 0))
             .ReturnsAsync(response);
 
         // Act

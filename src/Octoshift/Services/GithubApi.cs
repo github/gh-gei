@@ -564,11 +564,11 @@ public class GithubApi
                 var data = await _client.PostGraphQLWithRetryAsync(url, payload);
 
                 return (
-                    State: (string)data["data"]["node"]["state"],
-                    RepositoryName: (string)data["data"]["node"]["repositoryName"],
-                    WarningsCount: (int)data["data"]["node"]["warningsCount"],
-                    FailureReason: (string)data["data"]["node"]["failureReason"],
-                    MigrationLogUrl: (string)data["data"]["node"]["migrationLogUrl"]);
+                        State: (string)data["data"]["node"]["state"],
+                        RepositoryName: (string)data["data"]["node"]["repositoryName"],
+                        WarningsCount: (int)data["data"]["node"]["warningsCount"],
+                        FailureReason: (string)data["data"]["node"]["failureReason"],
+                        MigrationLogUrl: (string)data["data"]["node"]["migrationLogUrl"]);
             });
         }
         catch (Exception ex)

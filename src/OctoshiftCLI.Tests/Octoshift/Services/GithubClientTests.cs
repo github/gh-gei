@@ -2160,15 +2160,19 @@ query($id: ID!, $first: Int, $after: String) {
             .ReturnsAsync(CreateHttpResponseFactory(content: "SUCCESS_RESPONSE")());
 
         using var httpClient = new HttpClient(handlerMock.Object);
-        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN)
+        {
+            // Set short default delay to speed up the test. This is reflected in the logs below.
+            _secondaryRateLimitDefaultDelay = 0
+        };
 
         // Act
         var result = await githubClient.PatchAsync("http://example.com", _rawRequestBody);
 
         // Assert
         result.Should().Be("SUCCESS_RESPONSE");
-        _mockOctoLogger.Verify(m => m.LogWarning("Secondary rate limit detected (attempt 1/3). Waiting 60 seconds before retrying..."), Times.Once);
-        _mockOctoLogger.Verify(m => m.LogWarning("Secondary rate limit detected (attempt 2/3). Waiting 120 seconds before retrying..."), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogWarning("Secondary rate limit detected (attempt 1/3). Waiting 0 seconds before retrying..."), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogWarning("Secondary rate limit detected (attempt 2/3). Waiting 0 seconds before retrying..."), Times.Once);
     }
 
     [Fact]
@@ -2187,7 +2191,11 @@ query($id: ID!, $first: Int, $after: String) {
                 content: "Too many requests")());
 
         using var httpClient = new HttpClient(handlerMock.Object);
-        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN)
+        {
+            // Set short default delay to speed up the test. This is reflected in the logs below.
+            _secondaryRateLimitDefaultDelay = 0
+        };
 
         // Act & Assert
         await FluentActions
@@ -2197,9 +2205,9 @@ query($id: ID!, $first: Int, $after: String) {
             .WithMessage("Secondary rate limit exceeded. Maximum retries (3) reached. Please wait before retrying your request.");
 
         // Verify all retry attempts were logged
-        _mockOctoLogger.Verify(m => m.LogWarning("Secondary rate limit detected (attempt 1/3). Waiting 60 seconds before retrying..."), Times.Once);
-        _mockOctoLogger.Verify(m => m.LogWarning("Secondary rate limit detected (attempt 2/3). Waiting 120 seconds before retrying..."), Times.Once);
-        _mockOctoLogger.Verify(m => m.LogWarning("Secondary rate limit detected (attempt 3/3). Waiting 240 seconds before retrying..."), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogWarning("Secondary rate limit detected (attempt 1/3). Waiting 0 seconds before retrying..."), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogWarning("Secondary rate limit detected (attempt 2/3). Waiting 0 seconds before retrying..."), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogWarning("Secondary rate limit detected (attempt 3/3). Waiting 0 seconds before retrying..."), Times.Once);
     }
 
     private object CreateRepositoryMigration(string migrationId = null, string state = RepositoryMigrationStatus.Succeeded) => new
