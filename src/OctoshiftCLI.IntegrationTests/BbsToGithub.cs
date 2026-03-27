@@ -39,12 +39,19 @@ public sealed class BbsToGithub : IDisposable
         _startTime = DateTime.Now;
         _output = output;
 
+        var azureStorageEnvVar = $"AZURE_STORAGE_CONNECTION_STRING_BBS_{TestHelper.GetOsName().ToUpperInvariant()}";
+        TestHelper.AssertCredentialsPresent(
+            ("BBS_USERNAME", "Bitbucket Server username"),
+            ("BBS_PASSWORD", "Bitbucket Server password"),
+            ("GHEC_PAT", "GitHub Enterprise Cloud personal access token"),
+            (azureStorageEnvVar, "Azure blob storage connection string for BBS migration archives"));
+
         _logger = new OctoLogger(_ => { }, x => _output.WriteLine(x), _ => { }, _ => { });
 
         var sourceBbsUsername = Environment.GetEnvironmentVariable("BBS_USERNAME");
         var sourceBbsPassword = Environment.GetEnvironmentVariable("BBS_PASSWORD");
         var targetGithubToken = Environment.GetEnvironmentVariable("GHEC_PAT");
-        _azureStorageConnectionString = Environment.GetEnvironmentVariable($"AZURE_STORAGE_CONNECTION_STRING_BBS_{TestHelper.GetOsName().ToUpper()}");
+        _azureStorageConnectionString = Environment.GetEnvironmentVariable(azureStorageEnvVar);
         _tokens = new Dictionary<string, string>
         {
             ["BBS_USERNAME"] = sourceBbsUsername,

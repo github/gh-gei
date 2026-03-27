@@ -36,11 +36,17 @@ public sealed class GhesToGithub : IDisposable
         _startTime = DateTime.Now;
         _output = output;
 
+        var azureStorageEnvVar = $"AZURE_STORAGE_CONNECTION_STRING_GHES_{TestHelper.GetOsName().ToUpperInvariant()}";
+        TestHelper.AssertCredentialsPresent(
+            ("GHES_PAT", "GitHub Enterprise Server personal access token"),
+            ("GHEC_PAT", "GitHub Enterprise Cloud personal access token"),
+            (azureStorageEnvVar, "Azure blob storage connection string for GHES migration archives"));
+
         var logger = new OctoLogger(_ => { }, x => _output.WriteLine(x), _ => { }, _ => { });
 
         var sourceGithubToken = Environment.GetEnvironmentVariable("GHES_PAT");
         var targetGithubToken = Environment.GetEnvironmentVariable("GHEC_PAT");
-        _azureStorageConnectionString = Environment.GetEnvironmentVariable($"AZURE_STORAGE_CONNECTION_STRING_GHES_{TestHelper.GetOsName().ToUpper()}");
+        _azureStorageConnectionString = Environment.GetEnvironmentVariable(azureStorageEnvVar);
         _tokens = new Dictionary<string, string>
         {
             ["GH_SOURCE_PAT"] = sourceGithubToken,

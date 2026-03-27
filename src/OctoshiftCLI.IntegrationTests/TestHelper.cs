@@ -526,6 +526,36 @@ steps:
                 : throw new InvalidOperationException("Could not determine OS");
         }
 
+        /// <summary>
+        /// Validates that required environment variables for credentials are set and non-empty.
+        /// Throws an InvalidOperationException with a clear message identifying which env var is missing.
+        /// Call this at the start of integration test constructors for fast-fail with actionable error messages.
+        /// </summary>
+        public static void AssertCredentialsPresent(params (string envVarName, string description)[] credentials)
+        {
+            if (credentials is null)
+            {
+                throw new ArgumentNullException(nameof(credentials));
+            }
+
+            var missing = new List<string>();
+            foreach (var (envVarName, description) in credentials)
+            {
+                var value = Environment.GetEnvironmentVariable(envVarName);
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    missing.Add($"  - {envVarName}: {description}");
+                }
+            }
+
+            if (missing.Any())
+            {
+                throw new InvalidOperationException(
+                    $"Missing or empty credential environment variable(s). " +
+                    $"If these are GitHub Actions secrets, they may need to be rotated:\n{string.Join("\n", missing)}");
+            }
+        }
+
         public async Task RunCliMigration(string generateScriptCommand, string cliName, IReadOnlyDictionary<string, string> tokens)
         {
             await RunCliCommand(generateScriptCommand, cliName, tokens);

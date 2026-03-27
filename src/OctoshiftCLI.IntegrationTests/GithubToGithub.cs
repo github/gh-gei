@@ -26,6 +26,9 @@ namespace OctoshiftCLI.IntegrationTests
             _startTime = DateTime.Now;
             _output = output;
 
+            TestHelper.AssertCredentialsPresent(
+                ("GHEC_PAT", "GitHub Enterprise Cloud personal access token"));
+
             var logger = new OctoLogger(x => { }, x => _output.WriteLine(x), x => { }, x => { });
 
             var githubToken = Environment.GetEnvironmentVariable("GHEC_PAT");
