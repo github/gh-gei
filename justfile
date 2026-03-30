@@ -195,6 +195,26 @@ go-publish-macos:
 # Build Go binaries for all platforms
 go-publish-all: go-publish-linux go-publish-windows go-publish-macos
 
+# Install Go binaries as gh CLI extensions (macOS)
+go-install-extensions-macos: go-publish-macos
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for cli in gei ado2gh bbs2gh; do
+        dir="gh-${cli}"
+        mkdir -p "$dir"
+        cp "./dist/osx-x64/${cli}-darwin-amd64" "./${dir}/gh-${cli}"
+        chmod +x "./${dir}/gh-${cli}"
+        cd "$dir" && gh extension install . --force && cd ..
+    done
+    echo "Go extensions installed successfully!"
+
+# Run GithubToGithub integration test against Go binaries (macOS)
+go-e2e-github: go-install-extensions-macos
+    direnv exec . dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj \
+        --filter "GithubToGithub" \
+        --logger "console;verbosity=normal" \
+        /p:VersionPrefix=9.9
+
 # Run Go CI pipeline
 go-ci: go-format-check go-build go-test
 
