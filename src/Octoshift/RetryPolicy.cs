@@ -10,13 +10,25 @@ namespace OctoshiftCLI
     public class RetryPolicy
     {
         private readonly OctoLogger _log;
+        private readonly string _serviceName;
         internal int _httpRetryInterval = 1000;
         internal int _retryInterval = 4000;
 
-        public RetryPolicy(OctoLogger log)
+        public RetryPolicy(OctoLogger log, string serviceName = null)
         {
             _log = log;
+            _serviceName = serviceName;
         }
+
+        /// <summary>
+        /// Returns a new RetryPolicy with the same configuration as this one, but tagged with a service name
+        /// for more actionable error messages (e.g. on 401 Unauthorized).
+        /// </summary>
+        public RetryPolicy WithServiceName(string serviceName) => new(_log, serviceName)
+        {
+            _httpRetryInterval = _httpRetryInterval,
+            _retryInterval = _retryInterval
+        };
 
         public async Task<T> HttpRetry<T>(Func<Task<T>> func, Func<HttpRequestException, bool> filter)
         {
@@ -26,7 +38,15 @@ namespace OctoshiftCLI
                                    _log?.LogVerbose($"Call failed with HTTP {((HttpRequestException)ex).StatusCode}, retrying...");
                                });
 
-            return await policy.ExecuteAsync(func);
+            try
+            {
+                return await policy.ExecuteAsync(func);
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                ThrowUnauthorizedException(ex);
+                throw; // unreachable, but required by compiler
+            }
         }
 
         public async Task<PolicyResult<T>> RetryOnResult<T>(Func<Task<T>> func, Func<T, bool> resultPredicate, string retryLogMessage = null)
@@ -53,9 +73,8 @@ namespace OctoshiftCLI
                         _log?.LogVerbose($"[HTTP ERROR {(int?)httpEx.StatusCode}] {ex}");
                         if (httpEx.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                         {
-                            // We should not retry on an unathorized error; instead, log and bubble up the error
-                            throw new OctoshiftCliException($"Unauthorized. Please check your token and try again", ex);
-                        };
+                            ThrowUnauthorizedException(httpEx);
+                        }
                     }
                     else
                     {
@@ -63,5 +82,11 @@ namespace OctoshiftCLI
                     }
                     _log?.LogVerbose("Retrying...");
                 });
+
+        private void ThrowUnauthorizedException(HttpRequestException ex)
+        {
+            var serviceContext = _serviceName is not null ? $" ({_serviceName})" : "";
+            throw new OctoshiftCliException($"Unauthorized{serviceContext}. Please check your token and try again", ex);
+        }
     }
 }

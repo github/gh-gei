@@ -48,17 +48,17 @@ public sealed class GhesToGithub : IDisposable
         };
 
         _versionClient = new HttpClient();
-        var retryPolicy = new RetryPolicy(logger);
+        var retryPolicy = new RetryPolicy(logger, "GHES (GHES_PAT)");
         var environmentVariableProvider = new EnvironmentVariableProvider(logger);
 
         _sourceGithubHttpClient = new HttpClient();
-        _sourceGithubClient = new GithubClient(logger, _sourceGithubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), sourceGithubToken);
+        _sourceGithubClient = new GithubClient(logger, _sourceGithubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger, "GHES (GHES_PAT)"), new DateTimeProvider(), sourceGithubToken);
         _archiveUploader = new ArchiveUploader(_targetGithubClient, UPLOADS_URL, logger, retryPolicy, environmentVariableProvider);
-        _sourceGithubApi = new GithubApi(_sourceGithubClient, GHES_API_URL, new RetryPolicy(logger), _archiveUploader);
+        _sourceGithubApi = new GithubApi(_sourceGithubClient, GHES_API_URL, new RetryPolicy(logger, "GHES (GHES_PAT)"), _archiveUploader);
 
         _targetGithubHttpClient = new HttpClient();
-        _targetGithubClient = new GithubClient(logger, _targetGithubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), targetGithubToken);
-        _targetGithubApi = new GithubApi(_targetGithubClient, "https://api.github.com", new RetryPolicy(logger), _archiveUploader);
+        _targetGithubClient = new GithubClient(logger, _targetGithubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger, "GitHub (GHEC_PAT)"), new DateTimeProvider(), targetGithubToken);
+        _targetGithubApi = new GithubApi(_targetGithubClient, "https://api.github.com", new RetryPolicy(logger, "GitHub (GHEC_PAT)"), _archiveUploader);
 
         _blobServiceClient = new BlobServiceClient(_azureStorageConnectionString);
 

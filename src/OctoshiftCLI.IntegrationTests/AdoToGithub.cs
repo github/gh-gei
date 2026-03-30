@@ -28,14 +28,14 @@ namespace OctoshiftCLI.IntegrationTests
             _versionClient = new HttpClient();
             var adoToken = Environment.GetEnvironmentVariable(adoPatEnvVar);
             _adoHttpClient = new HttpClient();
-            var retryPolicy = new RetryPolicy(logger);
+            var retryPolicy = new RetryPolicy(logger, $"Azure DevOps ({adoPatEnvVar})");
             var adoClient = new AdoClient(logger, _adoHttpClient, new VersionChecker(_versionClient, logger), retryPolicy, adoToken);
             var adoApi = new AdoApi(adoClient, adoServerUrl, logger);
 
             var githubToken = Environment.GetEnvironmentVariable("GHEC_PAT");
             _githubHttpClient = new HttpClient();
-            var githubClient = new GithubClient(logger, _githubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), githubToken);
-            var githubApi = new GithubApi(githubClient, "https://api.github.com", new RetryPolicy(logger), null);
+            var githubClient = new GithubClient(logger, _githubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger, "GitHub (GHEC_PAT)"), new DateTimeProvider(), githubToken);
+            var githubApi = new GithubApi(githubClient, "https://api.github.com", new RetryPolicy(logger, "GitHub (GHEC_PAT)"), null);
 
             Tokens = new Dictionary<string, string>
             {
