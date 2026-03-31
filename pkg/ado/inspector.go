@@ -239,6 +239,16 @@ func (ins *Inspector) GetPullRequestCount(ctx context.Context, org, teamProject,
 	return count, nil
 }
 
+// SetOrgFilter sets the org filter for narrowing discovery to a single org.
+func (ins *Inspector) SetOrgFilter(org string) {
+	ins.OrgFilter = org
+}
+
+// GetOrgFilter returns the current org filter.
+func (ins *Inspector) GetOrgFilter() string {
+	return ins.OrgFilter
+}
+
 // ---------- Count aggregations ----------
 
 // GetRepoCount returns the total number of repos across all orgs and team projects.

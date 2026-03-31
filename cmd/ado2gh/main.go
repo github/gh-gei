@@ -55,7 +55,7 @@ func newRootCmd() *cobra.Command {
 	// Add commands (will be implemented in phases)
 	rootCmd.AddCommand(newMigrateRepoCmdLive())
 	rootCmd.AddCommand(newGenerateScriptCmdLive())
-	// rootCmd.AddCommand(newInventoryReportCmd())
+	rootCmd.AddCommand(newInventoryReportCmdLive())
 	rootCmd.AddCommand(newRewirePipelineCmdLive())
 	rootCmd.AddCommand(newIntegrateBoardsCmdLive())
 	rootCmd.AddCommand(newAddTeamToRepoCmdLive())
