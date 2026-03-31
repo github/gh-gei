@@ -57,15 +57,15 @@ func newRootCmd() *cobra.Command {
 	// Add commands
 	rootCmd.AddCommand(newGenerateScriptCmd())
 	rootCmd.AddCommand(newMigrateRepoCmdLive())
+	rootCmd.AddCommand(newMigrateOrgCmdLive())
+
+	rootCmd.AddCommand(newMigrateSecretAlertsCmdLive())
+	rootCmd.AddCommand(newMigrateCodeScanningCmdLive())
 
 	// Additional commands will be implemented in subsequent phases
-	// rootCmd.AddCommand(newMigrateRepoCmd())
-	// rootCmd.AddCommand(newMigrateOrgCmd())
 	// rootCmd.AddCommand(newWaitForMigrationCmd())
 	// rootCmd.AddCommand(newAbortMigrationCmd())
 	// rootCmd.AddCommand(newDownloadLogsCmd())
-	// rootCmd.AddCommand(newMigrateSecretAlertsCmd())
-	// rootCmd.AddCommand(newMigrateCodeScanningAlertsCmd())
 	// rootCmd.AddCommand(newGenerateMannequinCSVCmd())
 	// rootCmd.AddCommand(newReclaimMannequinCmd())
 	// rootCmd.AddCommand(newGrantMigratorRoleCmd())

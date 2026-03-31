@@ -1,7 +1,10 @@
 package github
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -1302,4 +1305,592 @@ func TestClient_GetArchiveMigrationUrl(t *testing.T) {
 
 		require.Error(t, err)
 	})
+}
+
+// ---------------------------------------------------------------------------
+// Secret Scanning Alert methods
+// ---------------------------------------------------------------------------
+
+func TestClient_GetSecretScanningAlertsForRepository(t *testing.T) {
+	t.Run("single page", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "GET", r.Method)
+			assert.Contains(t, r.URL.Path, "/repos/test-org/test-repo/secret-scanning/alerts")
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, `[
+				{
+					"number": 1,
+					"state": "open",
+					"secret_type": "github_token",
+					"secret": "ghp_abc123"
+				},
+				{
+					"number": 2,
+					"state": "resolved",
+					"resolution": "revoked",
+					"resolution_comment": "Token revoked",
+					"secret_type": "github_token",
+					"secret": "ghp_def456",
+					"resolved_by": {"login": "admin-user"}
+				}
+			]`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		alerts, err := client.GetSecretScanningAlertsForRepository(context.Background(), "test-org", "test-repo")
+
+		require.NoError(t, err)
+		require.Len(t, alerts, 2)
+		assert.Equal(t, 1, alerts[0].Number)
+		assert.Equal(t, "open", alerts[0].State)
+		assert.Equal(t, "github_token", alerts[0].SecretType)
+		assert.Equal(t, "ghp_abc123", alerts[0].Secret)
+		assert.Equal(t, "", alerts[0].ResolverName)
+
+		assert.Equal(t, 2, alerts[1].Number)
+		assert.Equal(t, "resolved", alerts[1].State)
+		assert.Equal(t, "revoked", alerts[1].Resolution)
+		assert.Equal(t, "Token revoked", alerts[1].ResolutionComment)
+		assert.Equal(t, "admin-user", alerts[1].ResolverName)
+	})
+
+	t.Run("pagination", func(t *testing.T) {
+		callCount := 0
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			callCount++
+			w.Header().Set("Content-Type", "application/json")
+			if callCount == 1 {
+				// First page: include Link header pointing to next page
+				w.Header().Set("Link", `<`+r.URL.Path+`?per_page=100&page=2>; rel="next"`)
+				w.WriteHeader(http.StatusOK)
+				fmt.Fprint(w, `[{"number": 1, "state": "open", "secret_type": "a", "secret": "s1"}]`)
+			} else {
+				// Second page: no next link
+				w.WriteHeader(http.StatusOK)
+				fmt.Fprint(w, `[{"number": 2, "state": "open", "secret_type": "b", "secret": "s2"}]`)
+			}
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		alerts, err := client.GetSecretScanningAlertsForRepository(context.Background(), "test-org", "test-repo")
+
+		require.NoError(t, err)
+		require.Len(t, alerts, 2)
+		assert.Equal(t, 1, alerts[0].Number)
+		assert.Equal(t, 2, alerts[1].Number)
+	})
+
+	t.Run("empty response", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, `[]`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		alerts, err := client.GetSecretScanningAlertsForRepository(context.Background(), "test-org", "test-repo")
+
+		require.NoError(t, err)
+		assert.Empty(t, alerts)
+	})
+}
+
+func TestClient_GetSecretScanningAlertsLocations(t *testing.T) {
+	t.Run("commit location", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "GET", r.Method)
+			assert.Contains(t, r.URL.Path, "/repos/test-org/test-repo/secret-scanning/alerts/1/locations")
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, `[
+				{
+					"type": "commit",
+					"details": {
+						"path": "config/secrets.yml",
+						"start_line": 10,
+						"end_line": 10,
+						"start_column": 5,
+						"end_column": 40,
+						"blob_sha": "abc123"
+					}
+				}
+			]`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		locs, err := client.GetSecretScanningAlertsLocations(context.Background(), "test-org", "test-repo", 1)
+
+		require.NoError(t, err)
+		require.Len(t, locs, 1)
+		assert.Equal(t, "commit", locs[0].LocationType)
+		assert.Equal(t, "config/secrets.yml", locs[0].Path)
+		assert.Equal(t, 10, locs[0].StartLine)
+		assert.Equal(t, 10, locs[0].EndLine)
+		assert.Equal(t, 5, locs[0].StartColumn)
+		assert.Equal(t, 40, locs[0].EndColumn)
+		assert.Equal(t, "abc123", locs[0].BlobSha)
+	})
+
+	t.Run("issue location", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, `[
+				{
+					"type": "issue_title",
+					"details": {
+						"issue_title_url": "https://api.github.com/repos/test-org/test-repo/issues/42"
+					}
+				}
+			]`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		locs, err := client.GetSecretScanningAlertsLocations(context.Background(), "test-org", "test-repo", 5)
+
+		require.NoError(t, err)
+		require.Len(t, locs, 1)
+		assert.Equal(t, "issue_title", locs[0].LocationType)
+		assert.Equal(t, "https://api.github.com/repos/test-org/test-repo/issues/42", locs[0].IssueTitleUrl)
+	})
+}
+
+func TestClient_UpdateSecretScanningAlert(t *testing.T) {
+	t.Run("resolve alert", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "PATCH", r.Method)
+			assert.Contains(t, r.URL.Path, "/repos/test-org/test-repo/secret-scanning/alerts/1")
+
+			body, _ := io.ReadAll(r.Body)
+			var payload map[string]string
+			require.NoError(t, json.Unmarshal(body, &payload))
+			assert.Equal(t, "resolved", payload["state"])
+			assert.Equal(t, "revoked", payload["resolution"])
+			assert.Equal(t, "Token was revoked", payload["resolution_comment"])
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, `{}`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		err := client.UpdateSecretScanningAlert(context.Background(), "test-org", "test-repo", 1, "resolved", "revoked", "Token was revoked")
+
+		require.NoError(t, err)
+	})
+
+	t.Run("reopen alert sends only state", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			body, _ := io.ReadAll(r.Body)
+			var payload map[string]string
+			require.NoError(t, json.Unmarshal(body, &payload))
+			assert.Equal(t, "open", payload["state"])
+			assert.NotContains(t, string(body), "resolution")
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, `{}`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		err := client.UpdateSecretScanningAlert(context.Background(), "test-org", "test-repo", 1, "open", "", "")
+
+		require.NoError(t, err)
+	})
+}
+
+// ---------------------------------------------------------------------------
+// Code Scanning Alert methods
+// ---------------------------------------------------------------------------
+
+func TestClient_GetCodeScanningAlertsForRepository(t *testing.T) {
+	t.Run("single page with branch filter", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "GET", r.Method)
+			assert.Contains(t, r.URL.Path, "/repos/test-org/test-repo/code-scanning/alerts")
+			assert.Contains(t, r.URL.RawQuery, "ref=main")
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, `[
+				{
+					"number": 1,
+					"url": "https://api.github.com/repos/test-org/test-repo/code-scanning/alerts/1",
+					"state": "open",
+					"rule": {"id": "js/sql-injection"},
+					"most_recent_instance": {
+						"ref": "refs/heads/main",
+						"commit_sha": "abc123",
+						"location": {
+							"path": "src/app.js",
+							"start_line": 42,
+							"end_line": 42,
+							"start_column": 5,
+							"end_column": 20
+						}
+					}
+				},
+				{
+					"number": 2,
+					"url": "https://api.github.com/repos/test-org/test-repo/code-scanning/alerts/2",
+					"state": "dismissed",
+					"dismissed_at": "2024-01-01T00:00:00Z",
+					"dismissed_reason": "won't fix",
+					"dismissed_comment": "Not applicable",
+					"rule": {"id": "js/xss"}
+				}
+			]`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		alerts, err := client.GetCodeScanningAlertsForRepository(context.Background(), "test-org", "test-repo", "main")
+
+		require.NoError(t, err)
+		require.Len(t, alerts, 2)
+
+		assert.Equal(t, 1, alerts[0].Number)
+		assert.Equal(t, "open", alerts[0].State)
+		assert.Equal(t, "js/sql-injection", alerts[0].RuleId)
+		require.NotNil(t, alerts[0].MostRecentInstance)
+		assert.Equal(t, "refs/heads/main", alerts[0].MostRecentInstance.Ref)
+		assert.Equal(t, "abc123", alerts[0].MostRecentInstance.CommitSha)
+		assert.Equal(t, "src/app.js", alerts[0].MostRecentInstance.Path)
+		assert.Equal(t, 42, alerts[0].MostRecentInstance.StartLine)
+
+		assert.Equal(t, 2, alerts[1].Number)
+		assert.Equal(t, "dismissed", alerts[1].State)
+		assert.Equal(t, "won't fix", alerts[1].DismissedReason)
+		assert.Equal(t, "js/xss", alerts[1].RuleId)
+		assert.Nil(t, alerts[1].MostRecentInstance)
+	})
+
+	t.Run("no branch filter", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.NotContains(t, r.URL.RawQuery, "ref=")
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, `[]`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		alerts, err := client.GetCodeScanningAlertsForRepository(context.Background(), "test-org", "test-repo", "")
+
+		require.NoError(t, err)
+		assert.Empty(t, alerts)
+	})
+}
+
+func TestClient_GetCodeScanningAlertInstances(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "GET", r.Method)
+			assert.Contains(t, r.URL.Path, "/repos/test-org/test-repo/code-scanning/alerts/1/instances")
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, `[
+				{
+					"ref": "refs/heads/main",
+					"commit_sha": "abc123",
+					"location": {
+						"path": "src/app.js",
+						"start_line": 10,
+						"end_line": 10,
+						"start_column": 1,
+						"end_column": 50
+					}
+				},
+				{
+					"ref": "refs/heads/feature",
+					"commit_sha": "def456",
+					"location": {
+						"path": "src/lib.js",
+						"start_line": 20,
+						"end_line": 25,
+						"start_column": 3,
+						"end_column": 30
+					}
+				}
+			]`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		instances, err := client.GetCodeScanningAlertInstances(context.Background(), "test-org", "test-repo", 1)
+
+		require.NoError(t, err)
+		require.Len(t, instances, 2)
+
+		assert.Equal(t, "refs/heads/main", instances[0].Ref)
+		assert.Equal(t, "abc123", instances[0].CommitSha)
+		assert.Equal(t, "src/app.js", instances[0].Path)
+		assert.Equal(t, 10, instances[0].StartLine)
+
+		assert.Equal(t, "refs/heads/feature", instances[1].Ref)
+		assert.Equal(t, "src/lib.js", instances[1].Path)
+		assert.Equal(t, 20, instances[1].StartLine)
+		assert.Equal(t, 25, instances[1].EndLine)
+	})
+}
+
+func TestClient_UpdateCodeScanningAlert(t *testing.T) {
+	t.Run("dismiss alert", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "PATCH", r.Method)
+			assert.Contains(t, r.URL.Path, "/repos/test-org/test-repo/code-scanning/alerts/5")
+
+			body, _ := io.ReadAll(r.Body)
+			var payload map[string]string
+			require.NoError(t, json.Unmarshal(body, &payload))
+			assert.Equal(t, "dismissed", payload["state"])
+			assert.Equal(t, "won't fix", payload["dismissed_reason"])
+			assert.Equal(t, "Not relevant", payload["dismissed_comment"])
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, `{}`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		err := client.UpdateCodeScanningAlert(context.Background(), "test-org", "test-repo", 5, "dismissed", "won't fix", "Not relevant")
+
+		require.NoError(t, err)
+	})
+
+	t.Run("reopen sends only state", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			body, _ := io.ReadAll(r.Body)
+			var payload map[string]string
+			require.NoError(t, json.Unmarshal(body, &payload))
+			assert.Equal(t, "open", payload["state"])
+			assert.NotContains(t, string(body), "dismissed_reason")
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, `{}`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		err := client.UpdateCodeScanningAlert(context.Background(), "test-org", "test-repo", 5, "open", "", "")
+
+		require.NoError(t, err)
+	})
+}
+
+func TestClient_GetCodeScanningAnalysisForRepository(t *testing.T) {
+	t.Run("success with branch", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "GET", r.Method)
+			assert.Contains(t, r.URL.Path, "/repos/test-org/test-repo/code-scanning/analyses")
+			assert.Contains(t, r.URL.RawQuery, "ref=main")
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, `[
+				{"id": 100, "ref": "refs/heads/main", "commit_sha": "abc123", "created_at": "2024-01-01T00:00:00Z"},
+				{"id": 101, "ref": "refs/heads/main", "commit_sha": "def456", "created_at": "2024-01-02T00:00:00Z"}
+			]`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		analyses, err := client.GetCodeScanningAnalysisForRepository(context.Background(), "test-org", "test-repo", "main")
+
+		require.NoError(t, err)
+		require.Len(t, analyses, 2)
+		assert.Equal(t, 100, analyses[0].ID)
+		assert.Equal(t, "abc123", analyses[0].CommitSha)
+		assert.Equal(t, 101, analyses[1].ID)
+	})
+
+	t.Run("404 returns empty slice", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, `{"message": "no analysis found"}`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		analyses, err := client.GetCodeScanningAnalysisForRepository(context.Background(), "test-org", "test-repo", "")
+
+		require.NoError(t, err)
+		assert.Nil(t, analyses)
+	})
+}
+
+func TestClient_GetSarifReport(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		sarifContent := `{"version":"2.1.0","runs":[{"tool":{"driver":{"name":"CodeQL"}}}]}`
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "GET", r.Method)
+			assert.Contains(t, r.URL.Path, "/repos/test-org/test-repo/code-scanning/analyses/100")
+			assert.Equal(t, "application/sarif+json", r.Header.Get("Accept"))
+			assert.Equal(t, "Bearer test-pat", r.Header.Get("Authorization"))
+
+			w.Header().Set("Content-Type", "application/sarif+json")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, sarifContent)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		report, err := client.GetSarifReport(context.Background(), "test-org", "test-repo", 100)
+
+		require.NoError(t, err)
+		assert.Equal(t, sarifContent, report)
+	})
+
+	t.Run("404 returns error", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusNotFound)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		_, err := client.GetSarifReport(context.Background(), "test-org", "test-repo", 999)
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "not found")
+	})
+}
+
+func TestClient_UploadSarifReport(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		sarifContent := `{"version":"2.1.0"}`
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "POST", r.Method)
+			assert.Contains(t, r.URL.Path, "/repos/test-org/test-repo/code-scanning/sarifs")
+
+			body, _ := io.ReadAll(r.Body)
+			var payload map[string]string
+			require.NoError(t, json.Unmarshal(body, &payload))
+
+			assert.Equal(t, "abc123", payload["commit_sha"])
+			assert.Equal(t, "refs/heads/main", payload["ref"])
+
+			// Verify the sarif field is valid gzip+base64
+			decoded, err := base64.StdEncoding.DecodeString(payload["sarif"])
+			require.NoError(t, err)
+			gz, err := gzip.NewReader(bytes.NewReader(decoded))
+			require.NoError(t, err)
+			decompressed, err := io.ReadAll(gz)
+			require.NoError(t, err)
+			assert.Equal(t, sarifContent, string(decompressed))
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusAccepted)
+			fmt.Fprint(w, `{"id": "sarif-id-123"}`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		id, err := client.UploadSarifReport(context.Background(), "test-org", "test-repo", sarifContent, "abc123", "refs/heads/main")
+
+		require.NoError(t, err)
+		assert.Equal(t, "sarif-id-123", id)
+	})
+}
+
+func TestClient_GetSarifProcessingStatus(t *testing.T) {
+	t.Run("pending", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "GET", r.Method)
+			assert.Contains(t, r.URL.Path, "/repos/test-org/test-repo/code-scanning/sarifs/sarif-123")
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, `{"processing_status": "pending", "errors": []}`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		status, err := client.GetSarifProcessingStatus(context.Background(), "test-org", "test-repo", "sarif-123")
+
+		require.NoError(t, err)
+		assert.True(t, status.IsPending())
+		assert.False(t, status.IsFailed())
+	})
+
+	t.Run("complete", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, `{"processing_status": "complete", "errors": []}`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		status, err := client.GetSarifProcessingStatus(context.Background(), "test-org", "test-repo", "sarif-123")
+
+		require.NoError(t, err)
+		assert.False(t, status.IsPending())
+		assert.False(t, status.IsFailed())
+	})
+
+	t.Run("failed with errors", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, `{"processing_status": "failed", "errors": ["invalid sarif"]}`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		status, err := client.GetSarifProcessingStatus(context.Background(), "test-org", "test-repo", "sarif-123")
+
+		require.NoError(t, err)
+		assert.True(t, status.IsFailed())
+		assert.Contains(t, status.Errors, "invalid sarif")
+	})
+}
+
+func TestClient_GetDefaultBranch(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "GET", r.Method)
+			assert.Contains(t, r.URL.Path, "/repos/test-org/test-repo")
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, `{"default_branch": "main"}`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		branch, err := client.GetDefaultBranch(context.Background(), "test-org", "test-repo")
+
+		require.NoError(t, err)
+		assert.Equal(t, "main", branch)
+	})
+}
+
+func TestGzipAndBase64(t *testing.T) {
+	input := "hello world"
+	encoded, err := gzipAndBase64(input)
+	require.NoError(t, err)
+
+	// Decode and decompress
+	decoded, err := base64.StdEncoding.DecodeString(encoded)
+	require.NoError(t, err)
+	gz, err := gzip.NewReader(bytes.NewReader(decoded))
+	require.NoError(t, err)
+	result, err := io.ReadAll(gz)
+	require.NoError(t, err)
+	assert.Equal(t, input, string(result))
 }
