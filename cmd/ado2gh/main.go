@@ -53,7 +53,7 @@ func newRootCmd() *cobra.Command {
 	rootCmd.Version = version
 
 	// Add commands (will be implemented in phases)
-	// rootCmd.AddCommand(newMigrateRepoCmd())
+	rootCmd.AddCommand(newMigrateRepoCmdLive())
 	// rootCmd.AddCommand(newGenerateScriptCmd())
 	// rootCmd.AddCommand(newInventoryReportCmd())
 	// rootCmd.AddCommand(newRewirePipelineCmd())

@@ -1,37 +1,74 @@
 package ado
 
-// TeamProject represents an Azure DevOps team project
+import (
+	"encoding/json"
+	"time"
+)
+
+// TeamProject represents an Azure DevOps team project.
 type TeamProject struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }
 
-// Repository represents an Azure DevOps repository
+// Repository represents an Azure DevOps repository.
 type Repository struct {
 	ID         string `json:"id"`
 	Name       string `json:"name"`
-	Size       uint64 `json:"size,string"` // ADO returns size as string
+	Size       uint64 `json:"size,string"` // ADO returns size as string in paginated response
 	IsDisabled bool   `json:"isDisabled,string"`
 }
 
-// teamProjectsResponse is the response from the projects list API
-type teamProjectsResponse struct {
-	Value []TeamProject `json:"value"`
+// BoardsConnection holds an Azure Boards ↔ GitHub external connection.
+type BoardsConnection struct {
+	ConnectionID   string
+	EndpointID     string
+	ConnectionName string
+	RepoIDs        []string
 }
 
-// repositoriesResponse is the response from the repositories list API
-type repositoriesResponse struct {
-	Value []Repository `json:"value"`
+// PipelineInfo captures the mutable settings of a pipeline definition.
+type PipelineInfo struct {
+	DefaultBranch      string
+	Clean              string
+	CheckoutSubmodules string
+	Triggers           json.RawMessage
 }
 
-// serviceEndpoint represents a service connection endpoint
-type serviceEndpoint struct {
-	ID   string `json:"id"`
-	Type string `json:"type"`
-	Name string `json:"name"`
+// PipelineRepository describes the repository linked to a pipeline.
+type PipelineRepository struct {
+	RepoName           string
+	RepoID             string
+	DefaultBranch      string
+	Clean              string
+	CheckoutSubmodules string
 }
 
-// serviceEndpointsResponse is the response from the service endpoints API
-type serviceEndpointsResponse struct {
-	Value []serviceEndpoint `json:"value"`
+// BuildStatus is the current status/result of a single build.
+type BuildStatus struct {
+	Status string
+	Result string
+	URL    string
+}
+
+// Build is a build record with timing information.
+type Build struct {
+	BuildID   int
+	Status    string
+	Result    string
+	URL       string
+	QueueTime time.Time
+}
+
+// repoIDKey is the cache key for repository ID lookups.
+type repoIDKey struct {
+	org         string
+	teamProject string
+}
+
+// pipelineIDKey is the cache key for pipeline ID lookups.
+type pipelineIDKey struct {
+	org          string
+	teamProject  string
+	pipelinePath string
 }
