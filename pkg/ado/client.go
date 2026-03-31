@@ -190,6 +190,19 @@ func (c *Client) patch(ctx context.Context, reqURL string, payload interface{}) 
 	return body, err
 }
 
+// GetRaw performs a raw GET request to the given URL and returns the response body.
+// This is used by services that need to make API calls with fully-formed URLs.
+func (c *Client) GetRaw(ctx context.Context, url string) (string, error) {
+	body, _, err := c.get(ctx, url)
+	return body, err
+}
+
+// PutRaw performs a raw PUT request to the given URL with the given body.
+// This is used by services that need to make API calls with fully-formed URLs.
+func (c *Client) PutRaw(ctx context.Context, url string, payload interface{}) (string, error) {
+	return c.put(ctx, url, payload)
+}
+
 // deleteReq performs a DELETE (no retry).
 func (c *Client) deleteReq(ctx context.Context, reqURL string) (string, error) {
 	if err := c.applyRetryDelay(ctx); err != nil {

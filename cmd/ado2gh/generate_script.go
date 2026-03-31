@@ -131,7 +131,7 @@ func newGenerateScriptCmd(
 // Production command constructor
 // ---------------------------------------------------------------------------
 
-func newGenerateScriptCmdLive() *cobra.Command { //nolint:unused // will be wired into main.go
+func newGenerateScriptCmdLive() *cobra.Command {
 	// TODO: wire up real ADO client and inspector
 	return &cobra.Command{
 		Use:   "generate-script",
@@ -749,6 +749,6 @@ func wrap(script string) string {
 }
 
 // defaultWriteToFile writes content to a file (production implementation).
-func defaultWriteToFile(path, content string) error { //nolint:unused // used by newGenerateScriptCmdLive
+func defaultWriteToFile(path, content string) error { //nolint:unused // will be used when newGenerateScriptCmdLive is fully wired
 	return os.WriteFile(path, []byte(content), 0o600)
 }

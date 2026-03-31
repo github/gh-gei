@@ -1,9 +1,10 @@
 package main
 
 // wiring.go contains "live" constructors that wire real dependencies
-// for commands that don't have their own *CmdLive() function yet.
+// for shared commands (from internal/sharedcmd) into the ado2gh binary.
 
 import (
+	"strings"
 	"time"
 
 	"github.com/github/gh-gei/internal/sharedcmd"
@@ -15,9 +16,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const defaultGitHubAPIURL = "https://api.github.com"
+
 // resolveSimpleTargetPAT resolves a target PAT from a flag value or the GH_PAT env var.
-// This is the simple version used by commands that only need a target token
-// (as opposed to resolveTargetToken in migrate_repo.go which uses the migrateRepoEnvProvider interface).
 func resolveSimpleTargetPAT(flagValue string, envProv *env.Provider) string {
 	if flagValue != "" {
 		return flagValue
@@ -58,10 +59,10 @@ func newWaitForMigrationCmdLive() *cobra.Command {
 				github.WithVersion(version),
 			)
 
-			if err := validateMigrationID(migrationID); err != nil {
+			if err := sharedcmd.ValidateMigrationID(migrationID); err != nil {
 				return err
 			}
-			return runWaitForMigration(cmd.Context(), gh, log, migrationID, defaultPollInterval)
+			return sharedcmd.RunWaitForMigration(cmd.Context(), gh, log, migrationID, sharedcmd.DefaultPollInterval)
 		},
 	}
 
@@ -97,10 +98,10 @@ func newAbortMigrationCmdLive() *cobra.Command {
 				github.WithVersion(version),
 			)
 
-			if err := validateAbortMigrationID(migrationID); err != nil {
+			if err := sharedcmd.ValidateAbortMigrationID(migrationID); err != nil {
 				return err
 			}
-			return runAbortMigration(cmd.Context(), gh, log, migrationID)
+			return sharedcmd.RunAbortMigration(cmd.Context(), gh, log, migrationID)
 		},
 	}
 
@@ -144,12 +145,12 @@ func newDownloadLogsCmdLive() *cobra.Command {
 			dl := download.New(nil)
 			fc := filesystem.New()
 
-			opts := downloadLogsOptions{
+			opts := sharedcmd.DownloadLogsOptions{
 				MaxRetries: 10,
 				RetryDelay: 5 * time.Second,
 			}
 
-			return runDownloadLogs(cmd.Context(), gh, dl, fc, log, downloadLogsParams{
+			return sharedcmd.RunDownloadLogs(cmd.Context(), gh, dl, fc, log, sharedcmd.DownloadLogsParams{
 				MigrationID:     migrationID,
 				GithubTargetOrg: githubTargetOrg,
 				TargetRepo:      targetRepo,
@@ -206,7 +207,8 @@ func newGrantMigratorRoleCmdLive() *cobra.Command {
 			if err := sharedcmd.ValidateMigratorRoleArgs(githubOrg, actor, actorType, ghesAPIURL, targetAPIURL); err != nil {
 				return err
 			}
-			return runGrantMigratorRole(cmd.Context(), gh, log, githubOrg, actor, actorType)
+			actorType = strings.ToUpper(actorType)
+			return sharedcmd.RunGrantMigratorRole(cmd.Context(), gh, log, githubOrg, actor, actorType)
 		},
 	}
 
@@ -254,7 +256,8 @@ func newRevokeMigratorRoleCmdLive() *cobra.Command {
 			if err := sharedcmd.ValidateMigratorRoleArgs(githubOrg, actor, actorType, ghesAPIURL, targetAPIURL); err != nil {
 				return err
 			}
-			return runRevokeMigratorRole(cmd.Context(), gh, log, githubOrg, actor, actorType)
+			actorType = strings.ToUpper(actorType)
+			return sharedcmd.RunRevokeMigratorRole(cmd.Context(), gh, log, githubOrg, actor, actorType)
 		},
 	}
 
@@ -295,10 +298,10 @@ func newCreateTeamCmdLive() *cobra.Command {
 				github.WithVersion(version),
 			)
 
-			if err := validateCreateTeamArgs(githubOrg, teamName); err != nil {
+			if err := sharedcmd.ValidateCreateTeamArgs(githubOrg, teamName); err != nil {
 				return err
 			}
-			return runCreateTeam(cmd.Context(), gh, log, githubOrg, teamName, idpGroup)
+			return sharedcmd.RunCreateTeam(cmd.Context(), gh, log, githubOrg, teamName, idpGroup)
 		},
 	}
 
@@ -338,10 +341,10 @@ func newGenerateMannequinCSVCmdLive() *cobra.Command {
 				github.WithVersion(version),
 			)
 
-			if err := validateGenerateMannequinCSVArgs(githubTargetOrg); err != nil {
+			if err := sharedcmd.ValidateGenerateMannequinCSVArgs(githubTargetOrg); err != nil {
 				return err
 			}
-			return runGenerateMannequinCSV(cmd.Context(), gh, log, nil, githubTargetOrg, output, includeReclaimed)
+			return sharedcmd.RunGenerateMannequinCSV(cmd.Context(), gh, log, nil, githubTargetOrg, output, includeReclaimed)
 		},
 	}
 
@@ -388,10 +391,10 @@ func newReclaimMannequinCmdLive() *cobra.Command {
 
 			svc := mannequin.NewReclaimService(gh, log)
 
-			if err := validateReclaimMannequinArgs(githubTargetOrg, csv, mannequinUser, targetUser); err != nil {
+			if err := sharedcmd.ValidateReclaimMannequinArgs(githubTargetOrg, csv, mannequinUser, targetUser); err != nil {
 				return err
 			}
-			return runReclaimMannequin(cmd.Context(), svc, gh, log, nil, nil,
+			return sharedcmd.RunReclaimMannequin(cmd.Context(), svc, gh, log, nil, nil,
 				githubTargetOrg, csv, mannequinUser, mannequinID, targetUser, force, skipInvitation, noPrompt)
 		},
 	}

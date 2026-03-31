@@ -2,17 +2,14 @@ package main
 
 import (
 	"context"
-	"strings"
 
-	"github.com/github/gh-gei/internal/cmdutil"
+	"github.com/github/gh-gei/internal/sharedcmd"
 	"github.com/github/gh-gei/pkg/logger"
 	"github.com/spf13/cobra"
 )
 
 // migrationAborter is the consumer-defined interface for aborting migrations.
-type migrationAborter interface {
-	AbortMigration(ctx context.Context, id string) (bool, error)
-}
+type migrationAborter = sharedcmd.MigrationAborter
 
 // newAbortMigrationCmd creates the abort-migration cobra command.
 func newAbortMigrationCmd(gh migrationAborter, log *logger.Logger) *cobra.Command {
@@ -23,10 +20,10 @@ func newAbortMigrationCmd(gh migrationAborter, log *logger.Logger) *cobra.Comman
 		Short: "Aborts a repository migration that is queued or in progress",
 		Long:  "Aborts a repository migration that is queued or in progress.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := validateAbortMigrationID(migrationID); err != nil {
+			if err := sharedcmd.ValidateAbortMigrationID(migrationID); err != nil {
 				return err
 			}
-			return runAbortMigration(cmd.Context(), gh, log, migrationID)
+			return sharedcmd.RunAbortMigration(cmd.Context(), gh, log, migrationID)
 		},
 	}
 
@@ -38,26 +35,12 @@ func newAbortMigrationCmd(gh migrationAborter, log *logger.Logger) *cobra.Comman
 	return cmd
 }
 
+// validateAbortMigrationID delegates to sharedcmd for backward compat with tests.
 func validateAbortMigrationID(id string) error {
-	if strings.TrimSpace(id) == "" {
-		return cmdutil.NewUserError("--migration-id must be provided")
-	}
-	if !strings.HasPrefix(id, repoMigrationIDPrefix) {
-		return cmdutil.NewUserErrorf(
-			"Invalid migration ID: %s. Only repository migration IDs starting with RM_ are supported.", id)
-	}
-	return nil
+	return sharedcmd.ValidateAbortMigrationID(id)
 }
 
+// runAbortMigration delegates to sharedcmd for backward compat with tests.
 func runAbortMigration(ctx context.Context, gh migrationAborter, log *logger.Logger, migrationID string) error {
-	success, err := gh.AbortMigration(ctx, migrationID)
-	if err != nil {
-		return err
-	}
-	if !success {
-		log.Errorf("Failed to abort migration %s", migrationID)
-		return nil
-	}
-	log.Info("Migration %s was canceled", migrationID)
-	return nil
+	return sharedcmd.RunAbortMigration(ctx, gh, log, migrationID)
 }

@@ -912,6 +912,68 @@ func (c *Client) AddEmuGroupToTeam(ctx context.Context, org, teamSlug string, gr
 }
 
 // ---------------------------------------------------------------------------
+// AutoLink methods
+// ---------------------------------------------------------------------------
+
+// GetAutoLinks returns all autolink references for a repository.
+func (c *Client) GetAutoLinks(ctx context.Context, org, repo string) ([]AutoLink, error) {
+	u := fmt.Sprintf("repos/%s/%s/autolinks", url.PathEscape(org), url.PathEscape(repo))
+
+	req, err := c.rest.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create autolinks request: %w", err)
+	}
+
+	var autoLinks []AutoLink
+	_, err = c.rest.Do(ctx, req, &autoLinks)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get autolinks for %s/%s: %w", org, repo, err)
+	}
+
+	return autoLinks, nil
+}
+
+// AddAutoLink creates an autolink reference for a repository.
+func (c *Client) AddAutoLink(ctx context.Context, org, repo, keyPrefix, urlTemplate string) error {
+	u := fmt.Sprintf("repos/%s/%s/autolinks", url.PathEscape(org), url.PathEscape(repo))
+
+	payload := map[string]interface{}{
+		"key_prefix":      keyPrefix,
+		"url_template":    urlTemplate,
+		"is_alphanumeric": false,
+	}
+
+	req, err := c.rest.NewRequest("POST", u, payload)
+	if err != nil {
+		return fmt.Errorf("failed to create add autolink request: %w", err)
+	}
+
+	_, err = c.rest.Do(ctx, req, nil)
+	if err != nil {
+		return fmt.Errorf("failed to add autolink for %s/%s: %w", org, repo, err)
+	}
+
+	return nil
+}
+
+// DeleteAutoLink deletes an autolink reference from a repository.
+func (c *Client) DeleteAutoLink(ctx context.Context, org, repo string, autoLinkID int) error {
+	u := fmt.Sprintf("repos/%s/%s/autolinks/%d", url.PathEscape(org), url.PathEscape(repo), autoLinkID)
+
+	req, err := c.rest.NewRequest("DELETE", u, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create delete autolink request: %w", err)
+	}
+
+	_, err = c.rest.Do(ctx, req, nil)
+	if err != nil {
+		return fmt.Errorf("failed to delete autolink %d for %s/%s: %w", autoLinkID, org, repo, err)
+	}
+
+	return nil
+}
+
+// ---------------------------------------------------------------------------
 // Mannequin methods
 // ---------------------------------------------------------------------------
 

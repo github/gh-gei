@@ -2,22 +2,15 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
-	"strings"
 
-	"github.com/github/gh-gei/internal/cmdutil"
-	"github.com/github/gh-gei/pkg/github"
+	"github.com/github/gh-gei/internal/sharedcmd"
 	"github.com/github/gh-gei/pkg/logger"
-	"github.com/github/gh-gei/pkg/mannequin"
 	"github.com/spf13/cobra"
 )
 
 // mannequinCSVGenerator is the consumer-defined interface for generate-mannequin-csv.
-type mannequinCSVGenerator interface {
-	GetOrganizationId(ctx context.Context, org string) (string, error)
-	GetMannequins(ctx context.Context, orgID string) ([]github.Mannequin, error)
-}
+type mannequinCSVGenerator = sharedcmd.MannequinCSVGenerator
 
 // newGenerateMannequinCSVCmd creates the generate-mannequin-csv cobra command.
 func newGenerateMannequinCSVCmd(gh mannequinCSVGenerator, log *logger.Logger, writeFile func(path, content string) error) *cobra.Command {
@@ -38,10 +31,10 @@ func newGenerateMannequinCSVCmd(gh mannequinCSVGenerator, log *logger.Logger, wr
 		Short: "Generates a CSV file with mannequin users",
 		Long:  "Generates a CSV file with mannequin users for an organization.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := validateGenerateMannequinCSVArgs(githubTargetOrg); err != nil {
+			if err := sharedcmd.ValidateGenerateMannequinCSVArgs(githubTargetOrg); err != nil {
 				return err
 			}
-			return runGenerateMannequinCSV(cmd.Context(), gh, log, writeFile, githubTargetOrg, output, includeReclaimed)
+			return sharedcmd.RunGenerateMannequinCSV(cmd.Context(), gh, log, writeFile, githubTargetOrg, output, includeReclaimed)
 		},
 	}
 
@@ -54,53 +47,12 @@ func newGenerateMannequinCSVCmd(gh mannequinCSVGenerator, log *logger.Logger, wr
 	return cmd
 }
 
+// validateGenerateMannequinCSVArgs delegates to sharedcmd for backward compat with tests.
 func validateGenerateMannequinCSVArgs(githubTargetOrg string) error {
-	if strings.TrimSpace(githubTargetOrg) == "" {
-		return cmdutil.NewUserError("--github-target-org must be provided")
-	}
-	if strings.HasPrefix(githubTargetOrg, "http://") || strings.HasPrefix(githubTargetOrg, "https://") {
-		return cmdutil.NewUserError("The --github-target-org option expects an organization name, not a URL. Please provide just the organization name.")
-	}
-	return nil
+	return sharedcmd.ValidateGenerateMannequinCSVArgs(githubTargetOrg)
 }
 
+// runGenerateMannequinCSV delegates to sharedcmd for backward compat with tests.
 func runGenerateMannequinCSV(ctx context.Context, gh mannequinCSVGenerator, log *logger.Logger, writeFile func(path, content string) error, org, output string, includeReclaimed bool) error {
-	log.Info("Generating CSV...")
-
-	orgID, err := gh.GetOrganizationId(ctx, org)
-	if err != nil {
-		return err
-	}
-
-	mannequins, err := gh.GetMannequins(ctx, orgID)
-	if err != nil {
-		return err
-	}
-
-	reclaimedCount := 0
-	for _, m := range mannequins {
-		if m.MappedUser != nil {
-			reclaimedCount++
-		}
-	}
-
-	log.Info("    # Mannequins Found: %d", len(mannequins))
-	log.Info("    # Mannequins Previously Reclaimed: %d", reclaimedCount)
-
-	var sb strings.Builder
-	sb.WriteString(mannequin.CSVHeader)
-	sb.WriteString("\n")
-
-	for _, m := range mannequins {
-		if !includeReclaimed && m.MappedUser != nil {
-			continue
-		}
-		mappedLogin := ""
-		if m.MappedUser != nil {
-			mappedLogin = m.MappedUser.Login
-		}
-		fmt.Fprintf(&sb, "%s,%s,%s\n", m.Login, m.ID, mappedLogin)
-	}
-
-	return writeFile(output, sb.String())
+	return sharedcmd.RunGenerateMannequinCSV(ctx, gh, log, writeFile, org, output, includeReclaimed)
 }
