@@ -94,6 +94,10 @@ linters:
         text: "G402"
         linters:
           - gosec
+      # Cyclomatic complexity for migrate-repo: validation and orchestration are inherently branchy
+      - path: cmd/gei/migrate_repo\.go
+        linters:
+          - gocyclo
 
 output:
   formats:

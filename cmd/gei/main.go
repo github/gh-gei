@@ -56,6 +56,7 @@ func newRootCmd() *cobra.Command {
 
 	// Add commands
 	rootCmd.AddCommand(newGenerateScriptCmd())
+	rootCmd.AddCommand(newMigrateRepoCmdLive())
 
 	// Additional commands will be implemented in subsequent phases
 	// rootCmd.AddCommand(newMigrateRepoCmd())

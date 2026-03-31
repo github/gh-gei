@@ -1069,3 +1069,237 @@ func TestClient_ReclaimMannequinSkipInvitation(t *testing.T) {
 		assert.Contains(t, result.Errors[0].Message, "Target must be a member")
 	})
 }
+
+// ---------------------------------------------------------------------------
+// Group 8: Archive / migration methods (REST-based)
+// ---------------------------------------------------------------------------
+
+func TestClient_DoesRepoExist(t *testing.T) {
+	t.Run("repo exists", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Contains(t, r.URL.Path, "/repos/test-org/test-repo")
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, `{"name":"test-repo","full_name":"test-org/test-repo"}`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		exists, err := client.DoesRepoExist(context.Background(), "test-org", "test-repo")
+
+		require.NoError(t, err)
+		assert.True(t, exists)
+	})
+
+	t.Run("repo not found", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, `{"message":"Not Found"}`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		exists, err := client.DoesRepoExist(context.Background(), "test-org", "no-such-repo")
+
+		require.NoError(t, err)
+		assert.False(t, exists)
+	})
+
+	t.Run("repo moved (301)", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusMovedPermanently)
+			fmt.Fprint(w, `{"message":"Moved Permanently"}`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		exists, err := client.DoesRepoExist(context.Background(), "test-org", "renamed-repo")
+
+		require.NoError(t, err)
+		assert.False(t, exists)
+	})
+}
+
+func TestClient_StartGitArchiveGeneration(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "POST", r.Method)
+			assert.Contains(t, r.URL.Path, "/orgs/test-org/migrations")
+
+			body, _ := io.ReadAll(r.Body)
+			var req map[string]interface{}
+			require.NoError(t, json.Unmarshal(body, &req))
+
+			repos, ok := req["repositories"].([]interface{})
+			require.True(t, ok)
+			assert.Equal(t, "test-repo", repos[0])
+			assert.Equal(t, true, req["exclude_metadata"])
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			fmt.Fprint(w, `{"id": 42}`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		id, err := client.StartGitArchiveGeneration(context.Background(), "test-org", "test-repo")
+
+		require.NoError(t, err)
+		assert.Equal(t, 42, id)
+	})
+
+	t.Run("blob storage error", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			fmt.Fprint(w, `{"message":"Please configure blob storage","documentation_url":"https://docs.github.com"}`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		_, err := client.StartGitArchiveGeneration(context.Background(), "test-org", "test-repo")
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "configure blob storage")
+	})
+}
+
+func TestClient_StartMetadataArchiveGeneration(t *testing.T) {
+	t.Run("success with skip releases and lock source", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "POST", r.Method)
+			assert.Contains(t, r.URL.Path, "/orgs/test-org/migrations")
+
+			body, _ := io.ReadAll(r.Body)
+			var req map[string]interface{}
+			require.NoError(t, json.Unmarshal(body, &req))
+
+			repos, ok := req["repositories"].([]interface{})
+			require.True(t, ok)
+			assert.Equal(t, "test-repo", repos[0])
+			assert.Equal(t, true, req["exclude_git_data"])
+			assert.Equal(t, true, req["exclude_releases"])
+			assert.Equal(t, true, req["lock_repositories"])
+			assert.Equal(t, true, req["exclude_owner_projects"])
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			fmt.Fprint(w, `{"id": 99}`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		id, err := client.StartMetadataArchiveGeneration(context.Background(), "test-org", "test-repo", true, true)
+
+		require.NoError(t, err)
+		assert.Equal(t, 99, id)
+	})
+
+	t.Run("success without skip releases or lock source", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			body, _ := io.ReadAll(r.Body)
+			var req map[string]interface{}
+			require.NoError(t, json.Unmarshal(body, &req))
+
+			assert.Equal(t, false, req["exclude_releases"])
+			assert.Equal(t, false, req["lock_repositories"])
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			fmt.Fprint(w, `{"id": 100}`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		id, err := client.StartMetadataArchiveGeneration(context.Background(), "test-org", "test-repo", false, false)
+
+		require.NoError(t, err)
+		assert.Equal(t, 100, id)
+	})
+}
+
+func TestClient_GetArchiveMigrationStatus(t *testing.T) {
+	t.Run("exported", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "GET", r.Method)
+			assert.Contains(t, r.URL.Path, "/orgs/test-org/migrations/42")
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, `{"id": 42, "state": "exported"}`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		status, err := client.GetArchiveMigrationStatus(context.Background(), "test-org", 42)
+
+		require.NoError(t, err)
+		assert.Equal(t, "exported", status)
+	})
+
+	t.Run("pending", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, `{"id": 42, "state": "pending"}`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		status, err := client.GetArchiveMigrationStatus(context.Background(), "test-org", 42)
+
+		require.NoError(t, err)
+		assert.Equal(t, "pending", status)
+	})
+
+	t.Run("failed", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, `{"id": 42, "state": "failed"}`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		status, err := client.GetArchiveMigrationStatus(context.Background(), "test-org", 42)
+
+		require.NoError(t, err)
+		assert.Equal(t, "failed", status)
+	})
+}
+
+func TestClient_GetArchiveMigrationUrl(t *testing.T) {
+	t.Run("success - captures redirect URL", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "GET", r.Method)
+			assert.Contains(t, r.URL.Path, "/orgs/test-org/migrations/42/archive")
+			assert.Equal(t, "Bearer test-pat", r.Header.Get("Authorization"))
+
+			w.Header().Set("Location", "https://storage.example.com/archive.tar.gz")
+			w.WriteHeader(http.StatusFound) // 302
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		archiveURL, err := client.GetArchiveMigrationUrl(context.Background(), "test-org", 42)
+
+		require.NoError(t, err)
+		assert.Equal(t, "https://storage.example.com/archive.tar.gz", archiveURL)
+	})
+
+	t.Run("error when no redirect", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, `{"message":"Not Found"}`)
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		_, err := client.GetArchiveMigrationUrl(context.Background(), "test-org", 42)
+
+		require.Error(t, err)
+	})
+}

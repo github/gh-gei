@@ -25,6 +25,7 @@ type Client struct {
 	graphql *graphqlClient   // custom for migration GraphQL
 	logger  *logger.Logger
 	apiURL  string
+	token   string // PAT, needed for raw HTTP requests (e.g. no-redirect archive URL fetch)
 }
 
 // Option configures a Client.
@@ -106,6 +107,7 @@ func NewClient(pat string, opts ...Option) *Client {
 		graphql: gql,
 		logger:  cfg.logger,
 		apiURL:  cfg.apiURL,
+		token:   pat,
 	}
 }
 
@@ -1018,6 +1020,137 @@ func (c *Client) CreateAttributionInvitation(ctx context.Context, orgID, sourceI
 		return nil, fmt.Errorf("failed to unmarshal attribution invitation response: %w", err)
 	}
 	return &result, nil
+}
+
+// ---------------------------------------------------------------------------
+// Archive / migration methods (REST-based, for GHES archive flows)
+// ---------------------------------------------------------------------------
+
+// DoesRepoExist checks whether a repository exists (REST GET /repos/{org}/{repo}).
+// Returns false when the API returns 404 or 301 (moved/renamed).
+func (c *Client) DoesRepoExist(ctx context.Context, org, repo string) (bool, error) {
+	_, resp, err := c.rest.Repositories.Get(ctx, org, repo)
+	if err != nil {
+		if resp != nil && (resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusMovedPermanently) {
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to check if repo %s/%s exists: %w", org, repo, err)
+	}
+	return true, nil
+}
+
+// StartGitArchiveGeneration starts a git-only archive generation for a repo.
+// POST /orgs/{org}/migrations with exclude_metadata=true.
+// Returns the migration ID.
+func (c *Client) StartGitArchiveGeneration(ctx context.Context, org, repo string) (int, error) {
+	payload := map[string]interface{}{
+		"repositories":     []string{repo},
+		"exclude_metadata": true,
+	}
+
+	u := fmt.Sprintf("orgs/%s/migrations", org)
+	req, err := c.rest.NewRequest("POST", u, payload)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create git archive request: %w", err)
+	}
+
+	var result struct {
+		ID int `json:"id"`
+	}
+	resp, err := c.rest.Do(ctx, req, &result)
+	if err != nil {
+		if resp != nil && resp.StatusCode == http.StatusUnprocessableEntity {
+			return 0, fmt.Errorf("failed to start git archive generation: please configure blob storage: %w", err)
+		}
+		return 0, fmt.Errorf("failed to start git archive generation for %s/%s: %w", org, repo, err)
+	}
+
+	return result.ID, nil
+}
+
+// StartMetadataArchiveGeneration starts a metadata-only archive generation for a repo.
+// POST /orgs/{org}/migrations with exclude_git_data=true.
+// Returns the migration ID.
+func (c *Client) StartMetadataArchiveGeneration(ctx context.Context, org, repo string, skipReleases, lockSource bool) (int, error) {
+	payload := map[string]interface{}{
+		"repositories":           []string{repo},
+		"exclude_git_data":       true,
+		"exclude_releases":       skipReleases,
+		"lock_repositories":      lockSource,
+		"exclude_owner_projects": true,
+	}
+
+	u := fmt.Sprintf("orgs/%s/migrations", org)
+	req, err := c.rest.NewRequest("POST", u, payload)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create metadata archive request: %w", err)
+	}
+
+	var result struct {
+		ID int `json:"id"`
+	}
+	_, err = c.rest.Do(ctx, req, &result)
+	if err != nil {
+		return 0, fmt.Errorf("failed to start metadata archive generation for %s/%s: %w", org, repo, err)
+	}
+
+	return result.ID, nil
+}
+
+// GetArchiveMigrationStatus returns the state of an org migration (archive generation).
+// GET /orgs/{org}/migrations/{id}
+func (c *Client) GetArchiveMigrationStatus(ctx context.Context, org string, archiveID int) (string, error) {
+	u := fmt.Sprintf("orgs/%s/migrations/%d", org, archiveID)
+	req, err := c.rest.NewRequest("GET", u, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create archive migration status request: %w", err)
+	}
+
+	var result struct {
+		State string `json:"state"`
+	}
+	_, err = c.rest.Do(ctx, req, &result)
+	if err != nil {
+		return "", fmt.Errorf("failed to get archive migration status for %s/%d: %w", org, archiveID, err)
+	}
+
+	return result.State, nil
+}
+
+// GetArchiveMigrationUrl returns the archive download URL for a completed migration.
+// GET /orgs/{org}/migrations/{id}/archive returns a 302 redirect.
+// We capture the Location header without following the redirect.
+func (c *Client) GetArchiveMigrationUrl(ctx context.Context, org string, archiveID int) (string, error) {
+	archiveURL := fmt.Sprintf("%s/orgs/%s/migrations/%d/archive", c.apiURL, org, archiveID)
+
+	// Build a no-redirect HTTP client to capture the Location header
+	noRedirectClient := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", archiveURL, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create archive URL request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.token)
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := noRedirectClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to get archive migration URL for %s/%d: %w", org, archiveID, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusFound || resp.StatusCode == http.StatusMovedPermanently {
+		location := resp.Header.Get("Location")
+		if location != "" {
+			return location, nil
+		}
+	}
+
+	return "", fmt.Errorf("expected redirect for archive migration URL, got status %d", resp.StatusCode)
 }
 
 // ReclaimMannequinSkipInvitation reclaims a mannequin, skipping the email invitation.
