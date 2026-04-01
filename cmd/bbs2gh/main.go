@@ -54,7 +54,7 @@ func newRootCmd() *cobra.Command {
 
 	// Add commands (will be implemented in phases)
 	rootCmd.AddCommand(newMigrateRepoCmdLive())
-	// rootCmd.AddCommand(newGenerateScriptCmd())
+	rootCmd.AddCommand(newGenerateScriptCmdLive())
 	// rootCmd.AddCommand(newInventoryReportCmd())
 	// rootCmd.AddCommand(newMigrateCodeScanningAlertsCmd())
 	// Shared commands from gei
