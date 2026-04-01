@@ -23,6 +23,10 @@ namespace OctoshiftCLI.IntegrationTests
             StartTime = DateTime.Now;
             _output = output;
 
+            TestHelper.AssertCredentialsPresent(
+                (adoPatEnvVar, "Azure DevOps personal access token"),
+                ("GHEC_PAT", "GitHub Enterprise Cloud personal access token"));
+
             var logger = new OctoLogger(x => { }, x => _output.WriteLine(x), x => { }, x => { });
 
             _versionClient = new HttpClient();
