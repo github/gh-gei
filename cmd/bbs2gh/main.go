@@ -52,20 +52,20 @@ func newRootCmd() *cobra.Command {
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose logging")
 	rootCmd.Version = version
 
-	// Add commands (will be implemented in phases)
+	// Add commands
 	rootCmd.AddCommand(newMigrateRepoCmdLive())
 	rootCmd.AddCommand(newGenerateScriptCmdLive())
-	// rootCmd.AddCommand(newInventoryReportCmd())
-	// rootCmd.AddCommand(newMigrateCodeScanningAlertsCmd())
-	// Shared commands from gei
-	// rootCmd.AddCommand(newWaitForMigrationCmd())
-	// rootCmd.AddCommand(newAbortMigrationCmd())
-	// rootCmd.AddCommand(newDownloadLogsCmd())
-	// rootCmd.AddCommand(newGenerateMannequinCSVCmd())
-	// rootCmd.AddCommand(newReclaimMannequinCmd())
-	// rootCmd.AddCommand(newGrantMigratorRoleCmd())
-	// rootCmd.AddCommand(newRevokeMigratorRoleCmd())
-	// rootCmd.AddCommand(newCreateTeamCmd())
+	rootCmd.AddCommand(newInventoryReportCmdLive())
+
+	// Shared commands
+	rootCmd.AddCommand(newWaitForMigrationCmdLive())
+	rootCmd.AddCommand(newAbortMigrationCmdLive())
+	rootCmd.AddCommand(newDownloadLogsCmdLive())
+	rootCmd.AddCommand(newGenerateMannequinCSVCmdLive())
+	rootCmd.AddCommand(newReclaimMannequinCmdLive())
+	rootCmd.AddCommand(newGrantMigratorRoleCmdLive())
+	rootCmd.AddCommand(newRevokeMigratorRoleCmdLive())
+	rootCmd.AddCommand(newCreateTeamCmdLive())
 
 	return rootCmd
 }
