@@ -167,7 +167,7 @@ go-lint:
 
 # Build Go binaries for Linux
 go-publish-linux:
-    mkdir -p dist/linux-x64
+    mkdir -p dist/linux-x64 dist/linux-arm64
     GOOS=linux GOARCH=amd64 go build -o dist/linux-x64/gei-linux-amd64 ./cmd/gei
     GOOS=linux GOARCH=amd64 go build -o dist/linux-x64/ado2gh-linux-amd64 ./cmd/ado2gh
     GOOS=linux GOARCH=amd64 go build -o dist/linux-x64/bbs2gh-linux-amd64 ./cmd/bbs2gh
@@ -187,10 +187,13 @@ go-publish-windows:
 
 # Build Go binaries for macOS
 go-publish-macos:
-    mkdir -p dist/osx-x64
+    mkdir -p dist/osx-x64 dist/osx-arm64
     GOOS=darwin GOARCH=amd64 go build -o dist/osx-x64/gei-darwin-amd64 ./cmd/gei
     GOOS=darwin GOARCH=amd64 go build -o dist/osx-x64/ado2gh-darwin-amd64 ./cmd/ado2gh
     GOOS=darwin GOARCH=amd64 go build -o dist/osx-x64/bbs2gh-darwin-amd64 ./cmd/bbs2gh
+    GOOS=darwin GOARCH=arm64 go build -o dist/osx-arm64/gei-darwin-arm64 ./cmd/gei
+    GOOS=darwin GOARCH=arm64 go build -o dist/osx-arm64/ado2gh-darwin-arm64 ./cmd/ado2gh
+    GOOS=darwin GOARCH=arm64 go build -o dist/osx-arm64/bbs2gh-darwin-arm64 ./cmd/bbs2gh
 
 # Build Go binaries for all platforms
 go-publish-all: go-publish-linux go-publish-windows go-publish-macos
@@ -199,12 +202,22 @@ go-publish-all: go-publish-linux go-publish-windows go-publish-macos
 go-install-extensions-macos: go-publish-macos
     #!/usr/bin/env bash
     set -euo pipefail
+    arch=$(uname -m)
+    if [ "$arch" = "arm64" ]; then
+        dist_dir="osx-arm64"
+        suffix="darwin-arm64"
+    else
+        dist_dir="osx-x64"
+        suffix="darwin-amd64"
+    fi
     for cli in gei ado2gh bbs2gh; do
         dir="gh-${cli}"
         mkdir -p "$dir"
-        cp "./dist/osx-x64/${cli}-darwin-amd64" "./${dir}/gh-${cli}"
+        cp "./dist/${dist_dir}/${cli}-${suffix}" "./${dir}/gh-${cli}"
         chmod +x "./${dir}/gh-${cli}"
-        cd "$dir" && gh extension install . --force && cd ..
+        pushd "$dir" > /dev/null
+        gh extension install . --force || true
+        popd > /dev/null
     done
     echo "Go extensions installed successfully!"
 
