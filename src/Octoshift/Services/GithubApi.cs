@@ -957,7 +957,6 @@ public class GithubApi
         try
         {
             return await _client.GetAllAsync(url)
-                .Where(x => string.IsNullOrEmpty((string)x["error"]))
                 .Select(BuildCodeScanningAnalysis)
                 .ToListAsync();
         }
@@ -1238,6 +1237,7 @@ public class GithubApi
             CommitSha = (string)codescan["commit_sha"],
             Ref = (string)codescan["ref"],
             CreatedAt = (string)codescan["created_at"],
+            Error = (string)codescan["error"],
         };
 
     private static CodeScanningAlert BuildCodeScanningAlert(JToken scanningAlert) =>

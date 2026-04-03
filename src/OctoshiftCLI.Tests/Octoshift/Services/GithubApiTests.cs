@@ -3069,7 +3069,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
     }
 
     [Fact]
-    public async Task GetCodeScanningAnalysisForRepository_Excludes_Analyses_With_Error()
+    public async Task GetCodeScanningAnalysisForRepository_Includes_Analyses_With_Error()
     {
         // Arrange
         const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses?per_page=100&sort=created&direction=asc";
@@ -3104,8 +3104,11 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         var scanResults = await _githubApi.GetCodeScanningAnalysisForRepository(GITHUB_ORG, GITHUB_REPO);
 
         // Assert
-        scanResults.Count().Should().Be(1);
+        scanResults.Count().Should().Be(2);
         scanResults.First().Id.Should().Be(38200197);
+        scanResults.First().Error.Should().BeEmpty();
+        scanResults.Last().Id.Should().Be(38026365);
+        scanResults.Last().Error.Should().Be("something went wrong");
     }
 
     [Fact]
