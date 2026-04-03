@@ -347,7 +347,8 @@ public class CodeScanningAlertServiceTests
 
         await _alertService.MigrateAnalyses(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, "main", false);
 
-        _mockOctoLogger.Verify(log => log.LogWarning($"Skipping analysis {errorAnalysis.Id} due to error: something went wrong"));
+        _mockOctoLogger.Verify(log => log.LogWarning($"Skipping analysis with Id {errorAnalysis.Id} which failed to process in the source repository: something went wrong"));
+        _mockOctoLogger.Verify(log => log.LogWarning("	This error is non-fatal and will not affect your migrated code-scanning alerts."));
         _mockSourceGithubApi.Verify(x => x.GetSarifReport(SOURCE_ORG, SOURCE_REPO, errorAnalysis.Id), Times.Never);
         _mockTargetGithubApi.Verify(x => x.UploadSarifReport(TARGET_ORG, TARGET_REPO, "SARIF", validAnalysis.CommitSha, validAnalysis.Ref), Times.Once);
     }
