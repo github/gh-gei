@@ -1237,6 +1237,7 @@ public class GithubApi
             CommitSha = (string)codescan["commit_sha"],
             Ref = (string)codescan["ref"],
             CreatedAt = (string)codescan["created_at"],
+            Error = (string)codescan["error"],
         };
 
     private static CodeScanningAlert BuildCodeScanningAlert(JToken scanningAlert) =>
