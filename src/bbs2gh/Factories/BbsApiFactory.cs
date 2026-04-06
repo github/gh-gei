@@ -28,7 +28,8 @@ public class BbsApiFactory
 
         var httpClient = noSsl ? _clientFactory.CreateClient("NoSSL") : _clientFactory.CreateClient("Default");
 
-        var bbsClient = new BbsClient(_octoLogger, httpClient, _versionProvider, _retryPolicy, bbsUsername, bbsPassword);
+        var clientRetryPolicy = (_retryPolicy ?? new RetryPolicy(_octoLogger)).WithServiceName("Bitbucket Server");
+        var bbsClient = new BbsClient(_octoLogger, httpClient, _versionProvider, clientRetryPolicy, bbsUsername, bbsPassword);
         return new BbsApi(bbsClient, bbsServerUrl, _octoLogger);
     }
 
@@ -36,7 +37,8 @@ public class BbsApiFactory
     {
         var httpClient = noSsl ? _clientFactory.CreateClient("KerberosNoSSL") : _clientFactory.CreateClient("Kerberos");
 
-        var bbsClient = new BbsClient(_octoLogger, httpClient, _versionProvider, _retryPolicy);
+        var clientRetryPolicy = (_retryPolicy ?? new RetryPolicy(_octoLogger)).WithServiceName("Bitbucket Server");
+        var bbsClient = new BbsClient(_octoLogger, httpClient, _versionProvider, clientRetryPolicy);
         return new BbsApi(bbsClient, bbsServerUrl, _octoLogger);
     }
 }

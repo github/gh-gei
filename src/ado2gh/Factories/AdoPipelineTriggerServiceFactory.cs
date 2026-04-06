@@ -27,7 +27,8 @@ public class AdoPipelineTriggerServiceFactory
     {
         adoServerUrl ??= DEFAULT_API_URL;
         personalAccessToken ??= _environmentVariableProvider.AdoPersonalAccessToken();
-        var adoClient = new AdoClient(_octoLogger, _client, _versionProvider, _retryPolicy, personalAccessToken);
+        var clientRetryPolicy = (_retryPolicy ?? new RetryPolicy(_octoLogger)).WithServiceName("Azure DevOps");
+        var adoClient = new AdoClient(_octoLogger, _client, _versionProvider, clientRetryPolicy, personalAccessToken);
         var adoApi = new AdoApi(adoClient, adoServerUrl, _octoLogger);
         return new AdoPipelineTriggerService(adoApi, _octoLogger, adoServerUrl);
     }
