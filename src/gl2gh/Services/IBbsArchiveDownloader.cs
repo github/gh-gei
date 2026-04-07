@@ -1,0 +1,20 @@
+using System.IO;
+using System.Threading.Tasks;
+using OctoshiftCLI.Extensions;
+
+namespace OctoshiftCLI.GitlabToGithub.Services;
+
+public interface IGitlabArchiveDownloader
+{
+    const string EXPORT_ARCHIVE_SOURCE_DIRECTORY = "data/migration/export";
+    const string DEFAULT_TARGET_DIRECTORY = "bbs_archive_downloads";
+
+    Task<string> Download(long exportJobId, string targetDirectory = DEFAULT_TARGET_DIRECTORY);
+
+    static string GetSourceExportArchiveAbsolutePath(string bbsSharedHomeDirectory, long exportJobId) =>
+        Path.Join(bbsSharedHomeDirectory, GetSourceExportArchiveRelativePath(exportJobId)).ToUnixPath();
+
+    static string GetExportArchiveFileName(long exportJobId) => $"Bitbucket_export_{exportJobId}.tar";
+
+    static string GetSourceExportArchiveRelativePath(long exportJobId) => Path.Join(EXPORT_ARCHIVE_SOURCE_DIRECTORY, GetExportArchiveFileName(exportJobId)).ToUnixPath();
+}

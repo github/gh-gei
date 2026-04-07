@@ -346,6 +346,30 @@ public class GithubApi
         return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
     }
 
+    public virtual async Task<string> CreateGitlabMigrationSource(string orgId)
+    {
+        var url = $"{_apiUrl}/graphql";
+
+        var query = "mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $type: MigrationSourceType!)";
+        var gql = "createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, type: $type}) { migrationSource { id, name, url, type } }";
+
+        var payload = new
+        {
+            query = $"{query} {{ {gql} }}",
+            variables = new
+            {
+                name = "GitLab Source",
+                url = "https://not-used",
+                ownerId = orgId,
+                type = "GITLAB_ARCHIVE"
+            },
+            operationName = "createMigrationSource"
+        };
+
+        var data = await _client.PostGraphQLAsync(url, payload);
+        return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
+    }
+
     public virtual async Task<string> CreateGhecMigrationSource(string orgId)
     {
         var url = $"{_apiUrl}/graphql";
@@ -522,6 +546,23 @@ public class GithubApi
         return await StartMigration(
             migrationSourceId,
             bbsRepoUrl,  // source repository URL
+            orgId,
+            repo,
+            "not-used",  // source access token
+            targetToken,
+            archiveUrl,
+            "https://not-used",  // metadata archive URL
+            false,  // skip releases
+            targetRepoVisibility,
+            false  // lock source
+        );
+    }
+
+    public virtual async Task<string> StartGitlabMigration(string migrationSourceId, string gitlabRepoUrl, string orgId, string repo, string targetToken, string archiveUrl, string targetRepoVisibility = null)
+    {
+        return await StartMigration(
+            migrationSourceId,
+            gitlabRepoUrl,  // source repository URL
             orgId,
             repo,
             "not-used",  // source access token

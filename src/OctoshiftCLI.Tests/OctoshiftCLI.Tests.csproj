@@ -32,4 +32,8 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\gl2gh\gl2gh.csproj" />
+  </ItemGroup>
+
 </Project>
