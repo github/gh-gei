@@ -51,4 +51,18 @@ public class GhesVersionCheckerTests
         var result = await _service.AreBlobCredentialsRequired("");
         result.Should().Be(false);
     }
+
+    [Fact]
+    public async Task Ghe_Com_Host_Returns_False()
+    {
+        var result = await _service.AreBlobCredentialsRequired("https://github.mycompany.ghe.com/api/v3");
+        result.Should().Be(false);
+    }
+
+    [Fact]
+    public async Task Ghe_Com_Host_Does_Not_Call_GetEnterpriseServerVersion()
+    {
+        await _service.AreBlobCredentialsRequired("https://github.mycompany.ghe.com/api/v3");
+        _mockGithubApi.Verify(m => m.GetEnterpriseServerVersion(), Times.Never);
+    }
 }

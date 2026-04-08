@@ -1,0 +1,1 @@
+- Skip the source GHES version check when the source host ends in `ghe.com`
