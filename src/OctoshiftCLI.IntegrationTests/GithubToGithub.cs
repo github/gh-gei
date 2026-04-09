@@ -26,6 +26,9 @@ namespace OctoshiftCLI.IntegrationTests
             _startTime = DateTime.Now;
             _output = output;
 
+            TestHelper.AssertCredentialsPresent(
+                ("GHEC_PAT", "GitHub Enterprise Cloud personal access token"));
+
             var logger = new OctoLogger(x => { }, x => _output.WriteLine(x), x => { }, x => { });
 
             var githubToken = Environment.GetEnvironmentVariable("GHEC_PAT");
@@ -33,8 +36,8 @@ namespace OctoshiftCLI.IntegrationTests
 
             _githubHttpClient = new HttpClient();
             _versionClient = new HttpClient();
-            _githubClient = new GithubClient(logger, _githubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger), new DateTimeProvider(), githubToken);
-            _githubApi = new GithubApi(_githubClient, "https://api.github.com", new RetryPolicy(logger), null);
+            _githubClient = new GithubClient(logger, _githubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger, "GitHub (GHEC_PAT)"), new DateTimeProvider(), githubToken);
+            _githubApi = new GithubApi(_githubClient, "https://api.github.com", new RetryPolicy(logger, "GitHub (GHEC_PAT)"), null);
 
             _helper = new TestHelper(_output, _githubApi, _githubClient);
         }

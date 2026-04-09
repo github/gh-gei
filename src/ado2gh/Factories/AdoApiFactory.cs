@@ -27,7 +27,8 @@ public class AdoApiFactory
     {
         adoServerUrl ??= DEFAULT_API_URL;
         personalAccessToken ??= _environmentVariableProvider.AdoPersonalAccessToken();
-        var adoClient = new AdoClient(_octoLogger, _client, _versionProvider, _retryPolicy, personalAccessToken);
+        var clientRetryPolicy = (_retryPolicy ?? new RetryPolicy(_octoLogger)).WithServiceName("Azure DevOps");
+        var adoClient = new AdoClient(_octoLogger, _client, _versionProvider, clientRetryPolicy, personalAccessToken);
         return new AdoApi(adoClient, adoServerUrl, _octoLogger);
     }
 
