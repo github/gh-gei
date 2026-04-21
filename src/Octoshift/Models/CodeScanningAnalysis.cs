@@ -6,5 +6,6 @@ namespace Octoshift.Models
         public string CommitSha { get; set; }
         public string CreatedAt { get; set; }
         public int Id { get; set; }
+        public string Error { get; set; }
     }
 }

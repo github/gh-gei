@@ -39,12 +39,19 @@ public sealed class BbsToGithub : IDisposable
         _startTime = DateTime.Now;
         _output = output;
 
+        var azureStorageEnvVar = $"AZURE_STORAGE_CONNECTION_STRING_BBS_{TestHelper.GetOsName().ToUpperInvariant()}";
+        TestHelper.AssertCredentialsPresent(
+            ("BBS_USERNAME", "Bitbucket Server username"),
+            ("BBS_PASSWORD", "Bitbucket Server password"),
+            ("GHEC_PAT", "GitHub Enterprise Cloud personal access token"),
+            (azureStorageEnvVar, "Azure blob storage connection string for BBS migration archives"));
+
         _logger = new OctoLogger(_ => { }, x => _output.WriteLine(x), _ => { }, _ => { });
 
         var sourceBbsUsername = Environment.GetEnvironmentVariable("BBS_USERNAME");
         var sourceBbsPassword = Environment.GetEnvironmentVariable("BBS_PASSWORD");
         var targetGithubToken = Environment.GetEnvironmentVariable("GHEC_PAT");
-        _azureStorageConnectionString = Environment.GetEnvironmentVariable($"AZURE_STORAGE_CONNECTION_STRING_BBS_{TestHelper.GetOsName().ToUpper()}");
+        _azureStorageConnectionString = Environment.GetEnvironmentVariable(azureStorageEnvVar);
         _tokens = new Dictionary<string, string>
         {
             ["BBS_USERNAME"] = sourceBbsUsername,
@@ -55,14 +62,14 @@ public sealed class BbsToGithub : IDisposable
         _versionClient = new HttpClient();
 
         _sourceBbsHttpClient = new HttpClient();
-        _sourceBbsClient = new BbsClient(_logger, _sourceBbsHttpClient, new VersionChecker(_versionClient, _logger), new RetryPolicy(_logger), sourceBbsUsername, sourceBbsPassword);
+        _sourceBbsClient = new BbsClient(_logger, _sourceBbsHttpClient, new VersionChecker(_versionClient, _logger), new RetryPolicy(_logger, "Bitbucket Server (BBS_USERNAME/BBS_PASSWORD)"), sourceBbsUsername, sourceBbsPassword);
 
         _targetGithubHttpClient = new HttpClient();
-        _targetGithubClient = new GithubClient(_logger, _targetGithubHttpClient, new VersionChecker(_versionClient, _logger), new RetryPolicy(_logger), new DateTimeProvider(), targetGithubToken);
-        var retryPolicy = new RetryPolicy(_logger);
+        _targetGithubClient = new GithubClient(_logger, _targetGithubHttpClient, new VersionChecker(_versionClient, _logger), new RetryPolicy(_logger, "GitHub (GHEC_PAT)"), new DateTimeProvider(), targetGithubToken);
+        var retryPolicy = new RetryPolicy(_logger, "GitHub (GHEC_PAT)");
         var environmentVariableProvider = new EnvironmentVariableProvider(_logger);
         _archiveUploader = new ArchiveUploader(_targetGithubClient, UPLOADS_URL, _logger, retryPolicy, environmentVariableProvider);
-        _targetGithubApi = new GithubApi(_targetGithubClient, "https://api.github.com", new RetryPolicy(_logger), _archiveUploader);
+        _targetGithubApi = new GithubApi(_targetGithubClient, "https://api.github.com", new RetryPolicy(_logger, "GitHub (GHEC_PAT)"), _archiveUploader);
 
         _blobServiceClient = new BlobServiceClient(_azureStorageConnectionString);
 

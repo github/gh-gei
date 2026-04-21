@@ -1282,7 +1282,7 @@ public class GithubApiTests
             }}");
 
         _githubClientMock
-            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+            .Setup(m => m.PostGraphQLWithRetryAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null, 0))
             .ReturnsAsync(response);
 
         // Act
@@ -1341,7 +1341,7 @@ public class GithubApiTests
             }}");
 
         _githubClientMock
-            .SetupSequence(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+            .SetupSequence(m => m.PostGraphQLWithRetryAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null, 0))
             .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
             .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
             .ReturnsAsync(response);
@@ -1399,7 +1399,7 @@ public class GithubApiTests
             }}");
 
         _githubClientMock
-            .SetupSequence(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+            .SetupSequence(m => m.PostGraphQLWithRetryAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null, 0))
             .ReturnsAsync(GQL_ERROR_RESPONSE)
             .ReturnsAsync(GQL_ERROR_RESPONSE)
             .ReturnsAsync(response);
@@ -1457,7 +1457,7 @@ public class GithubApiTests
             }}");
 
         _githubClientMock
-            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+            .Setup(m => m.PostGraphQLWithRetryAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null, 0))
             .ReturnsAsync(response);
 
         // Act
@@ -3066,6 +3066,49 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         scanResults.ElementAt(2).Ref.Should().Be((string)expectedData["ref"]);
         scanResults.ElementAt(2).CommitSha.Should().Be((string)expectedData["commit_sha"]);
         scanResults.ElementAt(2).CreatedAt.Should().Be((string)expectedData["created_at"]);
+    }
+
+    [Fact]
+    public async Task GetCodeScanningAnalysisForRepository_Includes_Analyses_With_Error()
+    {
+        // Arrange
+        const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses?per_page=100&sort=created&direction=asc";
+
+        var validAnalysis = $@"
+                {{
+                    ""ref"": ""refs/heads/main"",
+                    ""commit_sha"": ""25cb837876685f98756d0c934ffe6cd09da570f8"",
+                    ""created_at"": ""2022-08-08T19:00:18Z"",
+                    ""id"": 38200197,
+                    ""error"": """"
+                }}
+            ";
+
+        var errorAnalysis = $@"
+                {{
+                    ""ref"": ""refs/heads/main"",
+                    ""commit_sha"": ""67f8626e1f3ca40e9678e1dcfc4f840009ffc260"",
+                    ""created_at"": ""2022-08-06T19:40:39Z"",
+                    ""id"": 38026365,
+                    ""error"": ""something went wrong""
+                }}
+            ";
+
+        var analyses = new List<JToken> { JToken.Parse(validAnalysis), JToken.Parse(errorAnalysis) };
+
+        _githubClientMock
+            .Setup(m => m.GetAllAsync(url, null))
+            .Returns(analyses.ToAsyncEnumerable());
+
+        // Act
+        var scanResults = await _githubApi.GetCodeScanningAnalysisForRepository(GITHUB_ORG, GITHUB_REPO);
+
+        // Assert
+        scanResults.Count().Should().Be(2);
+        scanResults.First().Id.Should().Be(38200197);
+        scanResults.First().Error.Should().BeEmpty();
+        scanResults.Last().Id.Should().Be(38026365);
+        scanResults.Last().Error.Should().Be("something went wrong");
     }
 
     [Fact]
