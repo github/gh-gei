@@ -55,7 +55,7 @@ public class AbortMigrationCommandBase : CommandBase<AbortMigrationCommandArgs, 
         }
 
         var log = sp.GetRequiredService<OctoLogger>();
-        var githubApi = sp.GetRequiredService<ITargetGithubApiFactory>().Create(args.TargetApiUrl, args.GithubPat);
+        var githubApi = sp.GetRequiredService<ITargetGithubApiFactory>().Create(args.TargetApiUrl, null, args.GithubPat);
 
         return new AbortMigrationCommandHandler(log, githubApi);
     }
