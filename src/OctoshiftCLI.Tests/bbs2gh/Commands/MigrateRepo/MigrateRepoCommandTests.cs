@@ -90,7 +90,7 @@ public class MigrateRepoCommandTests
         TestHelpers.VerifyCommandOption(command.Options, "keep-archive", false);
         TestHelpers.VerifyCommandOption(command.Options, "no-ssl-verify", false);
         TestHelpers.VerifyCommandOption(command.Options, "target-api-url", false);
-        TestHelpers.VerifyCommandOption(command.Options, "target-uploads-url", false, true);
+        TestHelpers.VerifyCommandOption(command.Options, "target-uploads-url", false);
         TestHelpers.VerifyCommandOption(command.Options, "use-github-storage", false, true);
     }
 

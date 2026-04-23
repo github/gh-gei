@@ -46,7 +46,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateOrg
             TestHelpers.VerifyCommandOption(command.Options, "github-target-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
             TestHelpers.VerifyCommandOption(command.Options, "target-api-url", false);
-            TestHelpers.VerifyCommandOption(command.Options, "target-uploads-url", false, true);
+            TestHelpers.VerifyCommandOption(command.Options, "target-uploads-url", false);
         }
 
         [Fact]
