@@ -95,12 +95,13 @@ public sealed class BbsToGithub : IDisposable
         await retryPolicy.Retry(async () =>
         {
             await _targetHelper.ResetBlobContainers();
-            await sourceHelper.ResetBbsTestEnvironment(bbsProjectKey);
+            // TODO: Re-enable source data setup once BBS environment is updated
+            // await sourceHelper.ResetBbsTestEnvironment(bbsProjectKey);
             await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
 
-            await sourceHelper.CreateBbsProject(bbsProjectKey);
-            await sourceHelper.CreateBbsRepo(bbsProjectKey, repo1);
-            await sourceHelper.InitializeBbsRepo(bbsProjectKey, repo1);
+            // await sourceHelper.CreateBbsProject(bbsProjectKey);
+            // await sourceHelper.CreateBbsRepo(bbsProjectKey, repo1);
+            // await sourceHelper.InitializeBbsRepo(bbsProjectKey, repo1);
         });
 
         var sshPort = Environment.GetEnvironmentVariable("SSH_PORT_BBS");
