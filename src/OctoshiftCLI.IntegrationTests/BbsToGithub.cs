@@ -14,7 +14,7 @@ namespace OctoshiftCLI.IntegrationTests;
 public sealed class BbsToGithub : IDisposable
 {
     private const string SSH_KEY_FILE = "ssh_key.pem";
-    // TODO: Re-enable AWS upload option once BBS environment is updated
+    // TODO: Revert when BBS source environment is updated — see PR #1547.
     // private const string AWS_REGION = "us-east-1";
     private const string UPLOADS_URL = "https://uploads.github.com";
 
@@ -77,7 +77,7 @@ public sealed class BbsToGithub : IDisposable
         _targetHelper = new TestHelper(_output, _targetGithubApi, _targetGithubClient, _blobServiceClient);
     }
 
-    // TODO: Re-enable full basic BBS integration test matrix once BBS environment is updated.
+    // TODO: Revert when BBS source environment is updated — see PR #1547.
     // [Theory]
     // [InlineData("https://e2e-bbs-linux-1.westus2.cloudapp.azure.com", true, ArchiveUploadOption.AzureStorage)]
     // [InlineData("https://e2e-bbs-linux-1.westus2.cloudapp.azure.com", true, ArchiveUploadOption.AwsS3)]
@@ -85,12 +85,14 @@ public sealed class BbsToGithub : IDisposable
     [Fact]
     public async Task Basic()
     {
-        // TODO: Re-enable source data setup once BBS environment is updated
         // var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
-        var bbsProjectKey = "OCTOTEST";
-        var githubTargetOrg = $"octoshift-e2e-bbs-{TestHelper.GetOsName()}";
         // var repo1 = $"{bbsProjectKey}-repo-1";
+        var bbsProjectKey = "OCTOTEST";
         var bbsRepo = "bbs-test-repo";
+        var bbsServer = "https://test-bbs-o.githubapp.com";
+        var archiveUrl = Environment.GetEnvironmentVariable("BBS_ARCHIVE_URL");
+
+        var githubTargetOrg = $"octoshift-e2e-bbs-{TestHelper.GetOsName()}";
         var targetRepo1 = $"{bbsProjectKey}-e2e-{TestHelper.GetOsName().ToLower()}-repo-1";
 
         // var sourceBbsApi = new BbsApi(_sourceBbsClient, bbsServer, _logger);
@@ -101,7 +103,6 @@ public sealed class BbsToGithub : IDisposable
         await retryPolicy.Retry(async () =>
         {
             await _targetHelper.ResetBlobContainers();
-            // TODO: Re-enable source data setup once BBS environment is updated
             // await sourceHelper.ResetBbsTestEnvironment(bbsProjectKey);
             await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
 
@@ -110,7 +111,7 @@ public sealed class BbsToGithub : IDisposable
             // await sourceHelper.InitializeBbsRepo(bbsProjectKey, repo1);
         });
 
-        // TODO: Re-enable full BBS export and archive download flow once BBS environment is updated
+        // TODO: Revert when BBS source environment is updated.
         // var sshPort = Environment.GetEnvironmentVariable("SSH_PORT_BBS");
         // var archiveDownloadOptions = $" --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE} --ssh-port {sshPort}";
         // if (useSshForArchiveDownload)
@@ -144,10 +145,6 @@ public sealed class BbsToGithub : IDisposable
         // await _targetHelper.RunBbsCliMigration(
         //     $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey}{archiveDownloadOptions}{archiveUploadOptions}", _tokens);
 
-        var archiveUrl = Environment.GetEnvironmentVariable("BBS_ARCHIVE_URL");
-
-        var bbsServer = "https://test-bbs-o.githubapp.com";
-
         await _targetHelper.RunCliCommand(
             $"bbs2gh migrate-repo --archive-url {archiveUrl} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey} --bbs-repo {bbsRepo} --github-org {githubTargetOrg} --github-repo {targetRepo1} --target-repo-visibility private",
             "gh",
@@ -161,7 +158,8 @@ public sealed class BbsToGithub : IDisposable
         // TODO: Assert migration logs are downloaded
     }
 
-    [Fact(Skip = "Re-enable multipart upload test once BBS environment is updated")]
+    // TODO: Revert when BBS source environment is updated — see PR #1547.
+    [Fact(Skip = "Skipped while BBS source environment is being updated.")]
     public async Task MigrateRepo_MultipartUpload()
     {
         var githubTargetOrg = $"octoshift-e2e-bbs-{TestHelper.GetOsName()}";
