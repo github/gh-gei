@@ -76,65 +76,78 @@ public sealed class BbsToGithub : IDisposable
         _targetHelper = new TestHelper(_output, _targetGithubApi, _targetGithubClient, _blobServiceClient);
     }
 
-    [Theory]
-    [InlineData("https://e2e-bbs-linux-1.westus2.cloudapp.azure.com", true, ArchiveUploadOption.AzureStorage)]
-    [InlineData("https://e2e-bbs-linux-1.westus2.cloudapp.azure.com", true, ArchiveUploadOption.AwsS3)]
-    [InlineData("https://e2e-bbs-linux-1.westus2.cloudapp.azure.com", true, ArchiveUploadOption.GithubStorage)]
-    public async Task Basic(string bbsServer, bool useSshForArchiveDownload, ArchiveUploadOption uploadOption)
+    // TODO: Re-enable full basic BBS integration test matrix once BBS environment is updated.
+    // [Theory]
+    // [InlineData("https://e2e-bbs-linux-1.westus2.cloudapp.azure.com", true, ArchiveUploadOption.AzureStorage)]
+    // [InlineData("https://e2e-bbs-linux-1.westus2.cloudapp.azure.com", true, ArchiveUploadOption.AwsS3)]
+    // [InlineData("https://e2e-bbs-linux-1.westus2.cloudapp.azure.com", true, ArchiveUploadOption.GithubStorage)]
+    [Fact]
+    public async Task Basic()
     {
         var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
         var githubTargetOrg = $"octoshift-e2e-bbs-{TestHelper.GetOsName()}";
-        var repo1 = $"{bbsProjectKey}-repo-1";
+        // TODO: Re-enable source data setup once BBS environment is updated
+        // var repo1 = $"{bbsProjectKey}-repo-1";
         var targetRepo1 = $"{bbsProjectKey}-e2e-{TestHelper.GetOsName().ToLower()}-repo-1";
 
-        var sourceBbsApi = new BbsApi(_sourceBbsClient, bbsServer, _logger);
-        var sourceHelper = new TestHelper(_output, sourceBbsApi, _sourceBbsClient, bbsServer);
+        // TODO: Re-enable source data setup once BBS environment is updated
+        // var sourceBbsApi = new BbsApi(_sourceBbsClient, bbsServer, _logger);
+        // var sourceHelper = new TestHelper(_output, sourceBbsApi, _sourceBbsClient, bbsServer);
 
         var retryPolicy = new RetryPolicy(null);
 
         await retryPolicy.Retry(async () =>
         {
             await _targetHelper.ResetBlobContainers();
-            await sourceHelper.ResetBbsTestEnvironment(bbsProjectKey);
+            // TODO: Re-enable source data setup once BBS environment is updated
+            // await sourceHelper.ResetBbsTestEnvironment(bbsProjectKey);
             await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg);
 
-            await sourceHelper.CreateBbsProject(bbsProjectKey);
-            await sourceHelper.CreateBbsRepo(bbsProjectKey, repo1);
-            await sourceHelper.InitializeBbsRepo(bbsProjectKey, repo1);
+            // await sourceHelper.CreateBbsProject(bbsProjectKey);
+            // await sourceHelper.CreateBbsRepo(bbsProjectKey, repo1);
+            // await sourceHelper.InitializeBbsRepo(bbsProjectKey, repo1);
         });
 
-        var sshPort = Environment.GetEnvironmentVariable("SSH_PORT_BBS");
-        var archiveDownloadOptions = $" --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE} --ssh-port {sshPort}";
-        if (useSshForArchiveDownload)
-        {
-            var sshKey = Environment.GetEnvironmentVariable("SSH_KEY_BBS");
-            await File.WriteAllTextAsync(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
-        }
-        else
-        {
-            archiveDownloadOptions = " --smb-user octoshift";
-            _tokens.Add("SMB_PASSWORD", Environment.GetEnvironmentVariable("SMB_PASSWORD"));
-        }
+        // TODO: Re-enable full BBS export and archive download flow once BBS environment is updated
+        // var sshPort = Environment.GetEnvironmentVariable("SSH_PORT_BBS");
+        // var archiveDownloadOptions = $" --ssh-user octoshift --ssh-private-key {SSH_KEY_FILE} --ssh-port {sshPort}";
+        // if (useSshForArchiveDownload)
+        // {
+        //     var sshKey = Environment.GetEnvironmentVariable("SSH_KEY_BBS");
+        //     await File.WriteAllTextAsync(Path.Join(TestHelper.GetOsDistPath(), SSH_KEY_FILE), sshKey);
+        // }
+        // else
+        // {
+        //     archiveDownloadOptions = " --smb-user octoshift";
+        //     _tokens.Add("SMB_PASSWORD", Environment.GetEnvironmentVariable("SMB_PASSWORD"));
+        // }
 
-        var archiveUploadOptions = "";
-        if (uploadOption == ArchiveUploadOption.AzureStorage)
-        {
-            _tokens.Add("AZURE_STORAGE_CONNECTION_STRING", _azureStorageConnectionString);
-        }
-        else if (uploadOption == ArchiveUploadOption.AwsS3)
-        {
-            _tokens.Add("AWS_ACCESS_KEY_ID", Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID"));
-            _tokens.Add("AWS_SECRET_ACCESS_KEY", Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY"));
-            var awsBucketName = Environment.GetEnvironmentVariable("AWS_BUCKET_NAME");
-            archiveUploadOptions = $" --aws-bucket-name {awsBucketName} --aws-region {AWS_REGION}";
-        }
-        else if (uploadOption == ArchiveUploadOption.GithubStorage)
-        {
-            archiveUploadOptions = " --use-github-storage";
-        }
+        // var archiveUploadOptions = "";
+        // if (uploadOption == ArchiveUploadOption.AzureStorage)
+        // {
+        //     _tokens.Add("AZURE_STORAGE_CONNECTION_STRING", _azureStorageConnectionString);
+        // }
+        // else if (uploadOption == ArchiveUploadOption.AwsS3)
+        // {
+        //     _tokens.Add("AWS_ACCESS_KEY_ID", Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID"));
+        //     _tokens.Add("AWS_SECRET_ACCESS_KEY", Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY"));
+        //     var awsBucketName = Environment.GetEnvironmentVariable("AWS_BUCKET_NAME");
+        //     archiveUploadOptions = $" --aws-bucket-name {awsBucketName} --aws-region {AWS_REGION}";
+        // }
+        // else if (uploadOption == ArchiveUploadOption.GithubStorage)
+        // {
+        //     archiveUploadOptions = " --use-github-storage";
+        // }
 
-        await _targetHelper.RunBbsCliMigration(
-            $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey}{archiveDownloadOptions}{archiveUploadOptions}", _tokens);
+        // await _targetHelper.RunBbsCliMigration(
+        //     $"generate-script --github-org {githubTargetOrg} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey}{archiveDownloadOptions}{archiveUploadOptions}", _tokens);
+
+        var archiveUrl = Environment.GetEnvironmentVariable("BBS_ARCHIVE_URL");
+
+        await _targetHelper.RunCliCommand(
+            $"bbs2gh migrate-repo --archive-url {archiveUrl} --github-org {githubTargetOrg} --github-repo {targetRepo1} --target-repo-visibility private",
+            "gh",
+            _tokens);
 
         _targetHelper.AssertNoErrorInLogs(_startTime);
 
@@ -144,7 +157,7 @@ public sealed class BbsToGithub : IDisposable
         // TODO: Assert migration logs are downloaded
     }
 
-    [Fact]
+    [Fact(Skip = "Re-enable multipart upload test once BBS environment is updated")]
     public async Task MigrateRepo_MultipartUpload()
     {
         var githubTargetOrg = $"octoshift-e2e-bbs-{TestHelper.GetOsName()}";
