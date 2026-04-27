@@ -87,8 +87,7 @@ public sealed class BbsToGithub : IDisposable
     {
         var bbsProjectKey = $"E2E-{TestHelper.GetOsName().ToUpper()}";
         var githubTargetOrg = $"octoshift-e2e-bbs-{TestHelper.GetOsName()}";
-        // TODO: Re-enable source data setup once BBS environment is updated
-        // var repo1 = $"{bbsProjectKey}-repo-1";
+        var repo1 = $"{bbsProjectKey}-repo-1";
         var targetRepo1 = $"{bbsProjectKey}-e2e-{TestHelper.GetOsName().ToLower()}-repo-1";
 
         // TODO: Re-enable source data setup once BBS environment is updated
@@ -145,8 +144,10 @@ public sealed class BbsToGithub : IDisposable
 
         var archiveUrl = Environment.GetEnvironmentVariable("BBS_ARCHIVE_URL");
 
+        var bbsServer = "https://e2e-bbs-linux-1.westus2.cloudapp.azure.com";
+
         await _targetHelper.RunCliCommand(
-            $"bbs2gh migrate-repo --archive-url {archiveUrl} --github-org {githubTargetOrg} --github-repo {targetRepo1} --target-repo-visibility private",
+            $"bbs2gh migrate-repo --archive-url {archiveUrl} --bbs-server-url {bbsServer} --bbs-project {bbsProjectKey} --bbs-repo {repo1} --github-org {githubTargetOrg} --github-repo {targetRepo1} --target-repo-visibility private",
             "gh",
             _tokens);
 
