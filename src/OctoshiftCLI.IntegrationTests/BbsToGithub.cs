@@ -14,7 +14,8 @@ namespace OctoshiftCLI.IntegrationTests;
 public sealed class BbsToGithub : IDisposable
 {
     private const string SSH_KEY_FILE = "ssh_key.pem";
-    private const string AWS_REGION = "us-east-1";
+    // TODO: Re-enable AWS upload option once BBS environment is updated
+    // private const string AWS_REGION = "us-east-1";
     private const string UPLOADS_URL = "https://uploads.github.com";
 
     private readonly ITestOutputHelper _output;
