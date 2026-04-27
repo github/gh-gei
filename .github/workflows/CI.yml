@@ -338,7 +338,7 @@ jobs:
 
       - name: Create gh-gei Release
         # a06a81a03ee405af7f2048a818ed3f03bbf83c7b is tag v2, pinned to avoid supply chain attacks
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b
+        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe
         with:
           body_path: ./RELEASENOTES.md
           files: |
@@ -357,7 +357,7 @@ jobs:
 
       - name: Create gh-ado2gh Release
         # a06a81a03ee405af7f2048a818ed3f03bbf83c7b is tag v2, pinned to avoid supply chain attacks
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b
+        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe
         with:
           body_path: ./RELEASENOTES.md
           repository: github/gh-ado2gh
@@ -372,7 +372,7 @@ jobs:
 
       - name: Create gh-bbs2gh Release
         # a06a81a03ee405af7f2048a818ed3f03bbf83c7b is tag v2, pinned to avoid supply chain attacks
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b
+        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe
         with:
           body_path: ./RELEASENOTES.md
           repository: github/gh-bbs2gh
