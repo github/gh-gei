@@ -2,10 +2,13 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
 
+	"github.com/github/gh-gei/internal/cmdutil"
 	"github.com/github/gh-gei/pkg/env"
 	"github.com/github/gh-gei/pkg/logger"
 	"github.com/github/gh-gei/pkg/status"
@@ -24,7 +27,19 @@ var (
 )
 
 func main() {
-	if err := newRootCmd().Execute(); err != nil {
+	rootCmd := newRootCmd()
+	if err := rootCmd.Execute(); err != nil {
+		// Retrieve logger from the command context if available
+		if log, ok := rootCmd.Context().Value(loggerKey).(*logger.Logger); ok && log != nil {
+			var userErr *cmdutil.UserError
+			if errors.As(err, &userErr) {
+				log.Errorf("%v", err)
+			} else {
+				log.Errorf("Unexpected error: %v", err)
+			}
+		} else {
+			fmt.Fprintf(os.Stderr, "[ERROR] %v\n", err)
+		}
 		os.Exit(1)
 	}
 }
@@ -62,15 +77,14 @@ func newRootCmd() *cobra.Command {
 	rootCmd.AddCommand(newMigrateSecretAlertsCmdLive())
 	rootCmd.AddCommand(newMigrateCodeScanningCmdLive())
 
-	// Additional commands will be implemented in subsequent phases
-	// rootCmd.AddCommand(newWaitForMigrationCmd())
-	// rootCmd.AddCommand(newAbortMigrationCmd())
-	// rootCmd.AddCommand(newDownloadLogsCmd())
-	// rootCmd.AddCommand(newGenerateMannequinCSVCmd())
-	// rootCmd.AddCommand(newReclaimMannequinCmd())
-	// rootCmd.AddCommand(newGrantMigratorRoleCmd())
-	// rootCmd.AddCommand(newRevokeMigratorRoleCmd())
-	// rootCmd.AddCommand(newCreateTeamCmd())
+	rootCmd.AddCommand(newWaitForMigrationCmdLive())
+	rootCmd.AddCommand(newAbortMigrationCmdLive())
+	rootCmd.AddCommand(newDownloadLogsCmdLive())
+	rootCmd.AddCommand(newGenerateMannequinCSVCmdLive())
+	rootCmd.AddCommand(newReclaimMannequinCmdLive())
+	rootCmd.AddCommand(newGrantMigratorRoleCmdLive())
+	rootCmd.AddCommand(newRevokeMigratorRoleCmdLive())
+	rootCmd.AddCommand(newCreateTeamCmdLive())
 
 	return rootCmd
 }
