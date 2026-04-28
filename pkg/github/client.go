@@ -3,10 +3,15 @@
 package github
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -25,6 +30,7 @@ type Client struct {
 	graphql *graphqlClient   // custom for migration GraphQL
 	logger  *logger.Logger
 	apiURL  string
+	token   string // PAT, needed for raw HTTP requests (e.g. no-redirect archive URL fetch)
 }
 
 // Option configures a Client.
@@ -106,6 +112,7 @@ func NewClient(pat string, opts ...Option) *Client {
 		graphql: gql,
 		logger:  cfg.logger,
 		apiURL:  cfg.apiURL,
+		token:   pat,
 	}
 }
 
@@ -1020,6 +1027,137 @@ func (c *Client) CreateAttributionInvitation(ctx context.Context, orgID, sourceI
 	return &result, nil
 }
 
+// ---------------------------------------------------------------------------
+// Archive / migration methods (REST-based, for GHES archive flows)
+// ---------------------------------------------------------------------------
+
+// DoesRepoExist checks whether a repository exists (REST GET /repos/{org}/{repo}).
+// Returns false when the API returns 404 or 301 (moved/renamed).
+func (c *Client) DoesRepoExist(ctx context.Context, org, repo string) (bool, error) {
+	_, resp, err := c.rest.Repositories.Get(ctx, org, repo)
+	if err != nil {
+		if resp != nil && (resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusMovedPermanently) {
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to check if repo %s/%s exists: %w", org, repo, err)
+	}
+	return true, nil
+}
+
+// StartGitArchiveGeneration starts a git-only archive generation for a repo.
+// POST /orgs/{org}/migrations with exclude_metadata=true.
+// Returns the migration ID.
+func (c *Client) StartGitArchiveGeneration(ctx context.Context, org, repo string) (int, error) {
+	payload := map[string]interface{}{
+		"repositories":     []string{repo},
+		"exclude_metadata": true,
+	}
+
+	u := fmt.Sprintf("orgs/%s/migrations", org)
+	req, err := c.rest.NewRequest("POST", u, payload)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create git archive request: %w", err)
+	}
+
+	var result struct {
+		ID int `json:"id"`
+	}
+	resp, err := c.rest.Do(ctx, req, &result)
+	if err != nil {
+		if resp != nil && resp.StatusCode == http.StatusUnprocessableEntity {
+			return 0, fmt.Errorf("failed to start git archive generation: please configure blob storage: %w", err)
+		}
+		return 0, fmt.Errorf("failed to start git archive generation for %s/%s: %w", org, repo, err)
+	}
+
+	return result.ID, nil
+}
+
+// StartMetadataArchiveGeneration starts a metadata-only archive generation for a repo.
+// POST /orgs/{org}/migrations with exclude_git_data=true.
+// Returns the migration ID.
+func (c *Client) StartMetadataArchiveGeneration(ctx context.Context, org, repo string, skipReleases, lockSource bool) (int, error) {
+	payload := map[string]interface{}{
+		"repositories":           []string{repo},
+		"exclude_git_data":       true,
+		"exclude_releases":       skipReleases,
+		"lock_repositories":      lockSource,
+		"exclude_owner_projects": true,
+	}
+
+	u := fmt.Sprintf("orgs/%s/migrations", org)
+	req, err := c.rest.NewRequest("POST", u, payload)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create metadata archive request: %w", err)
+	}
+
+	var result struct {
+		ID int `json:"id"`
+	}
+	_, err = c.rest.Do(ctx, req, &result)
+	if err != nil {
+		return 0, fmt.Errorf("failed to start metadata archive generation for %s/%s: %w", org, repo, err)
+	}
+
+	return result.ID, nil
+}
+
+// GetArchiveMigrationStatus returns the state of an org migration (archive generation).
+// GET /orgs/{org}/migrations/{id}
+func (c *Client) GetArchiveMigrationStatus(ctx context.Context, org string, archiveID int) (string, error) {
+	u := fmt.Sprintf("orgs/%s/migrations/%d", org, archiveID)
+	req, err := c.rest.NewRequest("GET", u, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create archive migration status request: %w", err)
+	}
+
+	var result struct {
+		State string `json:"state"`
+	}
+	_, err = c.rest.Do(ctx, req, &result)
+	if err != nil {
+		return "", fmt.Errorf("failed to get archive migration status for %s/%d: %w", org, archiveID, err)
+	}
+
+	return result.State, nil
+}
+
+// GetArchiveMigrationUrl returns the archive download URL for a completed migration.
+// GET /orgs/{org}/migrations/{id}/archive returns a 302 redirect.
+// We capture the Location header without following the redirect.
+func (c *Client) GetArchiveMigrationUrl(ctx context.Context, org string, archiveID int) (string, error) {
+	archiveURL := fmt.Sprintf("%s/orgs/%s/migrations/%d/archive", c.apiURL, org, archiveID)
+
+	// Build a no-redirect HTTP client to capture the Location header
+	noRedirectClient := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", archiveURL, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create archive URL request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.token)
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := noRedirectClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to get archive migration URL for %s/%d: %w", org, archiveID, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusFound || resp.StatusCode == http.StatusMovedPermanently {
+		location := resp.Header.Get("Location")
+		if location != "" {
+			return location, nil
+		}
+	}
+
+	return "", fmt.Errorf("expected redirect for archive migration URL, got status %d", resp.StatusCode)
+}
+
 // ReclaimMannequinSkipInvitation reclaims a mannequin, skipping the email invitation.
 func (c *Client) ReclaimMannequinSkipInvitation(ctx context.Context, orgID, sourceID, targetID string) (*ReattributeMannequinToUserResult, error) {
 	mutation := `mutation($orgId: ID!, $sourceId: ID!, $targetId: ID!) {
@@ -1058,4 +1196,539 @@ func (c *Client) ReclaimMannequinSkipInvitation(ctx context.Context, orgID, sour
 		return nil, fmt.Errorf("failed to unmarshal reclaim mannequin response: %w", err)
 	}
 	return &result, nil
+}
+
+// ---------------------------------------------------------------------------
+// Secret Scanning methods
+// ---------------------------------------------------------------------------
+
+// GetSecretScanningAlertsForRepository fetches all secret scanning alerts for a repository.
+func (c *Client) GetSecretScanningAlertsForRepository(ctx context.Context, org, repo string) ([]SecretScanningAlert, error) {
+	c.logger.Info("Fetching secret scanning alerts for %s/%s", org, repo)
+
+	var allAlerts []SecretScanningAlert
+	page := 1
+
+	for {
+		u := fmt.Sprintf("repos/%s/%s/secret-scanning/alerts?per_page=100&page=%d",
+			url.PathEscape(org), url.PathEscape(repo), page)
+
+		req, err := c.rest.NewRequest("GET", u, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create secret scanning alerts request: %w", err)
+		}
+
+		var rawAlerts []json.RawMessage
+		resp, err := c.rest.Do(ctx, req, &rawAlerts)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get secret scanning alerts for %s/%s: %w", org, repo, err)
+		}
+
+		for _, raw := range rawAlerts {
+			alert, parseErr := parseSecretScanningAlert(raw)
+			if parseErr != nil {
+				return nil, fmt.Errorf("failed to parse secret scanning alert: %w", parseErr)
+			}
+			allAlerts = append(allAlerts, alert)
+		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+		page = resp.NextPage
+	}
+
+	return allAlerts, nil
+}
+
+// parseSecretScanningAlert parses a single secret scanning alert from raw JSON.
+// It extracts resolved_by.login into ResolverName.
+func parseSecretScanningAlert(data json.RawMessage) (SecretScanningAlert, error) {
+	var raw struct {
+		Number            int    `json:"number"`
+		State             string `json:"state"`
+		Resolution        string `json:"resolution"`
+		ResolutionComment string `json:"resolution_comment"`
+		SecretType        string `json:"secret_type"`
+		Secret            string `json:"secret"`
+		ResolvedBy        *struct {
+			Login string `json:"login"`
+		} `json:"resolved_by"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return SecretScanningAlert{}, err
+	}
+
+	alert := SecretScanningAlert{
+		Number:            raw.Number,
+		State:             raw.State,
+		Resolution:        raw.Resolution,
+		ResolutionComment: raw.ResolutionComment,
+		SecretType:        raw.SecretType,
+		Secret:            raw.Secret,
+	}
+	if raw.ResolvedBy != nil {
+		alert.ResolverName = raw.ResolvedBy.Login
+	}
+	return alert, nil
+}
+
+// GetSecretScanningAlertsLocations fetches all locations for a secret scanning alert.
+func (c *Client) GetSecretScanningAlertsLocations(ctx context.Context, org, repo string, alertNumber int) ([]SecretScanningAlertLocation, error) {
+	var allLocations []SecretScanningAlertLocation
+	page := 1
+
+	for {
+		u := fmt.Sprintf("repos/%s/%s/secret-scanning/alerts/%d/locations?per_page=100&page=%d",
+			url.PathEscape(org), url.PathEscape(repo), alertNumber, page)
+
+		req, err := c.rest.NewRequest("GET", u, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create secret scanning alert locations request: %w", err)
+		}
+
+		var rawLocations []json.RawMessage
+		resp, err := c.rest.Do(ctx, req, &rawLocations)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get secret scanning alert locations for %s/%s alert %d: %w", org, repo, alertNumber, err)
+		}
+
+		for _, raw := range rawLocations {
+			loc, parseErr := parseSecretScanningAlertLocation(raw)
+			if parseErr != nil {
+				return nil, fmt.Errorf("failed to parse secret scanning alert location: %w", parseErr)
+			}
+			allLocations = append(allLocations, loc)
+		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+		page = resp.NextPage
+	}
+
+	return allLocations, nil
+}
+
+// parseSecretScanningAlertLocation parses a single alert location from raw JSON.
+// The API returns {"type": "...", "details": {...}}, so we flatten it.
+func parseSecretScanningAlertLocation(data json.RawMessage) (SecretScanningAlertLocation, error) {
+	var raw struct {
+		Type    string `json:"type"`
+		Details struct {
+			Path                        string `json:"path"`
+			StartLine                   int    `json:"start_line"`
+			EndLine                     int    `json:"end_line"`
+			StartColumn                 int    `json:"start_column"`
+			EndColumn                   int    `json:"end_column"`
+			BlobSha                     string `json:"blob_sha"`
+			IssueTitleUrl               string `json:"issue_title_url"`
+			IssueBodyUrl                string `json:"issue_body_url"`
+			IssueCommentUrl             string `json:"issue_comment_url"`
+			PullRequestTitleUrl         string `json:"pull_request_title_url"`
+			PullRequestBodyUrl          string `json:"pull_request_body_url"`
+			PullRequestCommentUrl       string `json:"pull_request_comment_url"`
+			PullRequestReviewUrl        string `json:"pull_request_review_url"`
+			PullRequestReviewCommentUrl string `json:"pull_request_review_comment_url"`
+		} `json:"details"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return SecretScanningAlertLocation{}, err
+	}
+
+	return SecretScanningAlertLocation{
+		LocationType:                raw.Type,
+		Path:                        raw.Details.Path,
+		StartLine:                   raw.Details.StartLine,
+		EndLine:                     raw.Details.EndLine,
+		StartColumn:                 raw.Details.StartColumn,
+		EndColumn:                   raw.Details.EndColumn,
+		BlobSha:                     raw.Details.BlobSha,
+		IssueTitleUrl:               raw.Details.IssueTitleUrl,
+		IssueBodyUrl:                raw.Details.IssueBodyUrl,
+		IssueCommentUrl:             raw.Details.IssueCommentUrl,
+		PullRequestTitleUrl:         raw.Details.PullRequestTitleUrl,
+		PullRequestBodyUrl:          raw.Details.PullRequestBodyUrl,
+		PullRequestCommentUrl:       raw.Details.PullRequestCommentUrl,
+		PullRequestReviewUrl:        raw.Details.PullRequestReviewUrl,
+		PullRequestReviewCommentUrl: raw.Details.PullRequestReviewCommentUrl,
+	}, nil
+}
+
+// UpdateSecretScanningAlert updates a secret scanning alert's state and resolution.
+func (c *Client) UpdateSecretScanningAlert(ctx context.Context, org, repo string, alertNumber int, state, resolution, resolutionComment string) error {
+	u := fmt.Sprintf("repos/%s/%s/secret-scanning/alerts/%d",
+		url.PathEscape(org), url.PathEscape(repo), alertNumber)
+
+	var payload interface{}
+	if state == AlertStateOpen {
+		payload = map[string]string{"state": state}
+	} else {
+		payload = map[string]string{
+			"state":              state,
+			"resolution":         resolution,
+			"resolution_comment": resolutionComment,
+		}
+	}
+
+	req, err := c.rest.NewRequest("PATCH", u, payload)
+	if err != nil {
+		return fmt.Errorf("failed to create update secret scanning alert request: %w", err)
+	}
+
+	_, err = c.rest.Do(ctx, req, nil)
+	if err != nil {
+		return fmt.Errorf("failed to update secret scanning alert %d for %s/%s: %w", alertNumber, org, repo, err)
+	}
+	return nil
+}
+
+// ---------------------------------------------------------------------------
+// Code Scanning methods
+// ---------------------------------------------------------------------------
+
+// GetCodeScanningAlertsForRepository fetches all code scanning alerts for a repository.
+func (c *Client) GetCodeScanningAlertsForRepository(ctx context.Context, org, repo, branch string) ([]CodeScanningAlert, error) {
+	c.logger.Info("Fetching code scanning alerts for %s/%s", org, repo)
+
+	var allAlerts []CodeScanningAlert
+	page := 1
+
+	for {
+		u := fmt.Sprintf("repos/%s/%s/code-scanning/alerts?per_page=100&sort=created&direction=asc&page=%d",
+			url.PathEscape(org), url.PathEscape(repo), page)
+		if branch != "" {
+			u += "&ref=" + url.QueryEscape(branch)
+		}
+
+		req, err := c.rest.NewRequest("GET", u, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create code scanning alerts request: %w", err)
+		}
+
+		var rawAlerts []json.RawMessage
+		resp, err := c.rest.Do(ctx, req, &rawAlerts)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get code scanning alerts for %s/%s: %w", org, repo, err)
+		}
+
+		for _, raw := range rawAlerts {
+			alert, parseErr := parseCodeScanningAlert(raw)
+			if parseErr != nil {
+				return nil, fmt.Errorf("failed to parse code scanning alert: %w", parseErr)
+			}
+			allAlerts = append(allAlerts, alert)
+		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+		page = resp.NextPage
+	}
+
+	return allAlerts, nil
+}
+
+// parseCodeScanningAlert parses a single code scanning alert from raw JSON.
+func parseCodeScanningAlert(data json.RawMessage) (CodeScanningAlert, error) {
+	var raw struct {
+		Number           int    `json:"number"`
+		URL              string `json:"url"`
+		State            string `json:"state"`
+		DismissedAt      string `json:"dismissed_at"`
+		DismissedReason  string `json:"dismissed_reason"`
+		DismissedComment string `json:"dismissed_comment"`
+		Rule             struct {
+			ID string `json:"id"`
+		} `json:"rule"`
+		MostRecentInstance json.RawMessage `json:"most_recent_instance"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return CodeScanningAlert{}, err
+	}
+
+	alert := CodeScanningAlert{
+		Number:           raw.Number,
+		URL:              raw.URL,
+		State:            raw.State,
+		DismissedAt:      raw.DismissedAt,
+		DismissedReason:  raw.DismissedReason,
+		DismissedComment: raw.DismissedComment,
+		RuleId:           raw.Rule.ID,
+	}
+
+	if len(raw.MostRecentInstance) > 0 {
+		inst, err := parseCodeScanningAlertInstance(raw.MostRecentInstance)
+		if err != nil {
+			return CodeScanningAlert{}, fmt.Errorf("failed to parse most_recent_instance: %w", err)
+		}
+		alert.MostRecentInstance = &inst
+	}
+
+	return alert, nil
+}
+
+// GetCodeScanningAlertInstances fetches all instances of a code scanning alert.
+func (c *Client) GetCodeScanningAlertInstances(ctx context.Context, org, repo string, alertNumber int) ([]CodeScanningAlertInstance, error) {
+	var allInstances []CodeScanningAlertInstance
+	page := 1
+
+	for {
+		u := fmt.Sprintf("repos/%s/%s/code-scanning/alerts/%d/instances?per_page=100&page=%d",
+			url.PathEscape(org), url.PathEscape(repo), alertNumber, page)
+
+		req, err := c.rest.NewRequest("GET", u, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create code scanning alert instances request: %w", err)
+		}
+
+		var rawInstances []json.RawMessage
+		resp, err := c.rest.Do(ctx, req, &rawInstances)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get code scanning alert instances for %s/%s alert %d: %w", org, repo, alertNumber, err)
+		}
+
+		for _, raw := range rawInstances {
+			inst, parseErr := parseCodeScanningAlertInstance(raw)
+			if parseErr != nil {
+				return nil, fmt.Errorf("failed to parse code scanning alert instance: %w", parseErr)
+			}
+			allInstances = append(allInstances, inst)
+		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+		page = resp.NextPage
+	}
+
+	return allInstances, nil
+}
+
+// parseCodeScanningAlertInstance parses a single code scanning alert instance.
+func parseCodeScanningAlertInstance(data json.RawMessage) (CodeScanningAlertInstance, error) {
+	var raw struct {
+		Ref       string `json:"ref"`
+		CommitSha string `json:"commit_sha"`
+		Location  struct {
+			Path        string `json:"path"`
+			StartLine   int    `json:"start_line"`
+			EndLine     int    `json:"end_line"`
+			StartColumn int    `json:"start_column"`
+			EndColumn   int    `json:"end_column"`
+		} `json:"location"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return CodeScanningAlertInstance{}, err
+	}
+
+	return CodeScanningAlertInstance{
+		Ref:         raw.Ref,
+		CommitSha:   raw.CommitSha,
+		Path:        raw.Location.Path,
+		StartLine:   raw.Location.StartLine,
+		EndLine:     raw.Location.EndLine,
+		StartColumn: raw.Location.StartColumn,
+		EndColumn:   raw.Location.EndColumn,
+	}, nil
+}
+
+// UpdateCodeScanningAlert updates a code scanning alert's state and dismissal info.
+func (c *Client) UpdateCodeScanningAlert(ctx context.Context, org, repo string, alertNumber int, state, dismissedReason, dismissedComment string) error {
+	u := fmt.Sprintf("repos/%s/%s/code-scanning/alerts/%d",
+		url.PathEscape(org), url.PathEscape(repo), alertNumber)
+
+	var payload interface{}
+	if state == AlertStateOpen {
+		payload = map[string]string{"state": state}
+	} else {
+		payload = map[string]string{
+			"state":             state,
+			"dismissed_reason":  dismissedReason,
+			"dismissed_comment": dismissedComment,
+		}
+	}
+
+	req, err := c.rest.NewRequest("PATCH", u, payload)
+	if err != nil {
+		return fmt.Errorf("failed to create update code scanning alert request: %w", err)
+	}
+
+	_, err = c.rest.Do(ctx, req, nil)
+	if err != nil {
+		return fmt.Errorf("failed to update code scanning alert %d for %s/%s: %w", alertNumber, org, repo, err)
+	}
+	return nil
+}
+
+// GetCodeScanningAnalysisForRepository fetches all code scanning analyses for a repository.
+// Returns an empty slice (not an error) if the API returns 404 with "no analysis found".
+func (c *Client) GetCodeScanningAnalysisForRepository(ctx context.Context, org, repo, branch string) ([]CodeScanningAnalysis, error) {
+	c.logger.Info("Fetching code scanning analyses for %s/%s", org, repo)
+
+	var allAnalyses []CodeScanningAnalysis
+	page := 1
+
+	for {
+		u := fmt.Sprintf("repos/%s/%s/code-scanning/analyses?per_page=100&sort=created&direction=asc&page=%d",
+			url.PathEscape(org), url.PathEscape(repo), page)
+		if branch != "" {
+			u += "&ref=" + url.QueryEscape(branch)
+		}
+
+		req, err := c.rest.NewRequest("GET", u, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create code scanning analyses request: %w", err)
+		}
+
+		var analyses []CodeScanningAnalysis
+		resp, err := c.rest.Do(ctx, req, &analyses)
+		if err != nil {
+			// Return empty on 404 with "no analysis found"
+			if resp != nil && resp.StatusCode == http.StatusNotFound {
+				return nil, nil
+			}
+			return nil, fmt.Errorf("failed to get code scanning analyses for %s/%s: %w", org, repo, err)
+		}
+
+		allAnalyses = append(allAnalyses, analyses...)
+
+		if resp.NextPage == 0 {
+			break
+		}
+		page = resp.NextPage
+	}
+
+	return allAnalyses, nil
+}
+
+// GetSarifReport downloads a SARIF report for a code scanning analysis.
+// Uses Accept: application/sarif+json to get the SARIF format.
+func (c *Client) GetSarifReport(ctx context.Context, org, repo string, analysisID int) (string, error) {
+	sarifURL := fmt.Sprintf("%s/repos/%s/%s/code-scanning/analyses/%d",
+		c.apiURL, url.PathEscape(org), url.PathEscape(repo), analysisID)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", sarifURL, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create SARIF report request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.token)
+	req.Header.Set("Accept", "application/sarif+json")
+
+	httpClient := c.rest.Client()
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to get SARIF report for %s/%s analysis %d: %w", org, repo, analysisID, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return "", fmt.Errorf("SARIF report not found for %s/%s analysis %d: %w",
+			org, repo, analysisID, &gogithub.ErrorResponse{Response: resp})
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("unexpected status %d fetching SARIF report for %s/%s analysis %d",
+			resp.StatusCode, org, repo, analysisID)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read SARIF report body: %w", err)
+	}
+
+	return string(body), nil
+}
+
+// UploadSarifReport uploads a SARIF report to a repository.
+// The sarif content is gzip-compressed and base64-encoded before uploading.
+func (c *Client) UploadSarifReport(ctx context.Context, org, repo, sarifReport, commitSha, sarifRef string) (string, error) {
+	encoded, err := gzipAndBase64(sarifReport)
+	if err != nil {
+		return "", fmt.Errorf("failed to compress SARIF report: %w", err)
+	}
+
+	u := fmt.Sprintf("repos/%s/%s/code-scanning/sarifs",
+		url.PathEscape(org), url.PathEscape(repo))
+
+	payload := map[string]string{
+		"commit_sha": commitSha,
+		"sarif":      encoded,
+		"ref":        sarifRef,
+	}
+
+	req, err := c.rest.NewRequest("POST", u, payload)
+	if err != nil {
+		return "", fmt.Errorf("failed to create upload SARIF request: %w", err)
+	}
+
+	var result struct {
+		ID string `json:"id"`
+	}
+	_, err = c.rest.Do(ctx, req, &result)
+	if err != nil {
+		// go-github returns AcceptedError for 202 responses; the body is in Raw.
+		var acceptedErr *gogithub.AcceptedError
+		if errors.As(err, &acceptedErr) {
+			if jsonErr := json.Unmarshal(acceptedErr.Raw, &result); jsonErr != nil {
+				return "", fmt.Errorf("failed to parse SARIF upload response: %w", jsonErr)
+			}
+			return result.ID, nil
+		}
+		return "", fmt.Errorf("failed to upload SARIF report for %s/%s: %w", org, repo, err)
+	}
+
+	return result.ID, nil
+}
+
+// gzipAndBase64 compresses a string with gzip and then base64-encodes it.
+func gzipAndBase64(s string) (string, error) {
+	var buf bytes.Buffer
+	gz := gzip.NewWriter(&buf)
+	if _, err := gz.Write([]byte(s)); err != nil {
+		return "", err
+	}
+	if err := gz.Close(); err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(buf.Bytes()), nil
+}
+
+// GetSarifProcessingStatus retrieves the processing status of an uploaded SARIF report.
+func (c *Client) GetSarifProcessingStatus(ctx context.Context, org, repo, sarifID string) (*SarifProcessingStatus, error) {
+	u := fmt.Sprintf("repos/%s/%s/code-scanning/sarifs/%s",
+		url.PathEscape(org), url.PathEscape(repo), url.PathEscape(sarifID))
+
+	req, err := c.rest.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create SARIF processing status request: %w", err)
+	}
+
+	var status SarifProcessingStatus
+	_, err = c.rest.Do(ctx, req, &status)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get SARIF processing status for %s/%s: %w", org, repo, err)
+	}
+
+	return &status, nil
+}
+
+// GetDefaultBranch returns the default branch name for a repository.
+func (c *Client) GetDefaultBranch(ctx context.Context, org, repo string) (string, error) {
+	u := fmt.Sprintf("repos/%s/%s", url.PathEscape(org), url.PathEscape(repo))
+
+	req, err := c.rest.NewRequest("GET", u, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create default branch request: %w", err)
+	}
+
+	var result struct {
+		DefaultBranch string `json:"default_branch"`
+	}
+	_, err = c.rest.Do(ctx, req, &result)
+	if err != nil {
+		return "", fmt.Errorf("failed to get default branch for %s/%s: %w", org, repo, err)
+	}
+
+	return result.DefaultBranch, nil
 }
