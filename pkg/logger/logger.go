@@ -91,6 +91,11 @@ func (l *Logger) LogWarningCount() {
 	}
 }
 
+// IsVerbose returns true if verbose logging is enabled
+func (l *Logger) IsVerbose() bool {
+	return l.verbose
+}
+
 func (l *Logger) log(level, format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
