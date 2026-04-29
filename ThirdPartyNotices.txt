@@ -644,3 +644,50 @@ Licensed under MIT
 Available at https://licenses.nuget.org/MIT
 
 
+License notice for github.com/avast/retry-go/v4 (v4.7.0)
+------------------------------------
+
+https://github.com/avast/retry-go
+
+Copyright (c) 2017 Avast
+
+Licensed under MIT
+
+Available at https://github.com/avast/retry-go/blob/master/LICENSE
+
+
+License notice for github.com/spf13/cobra (v1.10.2)
+------------------------------------
+
+https://github.com/spf13/cobra
+
+Copyright (c) 2013 Steve Francia
+
+Licensed under Apache-2.0
+
+Available at https://github.com/spf13/cobra/blob/main/LICENSE.txt
+
+
+License notice for github.com/spf13/pflag (v1.0.9)
+------------------------------------
+
+https://github.com/spf13/pflag
+
+Copyright (c) 2012 Alex Ogier. Copyright (c) 2012 The Go Authors.
+
+Licensed under BSD-3-Clause
+
+Available at https://github.com/spf13/pflag/blob/master/LICENSE
+
+
+License notice for github.com/inconshreveable/mousetrap (v1.1.0)
+------------------------------------
+
+https://github.com/inconshreveable/mousetrap
+
+Copyright (c) 2022 Alan Shreve
+
+Licensed under Apache-2.0
+
+Available at https://github.com/inconshreveable/mousetrap/blob/master/LICENSE
+
