@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using OctoshiftCLI.Extensions;
@@ -24,125 +22,119 @@ public class GitlabApi
 
     public virtual async Task<string> GetServerVersion()
     {
-        var url = $"{_gitlabBaseUrl}/rest/api/1.0/application-properties";
+        var url = $"{_gitlabBaseUrl}/api/v4/version";
 
         var content = await _client.GetAsync(url);
 
         return (string)JObject.Parse(content)["version"];
     }
 
-    public virtual async Task<long> StartExport(string projectKey, string slug)
+    public virtual async Task<long> StartExport(string groupPath, string repoSlug)
     {
-        var url = $"{_gitlabBaseUrl}/rest/api/1.0/migration/exports";
-        var payload = new
-        {
-            repositoriesRequest = new
-            {
-                includes = new[]
-                {
-                    new
-                    {
-                        projectKey,
-                        slug
-                    }
-                }
-            }
-        };
+        var encodedProjectPath = GetEncodedProjectPath(groupPath, repoSlug);
+        var url = $"{_gitlabBaseUrl}/api/v4/projects/{encodedProjectPath}/export";
 
-        var content = await _client.PostAsync(url, payload);
+        var exportResponse = await _client.PostAsync(url, new { });
+        var exportData = JObject.Parse(exportResponse);
 
-        return (long)JObject.Parse(content)["id"];
+        return (long)exportData["id"];
     }
 
-    public virtual async Task<(string State, string Message, int Percentage)> GetExport(long id)
+    public virtual async Task<(string ExportStatus, string Message, string DownloadUrl)> GetExport(string groupPath, string repoSlug)
     {
-        var url = $"{_gitlabBaseUrl}/rest/api/1.0/migration/exports/{id}";
+        var encodedProjectPath = GetEncodedProjectPath(groupPath, repoSlug);
+        var url = $"{_gitlabBaseUrl}/api/v4/projects/{encodedProjectPath}/export";
 
-        var content = await _client.GetAsync(url);
-        var data = JObject.Parse(content);
+        var exportResponse = await _client.GetAsync(url);
+        var exportData = JObject.Parse(exportResponse);
 
         return (
-            (string)data["state"],
-            (string)data["progress"]["message"],
-            (int)data["progress"]["percentage"]
+            (string)exportData["export_status"],
+            (string)exportData["message"],
+            (string)exportData["_links"]?["api_url"]
         );
     }
 
-    public virtual async Task<IEnumerable<(int Id, string Key, string Name)>> GetProjects()
+    public virtual async Task<IEnumerable<(long Id, string Path, string Name)>> GetProjects(string groupPath)
     {
-        var url = $"{_gitlabBaseUrl}/rest/api/1.0/projects";
+        var encodedGroupPath = Uri.EscapeDataString(groupPath);
+        var url = $"{_gitlabBaseUrl}/api/v4/groups/{encodedGroupPath}/projects?simple=true&per_page=100";
+
         return await _client.GetAllAsync(url)
-            .Select(x => ((int)x["id"], (string)x["key"], (string)x["name"]))
+            .Select(x => ((long)x["id"], (string)x["path"], (string)x["name"]))
             .ToListAsync();
     }
 
-    public virtual async Task<(int Id, string Key, string Name)> GetProject(string projectKey)
+    public virtual async Task<(long Id, string FullPath, string Name)> GetGroup(string groupPath)
     {
-        var url = $"{_gitlabBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}";
-        var response = await _client.GetAsync(url);
+        var encodedGroupPath = groupPath.EscapeDataString();
+        var url = $"{_gitlabBaseUrl}/api/v4/groups/{encodedGroupPath}";
 
-        var project = JObject.Parse(response);
-        return ((int)project["id"], (string)project["key"], (string)project["name"]);
+        var groupResponse = await _client.GetAsync(url);
+        var groupData = JObject.Parse(groupResponse);
+
+        return (
+            (long)groupData["id"],
+            (string)groupData["full_path"],
+            (string)groupData["name"]
+        );
     }
 
-    public virtual async Task<IEnumerable<(int Id, string Slug, string Name)>> GetRepos(string projectKey)
+    public virtual async Task<IEnumerable<(long Id, string FullPath, string Name)>> GetGroups()
     {
-        var url = $"{_gitlabBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}/repos";
+        var url = $"{_gitlabBaseUrl}/api/v4/groups?per_page=100";
+
         return await _client.GetAllAsync(url)
-            .Select(x => ((int)x["id"], (string)x["slug"], (string)x["name"]))
+            .Select(x => ((long)x["id"], (string)x["full_path"], (string)x["name"]))
             .ToListAsync();
     }
 
-    public virtual async Task<bool> GetIsRepositoryArchived(string projectKey, string repo)
+    public virtual async Task<bool> GetIsProjectArchived(string groupPath, string repoSlug)
     {
-        var url = $"{_gitlabBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}/repos/{repo.EscapeDataString()}?fields=archived";
-        var response = await _client.GetAsync(url);
+        var encodedProjectPath = GetEncodedProjectPath(groupPath, repoSlug);
+        var url = $"{_gitlabBaseUrl}/api/v4/projects/{encodedProjectPath}?simple=true";
 
-        var data = JObject.Parse(response);
-        return (bool)data["archived"];
+        var projectResponse = await _client.GetAsync(url);
+        var projectData = JObject.Parse(projectResponse);
+
+        return (bool)projectData["archived"];
     }
 
-    public virtual async Task<IEnumerable<(int Id, string Name)>> GetRepositoryPullRequests(string projectKey, string repo)
+    public virtual async Task<DateTimeOffset?> GetRepositoryLatestCommitDate(string groupPath, string repoSlug)
     {
-        var url = $"{_gitlabBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}/repos/{repo.EscapeDataString()}/pull-requests?state=all";
-        return await _client.GetAllAsync(url)
-            .Select(x => ((int)x["id"], (string)x["name"]))
-            .ToListAsync();
-    }
+        var encodedProjectPath = GetEncodedProjectPath(groupPath, repoSlug);
+        var url = $"{_gitlabBaseUrl}/api/v4/projects/{encodedProjectPath}/repository/commits?per_page=1";
 
-    public virtual async Task<DateTime?> GetRepositoryLatestCommitDate(string projectKey, string repo)
-    {
-        var url = $"{_gitlabBaseUrl}/rest/api/1.0/projects/{projectKey.EscapeDataString()}/repos/{repo.EscapeDataString()}/commits?limit=1";
+        var commitsResponse = await _client.GetAsync(url);
+        var commitsData = JArray.Parse(commitsResponse);
+        var lastCommittedDate = (string)commitsData.First?["committed_date"];
 
-        try
-        {
-            var response = await _client.GetAsync(url);
-            var commit = JObject.Parse(response);
-
-            if (commit?["values"] == null || !commit["values"].Any())
-            {
-                return null;
-            }
-
-            var authorTimestamp = (long)commit["values"][0]["authorTimestamp"];
-            return DateTimeOffset.FromUnixTimeMilliseconds(authorTimestamp).DateTime;
-        }
-        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        if (string.IsNullOrWhiteSpace(lastCommittedDate))
         {
             return null;
         }
+
+        return DateTimeOffset.Parse(lastCommittedDate);
     }
 
-    public virtual async Task<(ulong repoSize, ulong attachmentsSize)> GetRepositoryAndAttachmentsSize(string projectKey, string repo, string gitlabUsername, string gitlabPassword)
+    public virtual async Task<(long RepositorySize, long AttachmentsSize)> GetRepositoryAndAttachmentsSize(string groupPath, string repoSlug)
     {
-        var url = $"{_gitlabBaseUrl}/projects/{projectKey.EscapeDataString()}/repos/{repo.EscapeDataString()}/sizes";
-        var response = await _client.GetAsync(url);
+        var encodedProjectPath = GetEncodedProjectPath(groupPath, repoSlug);
+        var url = $"{_gitlabBaseUrl}/api/v4/projects/{encodedProjectPath}?statistics=true";
 
-        var data = JObject.Parse(response);
+        var projectResponse = await _client.GetAsync(url);
+        var projectData = JObject.Parse(projectResponse);
+        var projectStatistics = (JObject)projectData["statistics"];
 
-        var repoSize = (ulong)data["repository"];
-        var attachmentsSize = (ulong)data["attachments"];
+        var repositorySize = (long)projectStatistics["repository_size"];
+        var attachmentsSize = (long)projectStatistics["uploads_size"];
 
-        return (repoSize, attachmentsSize);
+        return (repositorySize, attachmentsSize);
+    }
+
+    private static string GetEncodedProjectPath(string groupPath, string repoSlug)
+    {
+        var pathWithNamespace = $"{groupPath}/{repoSlug}";
+        return pathWithNamespace.EscapeDataString();
     }
 }
