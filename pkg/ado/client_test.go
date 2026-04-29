@@ -540,8 +540,8 @@ func TestGetRepos(t *testing.T) {
 		assert.Contains(t, r.URL.Path, "/org/proj/_apis/git/repositories")
 		w.WriteHeader(200)
 		fmt.Fprint(w, `{"value":[
-			{"id":"r1","name":"Repo1","size":"100","isDisabled":"false"},
-			{"id":"r2","name":"Repo2","size":"200","isDisabled":"true"}
+			{"id":"r1","name":"Repo1","size":100,"isDisabled":false},
+			{"id":"r2","name":"Repo2","size":200,"isDisabled":true}
 		]}`)
 	})
 
@@ -561,9 +561,9 @@ func TestGetEnabledRepos(t *testing.T) {
 	c, _ := testClient(t, func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
 		fmt.Fprint(w, `{"value":[
-			{"id":"r1","name":"Repo1","size":"100","isDisabled":"false"},
-			{"id":"r2","name":"Repo2","size":"200","isDisabled":"true"},
-			{"id":"r3","name":"Repo3","size":"50","isDisabled":"false"}
+			{"id":"r1","name":"Repo1","size":100,"isDisabled":false},
+			{"id":"r2","name":"Repo2","size":200,"isDisabled":true},
+			{"id":"r3","name":"Repo3","size":50,"isDisabled":false}
 		]}`)
 	})
 
