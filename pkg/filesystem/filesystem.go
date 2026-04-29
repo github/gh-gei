@@ -124,6 +124,29 @@ func (p *Provider) GetDirectoryName(path string) string {
 	return filepath.Dir(path)
 }
 
+// OpenRead opens a file for reading and returns an io.ReadSeekCloser and the file size
+func (p *Provider) OpenRead(path string) (io.ReadSeekCloser, int64, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, 0, err
+	}
+	info, err := file.Stat()
+	if err != nil {
+		file.Close()
+		return nil, 0, err
+	}
+	return file, info.Size(), nil
+}
+
+// DeleteIfExists deletes a file if it exists; no error if the file does not exist
+func (p *Provider) DeleteIfExists(path string) error {
+	err := os.Remove(path)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	return nil
+}
+
 // Combine joins path elements
 func (p *Provider) Combine(paths ...string) string {
 	return filepath.Join(paths...)
