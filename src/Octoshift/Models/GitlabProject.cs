@@ -1,6 +1,6 @@
 namespace Octoshift.Models;
 
-public record GitlabRepository
+public record GitlabProject
 {
     public string Id { get; init; }
     public string Name { get; init; }
