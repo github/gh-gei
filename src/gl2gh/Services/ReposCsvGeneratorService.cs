@@ -35,7 +35,7 @@ namespace OctoshiftCLI.GitlabToGithub
                 {
                     var url = $"{bbsServerUrl.TrimEnd('/')}/projects/{Uri.EscapeDataString(projectKey)}/repos/{Uri.EscapeDataString(repo.Slug)}";
                     var lastCommitDate = await gitlabApi.GetRepositoryLatestCommitDate(projectKey, repo.Slug);
-                    var (repoSize, attachmentsSize) = await gitlabApi.GetRepositoryAndAttachmentsSize(projectKey, repo.Slug, bbsUsername, bbsPassword);
+                    var (repoSize, attachmentsSize) = await gitlabApi.GetRepositoryAndAttachmentsSize(projectKey, repo.Slug);
                     var prCount = !minimal ? await inspector.GetRepositoryPullRequestCount(projectKey, repo.Slug) : 0;
 
                     var project = projectName.Replace(",", Uri.EscapeDataString(","));
