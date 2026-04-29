@@ -12,8 +12,8 @@ namespace OctoshiftCLI.GitlabToGithub
         private readonly OctoLogger _log;
         private readonly GitlabApi _gitlabApi;
 
-        private IList<(string, string)> _projects;
-        private readonly IDictionary<string, IList<GitlabRepository>> _repos = new Dictionary<string, IList<GitlabRepository>>();
+        private IList<(string, string)> _groups;
+        private readonly IDictionary<string, IList<GitlabProject>> _repos = new Dictionary<string, IList<GitlabProject>>();
         private readonly IDictionary<string, IDictionary<string, int>> _prCounts = new Dictionary<string, IDictionary<string, int>>();
 
         public GitlabInspectorService(OctoLogger log, GitlabApi gitlabApi)
@@ -22,73 +22,73 @@ namespace OctoshiftCLI.GitlabToGithub
             _gitlabApi = gitlabApi;
         }
 
-        public virtual async Task<IEnumerable<(string Key, string Name)>> GetProjects()
+        public virtual async Task<IEnumerable<(string Key, string Name)>> GetGroups()
         {
-            if (_projects is null)
+            if (_groups is null)
             {
-                _log.LogInformation($"Retrieving list of all Projects the user has access to...");
-                _projects = (await _gitlabApi.GetProjects())
-                    .Select(project => (project.Key, project.Name))
+                _log.LogInformation($"Retrieving list of all Groups the user has access to...");
+                _groups = (await _gitlabApi.GetGroups())
+                    .Select(group => (group.FullPath, group.Name))
                     .ToList();
             }
 
-            return _projects;
+            return _groups;
         }
 
-        public virtual async Task<(string Key, string Name)> GetProject(string project)
+        public virtual async Task<(string Key, string Name)> GetGroup(string groupPath)
         {
-            _log.LogInformation($"Retrieving Project...");
-            var (_, Key, Name) = await _gitlabApi.GetProject(project);
+            _log.LogInformation($"Retrieving Group...");
+            var (_, Key, Name) = await _gitlabApi.GetGroup(groupPath);
 
             return (Key, Name);
         }
 
-        public virtual async Task<IEnumerable<GitlabRepository>> GetRepos(string project)
+        public virtual async Task<IEnumerable<GitlabProject>> GetProjects(string groupPath)
         {
-            if (!_repos.TryGetValue(project, out var repos))
+            if (!_repos.TryGetValue(groupPath, out var repos))
             {
-                repos = (await _gitlabApi.GetRepos(project))
-                    .Select(repo => new GitlabRepository() { Name = repo.Name, Slug = repo.Slug })
+                repos = (await _gitlabApi.GetProjects(groupPath))
+                    .Select(repo => new GitlabProject() { Name = repo.Name, Path = repo.Path })
                     .ToList();
-                _repos.Add(project, repos);
+                _repos.Add(groupPath, repos);
             }
 
             return repos;
         }
 
-        public virtual async Task<int> GetRepoCount(string[] projects)
+        public virtual async Task<int> GetProjectCount(string[] groups)
         {
-            return await projects.Sum(async key => await GetRepoCount(key));
+            return await groups.Sum(async key => await GetProjectCount(key));
         }
 
-        public virtual async Task<int> GetRepoCount()
+        public virtual async Task<int> GetProjectCount()
         {
-            var projects = await GetProjects();
-            return await projects.Sum(async project => await GetRepoCount(project.Key));
+            var groups = await GetGroups();
+            return await groups.Sum(async group => await GetProjectCount(group.FullPath));
         }
 
-        public virtual async Task<int> GetRepoCount(string project)
+        public virtual async Task<int> GetProjectCount(string groupPath)
         {
-            return (await GetRepos(project)).Count();
+            return (await GetProjects(groupPath)).Count();
         }
 
-        public virtual async Task<int> GetPullRequestCount(string project)
+        public virtual async Task<int> GetPullRequestCount(string groupPath)
         {
-            var repos = await GetRepos(project);
-            return await repos.Sum(async repo => await GetRepositoryPullRequestCount(project, repo.Name));
+            var repos = await GetProjects(groupPath);
+            return await repos.Sum(async repo => await GetProjectPullRequestCount(groupPath, repo.Name));
         }
 
-        public virtual async Task<int> GetRepositoryPullRequestCount(string project, string repo)
+        public virtual async Task<int> GetProjectPullRequestCount(string groupPath, string repo)
         {
-            if (!_prCounts.ContainsKey(project))
+            if (!_prCounts.ContainsKey(groupPath))
             {
-                _prCounts.Add(project, new Dictionary<string, int>());
+                _prCounts.Add(groupPath, new Dictionary<string, int>());
             }
 
-            if (!_prCounts[project].TryGetValue(repo, out var prCount))
+            if (!_prCounts[groupPath].TryGetValue(repo, out var prCount))
             {
-                prCount = (await _gitlabApi.GetRepositoryPullRequests(project, repo)).Count();
-                _prCounts[project][repo] = prCount;
+                prCount = (await _gitlabApi.GetProjectPullRequests(groupPath, repo)).Count();
+                _prCounts[groupPath][repo] = prCount;
             }
 
             return prCount;
