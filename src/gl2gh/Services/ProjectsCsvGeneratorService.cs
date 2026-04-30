@@ -25,7 +25,7 @@ namespace OctoshiftCLI.GitlabToGithub
             var result = new StringBuilder();
 
             result.Append("group-path,group-name,project,url,last-commit-date,repo-size-in-bytes,attachments-size-in-bytes");
-            result.AppendLine(!minimal ? ",is-archived,pr-count" : null);
+            result.AppendLine(!minimal ? ",is-archived,mr-count" : null);
 
             var groups = string.IsNullOrWhiteSpace(gitlabGroup) ? await inspector.GetGroups() : new[] { await inspector.GetGroup(gitlabGroup) };
 
@@ -36,7 +36,7 @@ namespace OctoshiftCLI.GitlabToGithub
                     var url = $"{gitlabServerUrl.TrimEnd('/')}/{groupPath}/{project.Path}";
                     var lastCommitDate = await gitlabApi.GetRepositoryLatestCommitDate(groupPath, project.Path);
                     var (repoSize, attachmentsSize) = await gitlabApi.GetRepositoryAndAttachmentsSize(groupPath, project.Path);
-                    var prCount = !minimal ? await inspector.GetRepositoryPullRequestCount(groupPath, project.Path) : 0;
+                    var mrCount = !minimal ? await inspector.GetRepositoryMergeRequestCount(groupPath, project.Path) : 0;
 
                     var group = groupName.Replace(",", Uri.EscapeDataString(","));
                     var projectName = project.Name.Replace(",", Uri.EscapeDataString(","));
@@ -53,13 +53,13 @@ namespace OctoshiftCLI.GitlabToGithub
                     try
                     {
                         var archived = !minimal && await gitlabApi.GetIsRepositoryArchived(groupPath, project.Path);
-                        result.AppendLine(!minimal ? $",\"{archived}\",{prCount}" : null);
+                        result.AppendLine(!minimal ? $",\"{archived}\",{mrCount}" : null);
                     }
                     catch (ArgumentNullException)
                     {
                         // The archived field was introduced in BBS 6.0.0
                         result.Replace(",is-archived", null);
-                        result.AppendLine(!minimal ? $",{prCount}" : null);
+                        result.AppendLine(!minimal ? $",{mrCount}" : null);
                     }
                 }
             }
