@@ -16,7 +16,7 @@ namespace OctoshiftCLI.GitlabToGithub.Commands.InventoryReport
                              "Note: Expects BBS_USERNAME and BBS_PASSWORD env variables or --gitlab-username and --gitlab-password options to be set.")
         {
             AddOption(GitlabServerUrl);
-            AddOption(GitlabProject);
+            AddOption(GitlabGroup);
             AddOption(GitlabUsername);
             AddOption(GitlabPassword);
             AddOption(NoSslVerify);
@@ -29,8 +29,8 @@ namespace OctoshiftCLI.GitlabToGithub.Commands.InventoryReport
             description: "The full URL of the Bitbucket Server/Data Center. E.g. http://bitbucket.contoso.com:7990")
         { IsRequired = true };
 
-        public Option<string> GitlabProject { get; } = new(
-            name: "--gitlab-project",
+        public Option<string> GitlabGroup { get; } = new(
+            name: "--gitlab-group",
             description: "The Bitbucket project key. If not provided will iterate over all projects that the user has access to.");
 
         public Option<string> GitlabUsername { get; } = new(
