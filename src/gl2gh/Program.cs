@@ -42,7 +42,7 @@ namespace OctoshiftCLI.GitlabToGithub
                 .AddSingleton<VersionChecker>()
                 .AddSingleton<HttpDownloadServiceFactory>()
                 .AddSingleton<GroupsCsvGeneratorService>()
-                .AddSingleton<ReposCsvGeneratorService>()
+                .AddSingleton<ProjectsCsvGeneratorService>()
                 .AddSingleton<GitlabInspectorService>()
                 .AddSingleton<GitlabInspectorServiceFactory>()
                 .AddSingleton<FileSystemProvider>()
