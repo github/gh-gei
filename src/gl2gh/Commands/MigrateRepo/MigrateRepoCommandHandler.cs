@@ -168,13 +168,13 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         _log.LogInformation($"Export started. Export ID: {exportId}");
 
-        var (exportState, exportMessage, exportProgress) = await _gitlabApi.GetExport(exportId);
+        var (exportState, exportMessage, exportProgress) = await _gitlabApi.GetExport(args.GitlabGroup, args.GitlabProject);
 
         while (ExportState.IsInProgress(exportState))
         {
             _log.LogInformation($"Export status: {exportState}; {exportProgress}% complete");
             await Task.Delay(CHECK_EXPORT_STATUS_DELAY_IN_MILLISECONDS);
-            (exportState, exportMessage, exportProgress) = await _gitlabApi.GetExport(exportId);
+            (exportState, exportMessage, exportProgress) = await _gitlabApi.GetExport(args.GitlabGroup, args.GitlabProject);
         }
 
         if (ExportState.IsError(exportState))
