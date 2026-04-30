@@ -132,6 +132,17 @@ public class GitlabApi
         return (repositorySize, attachmentsSize);
     }
 
+    public virtual async Task<int> GetMergeRequestCount(string groupPath, string repoPath)
+    {
+        var encodedProjectPath = GetEncodedProjectPath(groupPath, repoPath);
+        var url = $"{_gitlabBaseUrl}/api/v4/projects/{encodedProjectPath}/merge_requests?state=all&per_page=1&page=1";
+
+        var mrResponse = await _client.GetAsyncHttpResponseMessage(url);
+        var mrTotal = mrResponse.Headers.GetValues("X-Total").Single();
+
+        return int.Parse(mrTotal);
+    }
+
     private static string GetEncodedProjectPath(string groupPath, string repoPath)
     {
         var pathWithNamespace = $"{groupPath}/{repoPath}";
