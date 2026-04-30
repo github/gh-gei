@@ -79,22 +79,22 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
             content.AppendLine(VALIDATE_SMB_PASSWORD);
         }
 
-        var projects = args.GitlabProject.HasValue()
-            ? [args.GitlabProject]
-            : (await _gitlabApi.GetProjects()).Select(x => x.Key);
+        var groups = args.GitlabGroup.HasValue()
+            ? [args.GitlabGroup]
+            : (await _gitlabApi.GetGroups()).Select(x => x.Path);
 
-        foreach (var projectKey in projects)
+        foreach (var groupPath in groups)
         {
-            _log.LogInformation($"Project: {projectKey}");
+            _log.LogInformation($"Group: {groupPath}");
 
             content.AppendLine();
-            content.AppendLine($"# =========== Project: {projectKey} ===========");
+            content.AppendLine($"# =========== Group: {groupPath} ===========");
 
-            var repos = await _gitlabApi.GetRepos(projectKey);
+            var repos = await _gitlabApi.GetRepos(groupPath);
 
             if (!repos.Any())
             {
-                content.AppendLine("# Skipping this project because it has no git repos.");
+                content.AppendLine("# Skipping this group because it has no git repos.");
                 continue;
             }
 
@@ -104,7 +104,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
             {
                 _log.LogInformation($"  Repo: {repoName}");
 
-                content.AppendLine(Exec(MigrateGithubRepoScript(args, projectKey, repoSlug, true)));
+                content.AppendLine(Exec(MigrateGithubRepoScript(args, groupPath, repoSlug, true)));
             }
         }
 
@@ -115,7 +115,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
     {
         var bbsServerUrlOption = $" --bbs-server-url \"{args.GitlabServerUrl}\"";
         var bbsUsernameOption = args.GitlabUsername.HasValue() ? $" --bbs-username \"{args.GitlabUsername}\"" : "";
-        var bbsProjectOption = $" --bbs-project \"{bbsProjectKey}\"";
+        var bbsProjectOption = $" --bbs-group \"{bbsProjectKey}\"";
         var bbsRepoOption = $" --bbs-repo \"{bbsRepoSlug}\"";
         var githubOrgOption = $" --github-org \"{args.GithubOrg}\"";
         var githubRepoOption = $" --github-repo \"{GetGithubRepoName(bbsProjectKey, bbsRepoSlug)}\"";
