@@ -58,7 +58,7 @@ public class MigrateRepoCommandArgs : CommandArgs
     {
         if (!GitlabServerUrl.HasValue() && !ArchiveUrl.HasValue() && !ArchivePath.HasValue())
         {
-            throw new OctoshiftCliException("Either --bbs-server-url, --archive-path, or --archive-url must be specified.");
+            throw new OctoshiftCliException("Either --gitlab-server-url, --archive-path, or --archive-url must be specified.");
         }
 
         if (ArchivePath.HasValue() && ArchiveUrl.HasValue())
@@ -96,7 +96,7 @@ public class MigrateRepoCommandArgs : CommandArgs
     {
         if (GitlabUsername.HasValue() || GitlabPassword.HasValue())
         {
-            throw new OctoshiftCliException("--bbs-username and --bbs-password cannot be provided with --archive-path or --archive-url.");
+            throw new OctoshiftCliException("--gitlab-username and --gitlab-password cannot be provided with --archive-path or --archive-url.");
         }
 
         if (NoSslVerify)
@@ -123,12 +123,12 @@ public class MigrateRepoCommandArgs : CommandArgs
     {
         if (Kerberos && (GitlabUsername.HasValue() || GitlabPassword.HasValue()))
         {
-            throw new OctoshiftCliException("--bbs-username and --bbs-password cannot be provided with --kerberos.");
+            throw new OctoshiftCliException("--gitlab-username and --gitlab-password cannot be provided with --kerberos.");
         }
 
         if (GitlabGroup.IsNullOrWhiteSpace() || GitlabProject.IsNullOrWhiteSpace())
         {
-            throw new OctoshiftCliException("Both --bbs-group and --bbs-project must be provided.");
+            throw new OctoshiftCliException("Both --gitlab-group and --gitlab-project must be provided.");
         }
     }
 
