@@ -47,7 +47,8 @@ public class GitlabClient
 
     public virtual async Task<string> GetAsync(string url)
     {
-        return await _retryPolicy.Retry(async () => await SendAsync(HttpMethod.Get, url));
+        using var response = await _retryPolicy.Retry(async () => await SendAsync(HttpMethod.Get, url));
+        return await response.Content.ReadAsStringAsync();
     }
 
     public virtual async IAsyncEnumerable<JToken> GetAllAsync(string url)
@@ -69,13 +70,26 @@ public class GitlabClient
         }
     }
 
-    public virtual async Task<string> PostAsync(string url, object body) => await SendAsync(HttpMethod.Post, url, body);
+    public virtual async Task<HttpResponseMessage> GetAsyncHttpResponseMessage(string url)
+    {
+        return await _retryPolicy.Retry(async () => await SendAsync(HttpMethod.Get, url));
+    }
 
-    public virtual async Task<string> DeleteAsync(string url) => await SendAsync(HttpMethod.Delete, url);
+    public virtual async Task<string> PostAsync(string url, object body)
+    {
+        using var response = await _retryPolicy.Retry(async () => await SendAsync(HttpMethod.Post, url, body));
+        return await response.Content.ReadAsStringAsync();
+    }
+
+    public virtual async Task<string> DeleteAsync(string url)
+    {
+        using var response = await _retryPolicy.Retry(async () => await SendAsync(HttpMethod.Delete, url));
+        return await response.Content.ReadAsStringAsync();
+    }
 
     private async Task<string> GetWithPagination(string url, int start = 0, int limit = DEFAULT_PAGE_SIZE) => await GetAsync(AddPaginationParams(url, start, limit));
 
-    private async Task<string> SendAsync(HttpMethod httpMethod, string url, object body = null)
+    private async Task<HttpResponseMessage> SendAsync(HttpMethod httpMethod, string url, object body = null)
     {
         _log.LogVerbose($"HTTP {httpMethod}: {url}");
 
@@ -99,7 +113,7 @@ public class GitlabClient
 
         response.EnsureSuccessStatusCode();
 
-        return content;
+        return response;
     }
 
     private string AddPaginationParams(string url, int start, int limit)
