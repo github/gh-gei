@@ -33,8 +33,8 @@ public class MigrateRepoCommandArgs : CommandArgs
     public bool Kerberos { get; set; }
 
     public string GitlabServerUrl { get; set; }
+    public string GitlabGroup { get; set; }
     public string GitlabProject { get; set; }
-    public string GitlabRepo { get; set; }
     public string GitlabUsername { get; set; }
     [Secret]
     public string GitlabPassword { get; set; }
@@ -126,9 +126,9 @@ public class MigrateRepoCommandArgs : CommandArgs
             throw new OctoshiftCliException("--bbs-username and --bbs-password cannot be provided with --kerberos.");
         }
 
-        if (GitlabProject.IsNullOrWhiteSpace() || GitlabRepo.IsNullOrWhiteSpace())
+        if (GitlabGroup.IsNullOrWhiteSpace() || GitlabProject.IsNullOrWhiteSpace())
         {
-            throw new OctoshiftCliException("Both --bbs-project and --bbs-repo must be provided.");
+            throw new OctoshiftCliException("Both --bbs-group and --bbs-project must be provided.");
         }
     }
 
