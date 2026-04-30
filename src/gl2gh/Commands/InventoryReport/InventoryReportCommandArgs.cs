@@ -5,7 +5,7 @@ namespace OctoshiftCLI.GitlabToGithub.Commands.InventoryReport
     public class InventoryReportCommandArgs : CommandArgs
     {
         public string GitlabServerUrl { get; set; }
-        public string GitlabProject { get; set; }
+        public string GitlabGroup { get; set; }
         public string GitlabUsername { get; set; }
         [Secret]
         public string GitlabPassword { get; set; }
