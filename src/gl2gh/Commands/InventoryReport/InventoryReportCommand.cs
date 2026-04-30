@@ -69,7 +69,7 @@ namespace OctoshiftCLI.GitlabToGithub.Commands.InventoryReport
             var gitlabApi = gitlabApiFactory.Create(args.GitlabServerUrl, args.GitlabUsername, args.GitlabPassword, args.NoSslVerify);
             var bbsInspectorServiceFactory = sp.GetRequiredService<GitlabInspectorServiceFactory>();
             var bbsInspectorService = bbsInspectorServiceFactory.Create(gitlabApi);
-            var projectsCsvGeneratorService = sp.GetRequiredService<ProjectsCsvGeneratorService>();
+            var projectsCsvGeneratorService = sp.GetRequiredService<GroupsCsvGeneratorService>();
             var reposCsvGeneratorService = sp.GetRequiredService<ReposCsvGeneratorService>();
 
             return new InventoryReportCommandHandler(

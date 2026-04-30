@@ -14,20 +14,20 @@ public class InventoryReportCommandHandler : ICommandHandler<InventoryReportComm
     private readonly OctoLogger _log;
     private readonly GitlabApi _gitlabApi;
     private readonly GitlabInspectorService _bbsInspectorService;
-    private readonly ProjectsCsvGeneratorService _projectsCsvGenerator;
+    private readonly GroupsCsvGeneratorService _groupsCsvGenerator;
     private readonly ReposCsvGeneratorService _reposCsvGenerator;
 
     public InventoryReportCommandHandler(
         OctoLogger log,
         GitlabApi gitlabApi,
         GitlabInspectorService bbsInspectorService,
-        ProjectsCsvGeneratorService projectsCsvGeneratorService,
+        GroupsCsvGeneratorService groupsCsvGeneratorService,
         ReposCsvGeneratorService reposCsvGeneratorService)
     {
         _log = log;
         _gitlabApi = gitlabApi;
         _bbsInspectorService = bbsInspectorService;
-        _projectsCsvGenerator = projectsCsvGeneratorService;
+        _groupsCsvGenerator = groupsCsvGeneratorService;
         _reposCsvGenerator = reposCsvGeneratorService;
     }
 
@@ -54,8 +54,8 @@ public class InventoryReportCommandHandler : ICommandHandler<InventoryReportComm
         _log.LogInformation($"Found {repoCount} Repos");
 
         _log.LogInformation("Generating data for projects.csv...");
-        var projectsCsvText = await _projectsCsvGenerator.Generate(args.GitlabServerUrl, args.GitlabUsername, args.GitlabPassword, args.NoSslVerify, args.GitlabProject, args.Minimal);
-        await WriteToFile("projects.csv", projectsCsvText);
+        var groupsCsvText = await _groupsCsvGenerator.Generate(args.GitlabServerUrl, args.GitlabUsername, args.GitlabPassword, args.NoSslVerify, args.GitlabProject, args.Minimal);
+        await WriteToFile("projects.csv", groupsCsvText);
         _log.LogSuccess("projects.csv generated");
 
         _log.LogInformation("Generating repos.csv...");
