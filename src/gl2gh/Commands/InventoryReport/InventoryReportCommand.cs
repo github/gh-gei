@@ -13,7 +13,7 @@ namespace OctoshiftCLI.GitlabToGithub.Commands.InventoryReport
                 name: "inventory-report",
                 description: "Generates several CSV files containing lists of BBS projects and repos. Useful for planning large migrations. Personal repositories owned by individual users will not be included." +
                              Environment.NewLine +
-                             "Note: Expects BBS_USERNAME and BBS_PASSWORD env variables or --bbs-username and --bbs-password options to be set.")
+                             "Note: Expects BBS_USERNAME and BBS_PASSWORD env variables or --gitlab-username and --gitlab-password options to be set.")
         {
             AddOption(GitlabServerUrl);
             AddOption(GitlabProject);
@@ -25,21 +25,21 @@ namespace OctoshiftCLI.GitlabToGithub.Commands.InventoryReport
         }
 
         public Option<string> GitlabServerUrl { get; } = new(
-            name: "--bbs-server-url",
+            name: "--gitlab-server-url",
             description: "The full URL of the Bitbucket Server/Data Center. E.g. http://bitbucket.contoso.com:7990")
         { IsRequired = true };
 
         public Option<string> GitlabProject { get; } = new(
-            name: "--bbs-project",
+            name: "--gitlab-project",
             description: "The Bitbucket project key. If not provided will iterate over all projects that the user has access to.");
 
         public Option<string> GitlabUsername { get; } = new(
-            name: "--bbs-username",
+            name: "--gitlab-username",
             description: "The Bitbucket username of a user with site admin privileges. If not set will be read from BBS_USERNAME environment variable.");
 
         public Option<string> GitlabPassword { get; } = new(
-            name: "--bbs-password",
-            description: "The Bitbucket password of the user specified by --bbs-username. If not set will be read from BBS_PASSWORD environment variable.");
+            name: "--gitlab-password",
+            description: "The Bitbucket password of the user specified by --gitlab-username. If not set will be read from BBS_PASSWORD environment variable.");
 
         public Option<bool> NoSslVerify { get; } = new(
             name: "--no-ssl-verify",
@@ -67,15 +67,15 @@ namespace OctoshiftCLI.GitlabToGithub.Commands.InventoryReport
             var log = sp.GetRequiredService<OctoLogger>();
             var gitlabApiFactory = sp.GetRequiredService<GitlabApiFactory>();
             var gitlabApi = gitlabApiFactory.Create(args.GitlabServerUrl, args.GitlabUsername, args.GitlabPassword, args.NoSslVerify);
-            var bbsInspectorServiceFactory = sp.GetRequiredService<GitlabInspectorServiceFactory>();
-            var bbsInspectorService = bbsInspectorServiceFactory.Create(gitlabApi);
+            var gitlabInspectorServiceFactory = sp.GetRequiredService<GitlabInspectorServiceFactory>();
+            var gitlabInspectorService = gitlabInspectorServiceFactory.Create(gitlabApi);
             var groupsCsvGeneratorService = sp.GetRequiredService<GroupsCsvGeneratorService>();
             var projectsCsvGeneratorService = sp.GetRequiredService<ProjectsCsvGeneratorService>();
 
             return new InventoryReportCommandHandler(
                 log,
                 gitlabApi,
-                bbsInspectorService,
+                gitlabInspectorService,
                 groupsCsvGeneratorService,
                 projectsCsvGeneratorService);
         }
