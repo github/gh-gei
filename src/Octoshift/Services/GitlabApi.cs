@@ -29,9 +29,9 @@ public class GitlabApi
         return (string)JObject.Parse(content)["version"];
     }
 
-    public virtual async Task<long> StartExport(string groupPath, string repoSlug)
+    public virtual async Task<long> StartExport(string groupPath, string repoPath)
     {
-        var encodedProjectPath = GetEncodedProjectPath(groupPath, repoSlug);
+        var encodedProjectPath = GetEncodedProjectPath(groupPath, repoPath);
         var url = $"{_gitlabBaseUrl}/api/v4/projects/{encodedProjectPath}/export";
 
         var exportResponse = await _client.PostAsync(url, new { });
@@ -40,9 +40,9 @@ public class GitlabApi
         return (long)exportData["id"];
     }
 
-    public virtual async Task<(string ExportStatus, string Message, string DownloadUrl)> GetExport(string groupPath, string repoSlug)
+    public virtual async Task<(string ExportStatus, string Message, string DownloadUrl)> GetExport(string groupPath, string repoPath)
     {
-        var encodedProjectPath = GetEncodedProjectPath(groupPath, repoSlug);
+        var encodedProjectPath = GetEncodedProjectPath(groupPath, repoPath);
         var url = $"{_gitlabBaseUrl}/api/v4/projects/{encodedProjectPath}/export";
 
         var exportResponse = await _client.GetAsync(url);
@@ -89,9 +89,9 @@ public class GitlabApi
             .ToListAsync();
     }
 
-    public virtual async Task<bool> GetIsProjectArchived(string groupPath, string repoSlug)
+    public virtual async Task<bool> GetIsProjectArchived(string groupPath, string repoPath)
     {
-        var encodedProjectPath = GetEncodedProjectPath(groupPath, repoSlug);
+        var encodedProjectPath = GetEncodedProjectPath(groupPath, repoPath);
         var url = $"{_gitlabBaseUrl}/api/v4/projects/{encodedProjectPath}?simple=true";
 
         var projectResponse = await _client.GetAsync(url);
@@ -100,9 +100,9 @@ public class GitlabApi
         return (bool)projectData["archived"];
     }
 
-    public virtual async Task<DateTimeOffset?> GetRepositoryLatestCommitDate(string groupPath, string repoSlug)
+    public virtual async Task<DateTimeOffset?> GetRepositoryLatestCommitDate(string groupPath, string repoPath)
     {
-        var encodedProjectPath = GetEncodedProjectPath(groupPath, repoSlug);
+        var encodedProjectPath = GetEncodedProjectPath(groupPath, repoPath);
         var url = $"{_gitlabBaseUrl}/api/v4/projects/{encodedProjectPath}/repository/commits?per_page=1";
 
         var commitsResponse = await _client.GetAsync(url);
@@ -117,9 +117,9 @@ public class GitlabApi
         return DateTimeOffset.Parse(lastCommittedDate);
     }
 
-    public virtual async Task<(long RepositorySize, long AttachmentsSize)> GetRepositoryAndAttachmentsSize(string groupPath, string repoSlug)
+    public virtual async Task<(long RepositorySize, long AttachmentsSize)> GetRepositoryAndAttachmentsSize(string groupPath, string repoPath)
     {
-        var encodedProjectPath = GetEncodedProjectPath(groupPath, repoSlug);
+        var encodedProjectPath = GetEncodedProjectPath(groupPath, repoPath);
         var url = $"{_gitlabBaseUrl}/api/v4/projects/{encodedProjectPath}?statistics=true";
 
         var projectResponse = await _client.GetAsync(url);
@@ -132,9 +132,9 @@ public class GitlabApi
         return (repositorySize, attachmentsSize);
     }
 
-    private static string GetEncodedProjectPath(string groupPath, string repoSlug)
+    private static string GetEncodedProjectPath(string groupPath, string repoPath)
     {
-        var pathWithNamespace = $"{groupPath}/{repoSlug}";
+        var pathWithNamespace = $"{groupPath}/{repoPath}";
         return pathWithNamespace.EscapeDataString();
     }
 }
