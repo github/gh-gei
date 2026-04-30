@@ -15,14 +15,14 @@ public class InventoryReportCommandHandler : ICommandHandler<InventoryReportComm
     private readonly GitlabApi _gitlabApi;
     private readonly GitlabInspectorService _bbsInspectorService;
     private readonly GroupsCsvGeneratorService _groupsCsvGenerator;
-    private readonly ReposCsvGeneratorService _projectsCsvGenerator;
+    private readonly ProjectsCsvGeneratorService _projectsCsvGenerator;
 
     public InventoryReportCommandHandler(
         OctoLogger log,
         GitlabApi gitlabApi,
         GitlabInspectorService bbsInspectorService,
         GroupsCsvGeneratorService groupsCsvGeneratorService,
-        ReposCsvGeneratorService projectsCsvGeneratorService)
+        ProjectsCsvGeneratorService projectsCsvGeneratorService)
     {
         _log = log;
         _gitlabApi = gitlabApi;

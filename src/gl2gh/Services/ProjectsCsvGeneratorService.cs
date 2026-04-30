@@ -5,12 +5,12 @@ using OctoshiftCLI.GitlabToGithub.Factories;
 
 namespace OctoshiftCLI.GitlabToGithub
 {
-    public class ReposCsvGeneratorService
+    public class ProjectsCsvGeneratorService
     {
         private readonly GitlabInspectorServiceFactory _gitlabInspectorServiceFactory;
         private readonly GitlabApiFactory _gitlabApiFactory;
 
-        public ReposCsvGeneratorService(GitlabInspectorServiceFactory gitlabInspectorServiceFactory, GitlabApiFactory gitlabApiFactory)
+        public ProjectsCsvGeneratorService(GitlabInspectorServiceFactory gitlabInspectorServiceFactory, GitlabApiFactory gitlabApiFactory)
         {
             _gitlabInspectorServiceFactory = gitlabInspectorServiceFactory;
             _gitlabApiFactory = gitlabApiFactory;
