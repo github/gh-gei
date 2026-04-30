@@ -12,7 +12,7 @@ public class GenerateScriptCommandArgs : CommandArgs
     public string GitlabUsername { get; set; }
     [Secret]
     public string GitlabPassword { get; set; }
-    public string GitlabProject { get; set; }
+    public string GitlabGroup { get; set; }
     public string GitlabSharedHome { get; set; }
     public string ArchiveDownloadHost { get; set; }
     public string SshUser { get; set; }
