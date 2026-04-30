@@ -90,7 +90,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
             content.AppendLine();
             content.AppendLine($"# =========== Group: {groupPath} ===========");
 
-            var repos = await _gitlabApi.GetRepos(groupPath);
+            var repos = await _gitlabApi.GetProjects(groupPath);
 
             if (!repos.Any())
             {
