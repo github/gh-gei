@@ -164,7 +164,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private async Task<long> GenerateArchive(MigrateRepoCommandArgs args)
     {
-        var exportId = await _gitlabApi.StartExport(args.GitlabProject, args.GitlabRepo);
+        var exportId = await _gitlabApi.StartExport(args.GitlabGroup, args.GitlabProject);
 
         _log.LogInformation($"Export started. Export ID: {exportId}");
 
@@ -250,7 +250,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         archiveUrl ??= args.ArchiveUrl;
 
-        var bbsRepoUrl = GetGitlabRepoUrl(args);
+        var bbsRepoUrl = GetGitlabProjectUrl(args);
 
         args.GithubPat ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
         var githubOrgId = await _githubApi.GetOrganizationId(args.GithubOrg);
@@ -313,10 +313,10 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private string GetSmbPassword(MigrateRepoCommandArgs args) => args.SmbPassword.HasValue() ? args.SmbPassword : _environmentVariableProvider.SmbPassword(false);
 
-    private string GetGitlabRepoUrl(MigrateRepoCommandArgs args)
+    private string GetGitlabProjectUrl(MigrateRepoCommandArgs args)
     {
-        return args.GitlabServerUrl.HasValue() && args.GitlabProject.HasValue() && args.GitlabRepo.HasValue()
-            ? $"{args.GitlabServerUrl.TrimEnd('/')}/projects/{args.GitlabProject}/repos/{args.GitlabRepo}/browse"
+        return args.GitlabServerUrl.HasValue() && args.GitlabGroup.HasValue() && args.GitlabProject.HasValue()
+            ? $"{args.GitlabServerUrl.TrimEnd('/')}/projects/{args.GitlabGroup}/repos/{args.GitlabProject}/browse"
             : "https://not-used";
     }
 
