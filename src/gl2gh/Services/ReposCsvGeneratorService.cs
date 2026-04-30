@@ -7,52 +7,52 @@ namespace OctoshiftCLI.GitlabToGithub
 {
     public class ReposCsvGeneratorService
     {
-        private readonly GitlabInspectorServiceFactory _bbsInspectorServiceFactory;
+        private readonly GitlabInspectorServiceFactory _gitlabInspectorServiceFactory;
         private readonly GitlabApiFactory _gitlabApiFactory;
 
-        public ReposCsvGeneratorService(GitlabInspectorServiceFactory bbsInspectorServiceFactory, GitlabApiFactory gitlabApiFactory)
+        public ReposCsvGeneratorService(GitlabInspectorServiceFactory gitlabInspectorServiceFactory, GitlabApiFactory gitlabApiFactory)
         {
-            _bbsInspectorServiceFactory = bbsInspectorServiceFactory;
+            _gitlabInspectorServiceFactory = gitlabInspectorServiceFactory;
             _gitlabApiFactory = gitlabApiFactory;
         }
 
-        public virtual async Task<string> Generate(string bbsServerUrl, string bbsUsername, string bbsPassword, bool noSslVerify, string bbsProject = "", bool minimal = false)
+        public virtual async Task<string> Generate(string gitlabServerUrl, string gitlabUsername, string gitlabPassword, bool noSslVerify, string gitlabGroup = "", bool minimal = false)
         {
-            bbsServerUrl = bbsServerUrl ?? throw new ArgumentNullException(nameof(bbsServerUrl));
+            gitlabServerUrl = gitlabServerUrl ?? throw new ArgumentNullException(nameof(gitlabServerUrl));
 
-            var gitlabApi = _gitlabApiFactory.Create(bbsServerUrl, bbsUsername, bbsPassword, noSslVerify);
-            var inspector = _bbsInspectorServiceFactory.Create(gitlabApi);
+            var gitlabApi = _gitlabApiFactory.Create(gitlabServerUrl, gitlabUsername, gitlabPassword, noSslVerify);
+            var inspector = _gitlabInspectorServiceFactory.Create(gitlabApi);
             var result = new StringBuilder();
 
-            result.Append("project-key,project-name,repo,url,last-commit-date,repo-size-in-bytes,attachments-size-in-bytes");
+            result.Append("group-path,group-name,project,url,last-commit-date,repo-size-in-bytes,attachments-size-in-bytes");
             result.AppendLine(!minimal ? ",is-archived,pr-count" : null);
 
-            var projects = string.IsNullOrWhiteSpace(bbsProject) ? await inspector.GetProjects() : new[] { await inspector.GetProject(bbsProject) };
+            var groups = string.IsNullOrWhiteSpace(gitlabGroup) ? await inspector.GetGroups() : new[] { await inspector.GetGroup(gitlabGroup) };
 
-            foreach (var (projectKey, projectName) in projects)
+            foreach (var (groupPath, groupName) in groups)
             {
-                foreach (var repo in await inspector.GetRepos(projectKey))
+                foreach (var project in await inspector.GetProjects(groupPath))
                 {
-                    var url = $"{bbsServerUrl.TrimEnd('/')}/projects/{Uri.EscapeDataString(projectKey)}/repos/{Uri.EscapeDataString(repo.Slug)}";
-                    var lastCommitDate = await gitlabApi.GetRepositoryLatestCommitDate(projectKey, repo.Slug);
-                    var (repoSize, attachmentsSize) = await gitlabApi.GetRepositoryAndAttachmentsSize(projectKey, repo.Slug);
-                    var prCount = !minimal ? await inspector.GetRepositoryPullRequestCount(projectKey, repo.Slug) : 0;
+                    var url = $"{gitlabServerUrl.TrimEnd('/')}/{groupPath}/{project.Path}";
+                    var lastCommitDate = await gitlabApi.GetRepositoryLatestCommitDate(groupPath, project.Path);
+                    var (repoSize, attachmentsSize) = await gitlabApi.GetRepositoryAndAttachmentsSize(groupPath, project.Path);
+                    var prCount = !minimal ? await inspector.GetRepositoryPullRequestCount(groupPath, project.Path) : 0;
 
-                    var project = projectName.Replace(",", Uri.EscapeDataString(","));
-                    var repoName = repo.Name.Replace(",", Uri.EscapeDataString(","));
+                    var group = groupName.Replace(",", Uri.EscapeDataString(","));
+                    var projectName = project.Name.Replace(",", Uri.EscapeDataString(","));
 
                     if (lastCommitDate == null)
                     {
-                        result.Append($"\"{projectKey}\",\"{project}\",\"{repoName}\",\"{url}\",,\"{repoSize:D}\",\"{attachmentsSize:D}\"");
+                        result.Append($"\"{groupPath}\",\"{group}\",\"{projectName}\",\"{url}\",,\"{repoSize:D}\",\"{attachmentsSize:D}\"");
                     }
                     else
                     {
-                        result.Append($"\"{projectKey}\",\"{project}\",\"{repoName}\",\"{url}\",\"{lastCommitDate:yyyy-MM-dd hh:mm tt}\",\"{repoSize:D}\",\"{attachmentsSize:D}\"");
+                        result.Append($"\"{groupPath}\",\"{group}\",\"{projectName}\",\"{url}\",\"{lastCommitDate:yyyy-MM-dd hh:mm tt}\",\"{repoSize:D}\",\"{attachmentsSize:D}\"");
                     }
 
                     try
                     {
-                        var archived = !minimal && await gitlabApi.GetIsRepositoryArchived(projectKey, repo.Slug);
+                        var archived = !minimal && await gitlabApi.GetIsRepositoryArchived(groupPath, project.Path);
                         result.AppendLine(!minimal ? $",\"{archived}\",{prCount}" : null);
                     }
                     catch (ArgumentNullException)
