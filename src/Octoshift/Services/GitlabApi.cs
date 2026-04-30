@@ -58,7 +58,7 @@ public class GitlabApi
     public virtual async Task<IEnumerable<(long Id, string Path, string Name)>> GetProjects(string groupPath)
     {
         var encodedGroupPath = Uri.EscapeDataString(groupPath);
-        var url = $"{_gitlabBaseUrl}/api/v4/groups/{encodedGroupPath}/projects?simple=true&per_page=100";
+        var url = $"{_gitlabBaseUrl}/api/v4/groups/{encodedGroupPath}/projects?per_page=100";
 
         return await _client.GetAllAsync(url)
             .Select(x => ((long)x["id"], (string)x["path"], (string)x["name"]))
@@ -92,7 +92,7 @@ public class GitlabApi
     public virtual async Task<bool> GetIsProjectArchived(string groupPath, string repoPath)
     {
         var encodedProjectPath = GetEncodedProjectPath(groupPath, repoPath);
-        var url = $"{_gitlabBaseUrl}/api/v4/projects/{encodedProjectPath}?simple=true";
+        var url = $"{_gitlabBaseUrl}/api/v4/projects/{encodedProjectPath}";
 
         var projectResponse = await _client.GetAsync(url);
         var projectData = JObject.Parse(projectResponse);
