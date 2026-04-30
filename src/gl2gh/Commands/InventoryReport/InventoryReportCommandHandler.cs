@@ -15,20 +15,20 @@ public class InventoryReportCommandHandler : ICommandHandler<InventoryReportComm
     private readonly GitlabApi _gitlabApi;
     private readonly GitlabInspectorService _bbsInspectorService;
     private readonly GroupsCsvGeneratorService _groupsCsvGenerator;
-    private readonly ReposCsvGeneratorService _reposCsvGenerator;
+    private readonly ReposCsvGeneratorService _projectsCsvGenerator;
 
     public InventoryReportCommandHandler(
         OctoLogger log,
         GitlabApi gitlabApi,
         GitlabInspectorService bbsInspectorService,
         GroupsCsvGeneratorService groupsCsvGeneratorService,
-        ReposCsvGeneratorService reposCsvGeneratorService)
+        ReposCsvGeneratorService projectsCsvGeneratorService)
     {
         _log = log;
         _gitlabApi = gitlabApi;
         _bbsInspectorService = bbsInspectorService;
         _groupsCsvGenerator = groupsCsvGeneratorService;
-        _reposCsvGenerator = reposCsvGeneratorService;
+        _projectsCsvGenerator = projectsCsvGeneratorService;
     }
 
     public async Task Handle(InventoryReportCommandArgs args)
@@ -49,18 +49,18 @@ public class InventoryReportCommandHandler : ICommandHandler<InventoryReportComm
             _log.LogInformation($"Found {groups.Count()} Groups");
         }
 
-        _log.LogInformation("Finding Repos...");
-        var repoCount = string.IsNullOrWhiteSpace(args.GitlabGroup) ? await _bbsInspectorService.GetRepoCount(groupKeys) : await _bbsInspectorService.GetRepoCount(args.GitlabGroup);
-        _log.LogInformation($"Found {repoCount} Repos");
+        _log.LogInformation("Finding Projects...");
+        var projectCount = string.IsNullOrWhiteSpace(args.GitlabGroup) ? await _bbsInspectorService.GetProjectCount(groupKeys) : await _bbsInspectorService.GetProjectCount(args.GitlabGroup);
+        _log.LogInformation($"Found {projectCount} Projects");
 
         _log.LogInformation("Generating data for groups.csv...");
         var groupsCsvText = await _groupsCsvGenerator.Generate(args.GitlabServerUrl, args.GitlabUsername, args.GitlabPassword, args.NoSslVerify, args.GitlabGroup, args.Minimal);
         await WriteToFile("groups.csv", groupsCsvText);
         _log.LogSuccess("groups.csv generated");
 
-        _log.LogInformation("Generating repos.csv...");
-        var reposCsvText = await _reposCsvGenerator.Generate(args.GitlabServerUrl, args.GitlabUsername, args.GitlabPassword, args.NoSslVerify, args.GitlabGroup, args.Minimal);
-        await WriteToFile("repos.csv", reposCsvText);
-        _log.LogSuccess("repos.csv generated");
+        _log.LogInformation("Generating projects.csv...");
+        var projectsCsvText = await _projectsCsvGenerator.Generate(args.GitlabServerUrl, args.GitlabUsername, args.GitlabPassword, args.NoSslVerify, args.GitlabGroup, args.Minimal);
+        await WriteToFile("projects.csv", projectsCsvText);
+        _log.LogSuccess("projects.csv generated");
     }
 }
