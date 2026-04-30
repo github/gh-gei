@@ -36,7 +36,7 @@ namespace OctoshiftCLI.GitlabToGithub
                     var url = $"{gitlabServerUrl.TrimEnd('/')}/{groupPath}/{project.Path}";
                     var lastCommitDate = await gitlabApi.GetRepositoryLatestCommitDate(groupPath, project.Path);
                     var (repoSize, attachmentsSize) = await gitlabApi.GetRepositoryAndAttachmentsSize(groupPath, project.Path);
-                    var mrCount = !minimal ? await inspector.GetMergeRequestCount(groupPath, project.Path) : 0;
+                    var mrCount = !minimal ? await inspector.GetProjectMergeRequestCount(groupPath, project.Path) : 0;
 
                     var group = groupName.Replace(",", Uri.EscapeDataString(","));
                     var projectName = project.Name.Replace(",", Uri.EscapeDataString(","));
