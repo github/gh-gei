@@ -14,7 +14,7 @@ namespace OctoshiftCLI.GitlabToGithub
 
         private IList<(string, string)> _groups;
         private readonly IDictionary<string, IList<GitlabProject>> _repos = new Dictionary<string, IList<GitlabProject>>();
-        private readonly IDictionary<string, IDictionary<string, int>> _prCounts = new Dictionary<string, IDictionary<string, int>>();
+        private readonly IDictionary<string, IDictionary<string, int>> _mrCounts = new Dictionary<string, IDictionary<string, int>>();
 
         public GitlabInspectorService(OctoLogger log, GitlabApi gitlabApi)
         {
@@ -72,26 +72,26 @@ namespace OctoshiftCLI.GitlabToGithub
             return (await GetProjects(groupPath)).Count();
         }
 
-        public virtual async Task<int> GetPullRequestCount(string groupPath)
+        public virtual async Task<int> GetMergeRequestCount(string groupPath)
         {
             var repos = await GetProjects(groupPath);
-            return await repos.Sum(async repo => await GetProjectPullRequestCount(groupPath, repo.Name));
+            return await repos.Sum(async repo => await GetProjectMergeRequestCount(groupPath, repo.Name));
         }
 
-        public virtual async Task<int> GetProjectPullRequestCount(string groupPath, string repo)
+        public virtual async Task<int> GetProjectMergeRequestCount(string groupPath, string repo)
         {
-            if (!_prCounts.ContainsKey(groupPath))
+            if (!_mrCounts.ContainsKey(groupPath))
             {
-                _prCounts.Add(groupPath, new Dictionary<string, int>());
+                _mrCounts.Add(groupPath, new Dictionary<string, int>());
             }
 
-            if (!_prCounts[groupPath].TryGetValue(repo, out var prCount))
+            if (!_mrCounts[groupPath].TryGetValue(repo, out var mrCount))
             {
-                prCount = (await _gitlabApi.GetProjectPullRequests(groupPath, repo)).Count();
-                _prCounts[groupPath][repo] = prCount;
+                mrCount = (await _gitlabApi.GetProjectMergeRequests(groupPath, repo)).Count();
+                _mrCounts[groupPath][repo] = mrCount;
             }
 
-            return prCount;
+            return mrCount;
         }
     }
 }
