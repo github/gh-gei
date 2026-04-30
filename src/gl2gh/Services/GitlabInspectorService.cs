@@ -28,7 +28,7 @@ namespace OctoshiftCLI.GitlabToGithub
             {
                 _log.LogInformation($"Retrieving list of all Groups the user has access to...");
                 _groups = (await _gitlabApi.GetGroups())
-                    .Select(group => (group.FullPath, group.Name))
+                    .Select(group => (group.Path, group.Name))
                     .ToList();
             }
 
@@ -64,7 +64,7 @@ namespace OctoshiftCLI.GitlabToGithub
         public virtual async Task<int> GetProjectCount()
         {
             var groups = await GetGroups();
-            return await groups.Sum(async group => await GetProjectCount(group.FullPath));
+            return await groups.Sum(async group => await GetProjectCount(group.Path));
         }
 
         public virtual async Task<int> GetProjectCount(string groupPath)

@@ -65,7 +65,7 @@ public class GitlabApi
             .ToListAsync();
     }
 
-    public virtual async Task<(long Id, string FullPath, string Name)> GetGroup(string groupPath)
+    public virtual async Task<(long Id, string Path, string Name)> GetGroup(string groupPath)
     {
         var encodedGroupPath = groupPath.EscapeDataString();
         var url = $"{_gitlabBaseUrl}/api/v4/groups/{encodedGroupPath}";
@@ -80,7 +80,7 @@ public class GitlabApi
         );
     }
 
-    public virtual async Task<IEnumerable<(long Id, string FullPath, string Name)>> GetGroups()
+    public virtual async Task<IEnumerable<(long Id, string Path, string Name)>> GetGroups()
     {
         var url = $"{_gitlabBaseUrl}/api/v4/groups?per_page=100";
 
