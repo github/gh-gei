@@ -25,7 +25,7 @@ namespace OctoshiftCLI.GitlabToGithub
             var result = new StringBuilder();
 
             result.Append("project-key,project-name,url,repo-count");
-            result.AppendLine(!minimal ? ",pr-count" : null);
+            result.AppendLine(!minimal ? ",mr-count" : null);
 
             var projects = string.IsNullOrWhiteSpace(gitlabGroup) ? await inspector.GetGroups() : new[] { await inspector.GetGroup(gitlabGroup) };
 
@@ -33,12 +33,12 @@ namespace OctoshiftCLI.GitlabToGithub
             {
                 var url = $"{gitlabServerUrl.TrimEnd('/')}/projects/{Uri.EscapeDataString(Key)}";
                 var repoCount = await inspector.GetProjectCount(Key);
-                var prCount = !minimal ? await inspector.GetPullRequestCount(Key) : 0;
+                var mrCount = !minimal ? await inspector.GetMergeRequestCount(Key) : 0;
 
                 var projectName = Name.Replace(",", Uri.EscapeDataString(","));
 
                 result.Append($"\"{Key}\",\"{projectName}\",\"{url}\",{repoCount}");
-                result.AppendLine(!minimal ? $",{prCount}" : null);
+                result.AppendLine(!minimal ? $",{mrCount}" : null);
             }
 
             return result.ToString();
