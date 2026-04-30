@@ -50,17 +50,7 @@ namespace OctoshiftCLI.GitlabToGithub
                         result.Append($"\"{groupPath}\",\"{group}\",\"{projectName}\",\"{url}\",\"{lastCommitDate:yyyy-MM-dd hh:mm tt}\",\"{repoSize:D}\",\"{attachmentsSize:D}\"");
                     }
 
-                    try
-                    {
-                        var archived = !minimal && await gitlabApi.GetIsRepositoryArchived(groupPath, project.Path);
-                        result.AppendLine(!minimal ? $",\"{archived}\",{mrCount}" : null);
-                    }
-                    catch (ArgumentNullException)
-                    {
-                        // The archived field was introduced in BBS 6.0.0
-                        result.Replace(",is-archived", null);
-                        result.AppendLine(!minimal ? $",{mrCount}" : null);
-                    }
+                    result.AppendLine(!minimal ? $",\"{project.Archived}\",{mrCount}" : null);
                 }
             }
 
