@@ -40,17 +40,17 @@ public class InventoryReportCommandHandler : ICommandHandler<InventoryReportComm
 
         _log.LogInformation("Creating inventory report...");
 
-        var groupKeys = Array.Empty<string>();
+        var groupPaths = Array.Empty<string>();
         if (string.IsNullOrWhiteSpace(args.GitlabGroup))
         {
             _log.LogInformation("Finding Groups...");
             var groups = await _gitlabApi.GetGroups();
-            groupKeys = groups.Select(x => x.Key).ToArray();
+            groupPaths = groups.Select(x => x.Path).ToArray();
             _log.LogInformation($"Found {groups.Count()} Groups");
         }
 
         _log.LogInformation("Finding Projects...");
-        var projectCount = string.IsNullOrWhiteSpace(args.GitlabGroup) ? await _bbsInspectorService.GetProjectCount(groupKeys) : await _bbsInspectorService.GetProjectCount(args.GitlabGroup);
+        var projectCount = string.IsNullOrWhiteSpace(args.GitlabGroup) ? await _bbsInspectorService.GetProjectCount(groupPaths) : await _bbsInspectorService.GetProjectCount(args.GitlabGroup);
         _log.LogInformation($"Found {projectCount} Projects");
 
         _log.LogInformation("Generating data for groups.csv...");
