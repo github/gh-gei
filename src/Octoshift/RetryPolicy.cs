@@ -65,7 +65,7 @@ namespace OctoshiftCLI
         public async Task<T> Retry<T>(Func<Task<T>> func) => await CreateRetryPolicyForException<Exception>().ExecuteAsync(func);
 
         private AsyncRetryPolicy CreateRetryPolicyForException<TException>() where TException : Exception => Policy
-                .Handle<TException>()
+                .Handle<TException>(ex => IsRetryableException(ex))
                 .WaitAndRetryAsync(5, retry => retry * TimeSpan.FromMilliseconds(_retryInterval), (Exception ex, TimeSpan ts, Context ctx) =>
                 {
                     if (ex is HttpRequestException httpEx)
@@ -82,6 +82,27 @@ namespace OctoshiftCLI
                     }
                     _log?.LogVerbose("Retrying...");
                 });
+
+        private static bool IsRetryableException(Exception ex)
+        {
+            if (ex is OctoshiftCliException)
+            {
+                return false;
+            }
+
+            if (ex is not HttpRequestException httpEx)
+            {
+                return true;
+            }
+
+            if (httpEx.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                return true; // Let it through so the retry handler can throw OctoshiftCliException
+            }
+
+            // Retry on server errors (5xx) and network-level failures (null status code)
+            return httpEx.StatusCode is null || (int)httpEx.StatusCode >= 500;
+        }
 
         private void ThrowUnauthorizedException(HttpRequestException ex)
         {
