@@ -247,6 +247,9 @@ public sealed class GithubClientTests
         // Should NOT log "Server error detected" since 500 goes through generic retry
         _mockOctoLogger.Verify(m => m.LogWarning(It.Is<string>(s => s.Contains("Server error detected"))), Times.Never);
     }
+
+    [Fact]
+    public async Task GetAsync_Bubbles_UnAuthorized_Error()
     {
         // Arrange
         var handlerMock = new Mock<HttpMessageHandler>();
