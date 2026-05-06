@@ -3,7 +3,6 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using FluentAssertions;
-using OctoshiftCLI.Services;
 using Xunit;
 
 namespace OctoshiftCLI.Tests.Octoshift;
@@ -35,11 +34,9 @@ public sealed class RetryPolicyTests
         var result = await _retryPolicy.Retry(async () =>
         {
             callCount++;
-            if (callCount == 1)
-            {
-                throw new HttpRequestException("server error", null, statusCode);
-            }
-            return await Task.FromResult("success");
+            return callCount == 1
+                ? throw new HttpRequestException("server error", null, statusCode)
+                : await Task.FromResult("success");
         });
 
         // Assert
@@ -80,11 +77,9 @@ public sealed class RetryPolicyTests
         var result = await _retryPolicy.Retry(async () =>
         {
             callCount++;
-            if (callCount == 1)
-            {
-                throw new HttpRequestException("network error");
-            }
-            return await Task.FromResult("success");
+            return callCount == 1
+                ? throw new HttpRequestException("network error")
+                : await Task.FromResult("success");
         });
 
         // Assert
@@ -102,11 +97,9 @@ public sealed class RetryPolicyTests
         var result = await _retryPolicy.Retry(async () =>
         {
             callCount++;
-            if (callCount == 1)
-            {
-                throw new TimeoutException("timed out");
-            }
-            return await Task.FromResult("success");
+            return callCount == 1
+                ? throw new TimeoutException("timed out")
+                : await Task.FromResult("success");
         });
 
         // Assert
