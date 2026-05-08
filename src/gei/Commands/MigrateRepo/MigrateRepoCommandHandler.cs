@@ -247,7 +247,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
       bool keepArchive,
       bool useGithubStorage)
     {
-        var (gitArchiveUrl, metadataArchiveUrl, gitArchiveId, metadataArchiveId) = await _retryPolicy.Retry(
+        var (gitArchiveUrl, metadataArchiveUrl, gitArchiveId, metadataArchiveId) = await _retryPolicy.RetryOnAnyException(
             async () => await GenerateArchives(githubSourceOrg, sourceRepo, skipReleases, lockSourceRepo));
 
         if (!useGithubStorage && !blobCredentialsRequired)
