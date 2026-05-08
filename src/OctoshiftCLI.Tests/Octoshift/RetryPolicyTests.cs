@@ -56,7 +56,7 @@ public sealed class RetryPolicyTests
 
         // Act / Assert
         await FluentActions
-            .Invoking(async () => await _retryPolicy.Retry<string>(async () =>
+            .Invoking(async () => await _retryPolicy.Retry<string>(() =>
             {
                 callCount++;
                 throw new HttpRequestException("client error", null, statusCode);
@@ -115,7 +115,7 @@ public sealed class RetryPolicyTests
 
         // Act / Assert
         await FluentActions
-            .Invoking(async () => await _retryPolicy.Retry<string>(async () =>
+            .Invoking(async () => await _retryPolicy.Retry<string>(() =>
             {
                 callCount++;
                 throw new OctoshiftCliException("terminal error");
@@ -134,7 +134,7 @@ public sealed class RetryPolicyTests
 
         // Act / Assert
         await FluentActions
-            .Invoking(async () => await _retryPolicy.Retry<string>(async () =>
+            .Invoking(async () => await _retryPolicy.Retry<string>(() =>
             {
                 callCount++;
                 throw new HttpRequestException("unauthorized", null, HttpStatusCode.Unauthorized);
