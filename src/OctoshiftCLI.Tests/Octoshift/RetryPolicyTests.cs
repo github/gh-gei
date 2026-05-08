@@ -143,4 +143,64 @@ public sealed class RetryPolicyTests
             .ThrowAsync<OctoshiftCliException>()
             .WithMessage("*Unauthorized*");
     }
+
+    [Fact]
+    public async Task RetryOnAnyException_Retries_On_OctoshiftCliException()
+    {
+        // Arrange
+        var callCount = 0;
+
+        // Act
+        var result = await _retryPolicy.RetryOnAnyException(async () =>
+        {
+            callCount++;
+            return callCount == 1
+                ? throw new OctoshiftCliException("transient error")
+                : await Task.FromResult("success");
+        });
+
+        // Assert
+        result.Should().Be("success");
+        callCount.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task RetryOnAnyException_Retries_On_HttpRequestException()
+    {
+        // Arrange
+        var callCount = 0;
+
+        // Act
+        var result = await _retryPolicy.RetryOnAnyException(async () =>
+        {
+            callCount++;
+            return callCount == 1
+                ? throw new HttpRequestException("server error", null, HttpStatusCode.BadRequest)
+                : await Task.FromResult("success");
+        });
+
+        // Assert
+        result.Should().Be("success");
+        callCount.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task RetryOnAnyException_Retries_On_TimeoutException()
+    {
+        // Arrange
+        var callCount = 0;
+
+        // Act
+        var result = await _retryPolicy.RetryOnAnyException(async () =>
+        {
+            callCount++;
+            return callCount == 1
+                ? throw new TimeoutException("timed out")
+                : await Task.FromResult("success");
+        });
+
+        // Assert
+        result.Should().Be("success");
+        callCount.Should().Be(2);
+    }
 }

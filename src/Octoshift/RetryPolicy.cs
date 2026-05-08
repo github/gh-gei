@@ -64,6 +64,10 @@ namespace OctoshiftCLI
 
         public async Task<T> Retry<T>(Func<Task<T>> func) => await CreateRetryPolicyForException<Exception>().ExecuteAsync(func);
 
+        public async Task RetryOnAnyException(Func<Task> func) => await CreateRetryPolicyForAllExceptions().ExecuteAsync(func);
+
+        public async Task<T> RetryOnAnyException<T>(Func<Task<T>> func) => await CreateRetryPolicyForAllExceptions().ExecuteAsync(func);
+
         private AsyncRetryPolicy CreateRetryPolicyForException<TException>() where TException : Exception => Policy
                 .Handle<TException>(ex => IsRetryableException(ex))
                 .WaitAndRetryAsync(5, retry => retry * TimeSpan.FromMilliseconds(_retryInterval), (Exception ex, TimeSpan ts, Context ctx) =>
@@ -80,6 +84,14 @@ namespace OctoshiftCLI
                     {
                         _log?.LogVerbose(ex.ToString());
                     }
+                    _log?.LogVerbose("Retrying...");
+                });
+
+        private AsyncRetryPolicy CreateRetryPolicyForAllExceptions() => Policy
+                .Handle<Exception>()
+                .WaitAndRetryAsync(5, retry => retry * TimeSpan.FromMilliseconds(_retryInterval), (Exception ex, TimeSpan ts, Context ctx) =>
+                {
+                    _log?.LogVerbose(ex.ToString());
                     _log?.LogVerbose("Retrying...");
                 });
 
