@@ -22,7 +22,7 @@ namespace OctoshiftCLI.GitlabToGithub
             _gitlabApi = gitlabApi;
         }
 
-        public virtual async Task<IEnumerable<(string Key, string Name)>> GetGroups()
+        public virtual async Task<IEnumerable<(string Path, string Name)>> GetGroups()
         {
             if (_groups is null)
             {
