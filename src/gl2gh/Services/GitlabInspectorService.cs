@@ -87,7 +87,7 @@ namespace OctoshiftCLI.GitlabToGithub
 
             if (!_mrCounts[groupPath].TryGetValue(repo, out var mrCount))
             {
-                mrCount = (await _gitlabApi.GetProjectMergeRequests(groupPath, repo)).Count();
+                mrCount = await _gitlabApi.GetMergeRequestCount(groupPath, repo);
                 _mrCounts[groupPath][repo] = mrCount;
             }
 
