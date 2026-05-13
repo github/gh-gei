@@ -40,7 +40,7 @@ public class GitlabApi
         return (long)exportData["id"];
     }
 
-    public virtual async Task<(string ExportStatus, string Message, string DownloadUrl)> GetExport(string groupPath, string projectPath)
+    public virtual async Task<(string ExportStatus, string DownloadUrl)> GetExport(string groupPath, string projectPath)
     {
         var encodedProjectPath = GetEncodedProjectPath(groupPath, projectPath);
         var url = $"{_gitlabBaseUrl}/api/v4/projects/{encodedProjectPath}/export";
@@ -50,7 +50,6 @@ public class GitlabApi
 
         return (
             (string)exportData["export_status"],
-            (string)exportData["message"],
             (string)exportData["_links"]?["api_url"]
         );
     }
