@@ -18,7 +18,6 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         AddOption(GitlabServerUrl);
         AddOption(GithubOrg);
         AddOption(TargetApiUrl);
-        AddOption(GitlabUsername);
         AddOption(GitlabPassword);
         AddOption(GitlabProject);
         AddOption(GitlabSharedHome);
@@ -42,10 +41,6 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         name: "--bbs-server-url",
         description: "The full URL of the Bitbucket Server/Data Center to migrate from.")
     { IsRequired = true };
-
-    public Option<string> GitlabUsername { get; } = new(
-        name: "--bbs-username",
-        description: "The Bitbucket username of a user with site admin privileges to get the list of all projects and their repos. If not set will be read from BBS_USERNAME environment variable.");
 
     public Option<string> GitlabPassword { get; } = new(
         name: "--bbs-password",
@@ -152,7 +147,7 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         var gitlabApiFactory = sp.GetRequiredService<GitlabApiFactory>();
         var gitlabApi = args.Kerberos
             ? gitlabApiFactory.CreateKerberos(args.GitlabServerUrl, args.NoSslVerify)
-            : gitlabApiFactory.Create(args.GitlabServerUrl, args.GitlabUsername, args.GitlabPassword, args.NoSslVerify);
+            : gitlabApiFactory.Create(args.GitlabServerUrl, args.GitlabPassword, args.NoSslVerify);
 
         return new GenerateScriptCommandHandler(log, versionProvider, fileSystemProvider, gitlabApi, environmentVariableProvider);
     }

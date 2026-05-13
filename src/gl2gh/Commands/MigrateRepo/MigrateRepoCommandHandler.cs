@@ -307,8 +307,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         ? args.AzureStorageConnectionString
         : _environmentVariableProvider.AzureStorageConnectionString(false);
 
-    private string GetGitlabUsername(MigrateRepoCommandArgs args) => args.GitlabUsername.HasValue() ? args.GitlabUsername : _environmentVariableProvider.GitlabUsername(false);
-
     private string GetGitlabPassword(MigrateRepoCommandArgs args) => args.GitlabPassword.HasValue() ? args.GitlabPassword : _environmentVariableProvider.GitlabPassword(false);
 
     private string GetSmbPassword(MigrateRepoCommandArgs args) => args.SmbPassword.HasValue() ? args.SmbPassword : _environmentVariableProvider.SmbPassword(false);
@@ -326,11 +324,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             if (!args.Kerberos)
             {
-                if (GetGitlabUsername(args).IsNullOrWhiteSpace())
-                {
-                    throw new OctoshiftCliException("BBS username must be either set as BBS_USERNAME environment variable or passed as --bbs-username.");
-                }
-
                 if (GetGitlabPassword(args).IsNullOrWhiteSpace())
                 {
                     throw new OctoshiftCliException("BBS password must be either set as BBS_PASSWORD environment variable or passed as --bbs-password.");

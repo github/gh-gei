@@ -26,7 +26,6 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(GitlabServerUrl);
         AddOption(GitlabProject);
         AddOption(GitlabRepo);
-        AddOption(GitlabUsername);
         AddOption(GitlabPassword);
         AddOption(GitlabSharedHome);
         AddOption(SshUser);
@@ -74,10 +73,6 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
     {
         IsRequired = true
     };
-
-    public Option<string> GitlabUsername { get; } = new(
-        name: "--bbs-username",
-        description: "The Bitbucket username of a user with site admin privileges. If not set will be read from BBS_USERNAME environment variable.");
 
     public Option<string> GitlabPassword { get; } = new(
         name: "--bbs-password",
@@ -238,7 +233,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
             gitlabApi = args.Kerberos
                 ? gitlabApiFactory.CreateKerberos(args.GitlabServerUrl, args.NoSslVerify)
-                : gitlabApiFactory.Create(args.GitlabServerUrl, args.GitlabUsername, args.GitlabPassword, args.NoSslVerify);
+                : gitlabApiFactory.Create(args.GitlabServerUrl, args.GitlabPassword, args.NoSslVerify);
         }
 
         if (args.SshUser.HasValue() || args.SmbUser.HasValue())

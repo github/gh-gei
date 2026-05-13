@@ -21,15 +21,14 @@ public class GitlabApiFactory
         _retryPolicy = retryPolicy;
     }
 
-    public virtual GitlabApi Create(string bbsServerUrl, string bbsUsername, string bbsPassword, bool noSsl = false)
+    public virtual GitlabApi Create(string bbsServerUrl, string bbsPassword, bool noSsl = false)
     {
-        bbsUsername ??= _environmentVariableProvider.GitlabUsername();
         bbsPassword ??= _environmentVariableProvider.GitlabPassword();
 
         var httpClient = noSsl ? _clientFactory.CreateClient("NoSSL") : _clientFactory.CreateClient("Default");
 
         var clientRetryPolicy = (_retryPolicy ?? new RetryPolicy(_octoLogger)).WithServiceName("Bitbucket Server");
-        var bbsClient = new GitlabClient(_octoLogger, httpClient, _versionProvider, clientRetryPolicy, bbsUsername, bbsPassword);
+        var bbsClient = new GitlabClient(_octoLogger, httpClient, _versionProvider, clientRetryPolicy, bbsPassword);
         return new GitlabApi(bbsClient, bbsServerUrl, _octoLogger);
     }
 

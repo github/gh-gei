@@ -16,11 +16,11 @@ namespace OctoshiftCLI.GitlabToGithub
             _gitlabApiFactory = gitlabApiFactory;
         }
 
-        public virtual async Task<string> Generate(string gitlabServerUrl, string gitlabUsername, string gitlabPassword, bool noSslVerify, string gitlabGroup = "", bool minimal = false)
+        public virtual async Task<string> Generate(string gitlabServerUrl, string gitlabPassword, bool noSslVerify, string gitlabGroup = "", bool minimal = false)
         {
             gitlabServerUrl = gitlabServerUrl ?? throw new ArgumentNullException(nameof(gitlabServerUrl));
 
-            var gitlabApi = _gitlabApiFactory.Create(gitlabServerUrl, gitlabUsername, gitlabPassword, noSslVerify);
+            var gitlabApi = _gitlabApiFactory.Create(gitlabServerUrl, gitlabPassword, noSslVerify);
             var inspector = _gitlabInspectorServiceFactory.Create(gitlabApi);
             var result = new StringBuilder();
 

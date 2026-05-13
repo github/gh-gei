@@ -13,11 +13,10 @@ namespace OctoshiftCLI.GitlabToGithub.Commands.InventoryReport
                 name: "inventory-report",
                 description: "Generates several CSV files containing lists of BBS projects and repos. Useful for planning large migrations. Personal repositories owned by individual users will not be included." +
                              Environment.NewLine +
-                             "Note: Expects BBS_USERNAME and BBS_PASSWORD env variables or --gitlab-username and --gitlab-password options to be set.")
+                             "Note: Expects GITLAB_PAT env variable or --gitlab-pat options to be set.")
         {
             AddOption(GitlabServerUrl);
             AddOption(GitlabGroup);
-            AddOption(GitlabUsername);
             AddOption(GitlabPassword);
             AddOption(NoSslVerify);
             AddOption(Minimal);
@@ -32,10 +31,6 @@ namespace OctoshiftCLI.GitlabToGithub.Commands.InventoryReport
         public Option<string> GitlabGroup { get; } = new(
             name: "--gitlab-group",
             description: "The Bitbucket project key. If not provided will iterate over all projects that the user has access to.");
-
-        public Option<string> GitlabUsername { get; } = new(
-            name: "--gitlab-username",
-            description: "The Bitbucket username of a user with site admin privileges. If not set will be read from BBS_USERNAME environment variable.");
 
         public Option<string> GitlabPassword { get; } = new(
             name: "--gitlab-password",
@@ -66,7 +61,7 @@ namespace OctoshiftCLI.GitlabToGithub.Commands.InventoryReport
 
             var log = sp.GetRequiredService<OctoLogger>();
             var gitlabApiFactory = sp.GetRequiredService<GitlabApiFactory>();
-            var gitlabApi = gitlabApiFactory.Create(args.GitlabServerUrl, args.GitlabUsername, args.GitlabPassword, args.NoSslVerify);
+            var gitlabApi = gitlabApiFactory.Create(args.GitlabServerUrl, args.GitlabPassword, args.NoSslVerify);
             var gitlabInspectorServiceFactory = sp.GetRequiredService<GitlabInspectorServiceFactory>();
             var gitlabInspectorService = gitlabInspectorServiceFactory.Create(gitlabApi);
             var groupsCsvGeneratorService = sp.GetRequiredService<GroupsCsvGeneratorService>();
