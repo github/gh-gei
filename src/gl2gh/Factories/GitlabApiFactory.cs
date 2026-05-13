@@ -21,23 +21,23 @@ public class GitlabApiFactory
         _retryPolicy = retryPolicy;
     }
 
-    public virtual GitlabApi Create(string bbsServerUrl, string bbsPassword, bool noSsl = false)
+    public virtual GitlabApi Create(string gitlabServerUrl, string gitlabPassword, bool noSsl = false)
     {
-        bbsPassword ??= _environmentVariableProvider.GitlabPassword();
+        gitlabPassword ??= _environmentVariableProvider.GitlabPassword();
 
         var httpClient = noSsl ? _clientFactory.CreateClient("NoSSL") : _clientFactory.CreateClient("Default");
 
-        var clientRetryPolicy = (_retryPolicy ?? new RetryPolicy(_octoLogger)).WithServiceName("Bitbucket Server");
-        var bbsClient = new GitlabClient(_octoLogger, httpClient, _versionProvider, clientRetryPolicy, bbsPassword);
-        return new GitlabApi(bbsClient, bbsServerUrl, _octoLogger);
+        var clientRetryPolicy = (_retryPolicy ?? new RetryPolicy(_octoLogger)).WithServiceName("GitLab");
+        var gitlabClient = new GitlabClient(_octoLogger, httpClient, _versionProvider, clientRetryPolicy, gitlabPassword);
+        return new GitlabApi(gitlabClient, gitlabServerUrl, _octoLogger);
     }
 
-    public virtual GitlabApi CreateKerberos(string bbsServerUrl, bool noSsl = false)
+    public virtual GitlabApi CreateKerberos(string gitlabServerUrl, bool noSsl = false)
     {
         var httpClient = noSsl ? _clientFactory.CreateClient("KerberosNoSSL") : _clientFactory.CreateClient("Kerberos");
 
-        var clientRetryPolicy = (_retryPolicy ?? new RetryPolicy(_octoLogger)).WithServiceName("Bitbucket Server");
-        var bbsClient = new GitlabClient(_octoLogger, httpClient, _versionProvider, clientRetryPolicy);
-        return new GitlabApi(bbsClient, bbsServerUrl, _octoLogger);
+        var clientRetryPolicy = (_retryPolicy ?? new RetryPolicy(_octoLogger)).WithServiceName("GitLab");
+        var gitlabClient = new GitlabClient(_octoLogger, httpClient, _versionProvider, clientRetryPolicy);
+        return new GitlabApi(gitlabClient, gitlabServerUrl, _octoLogger);
     }
 }
