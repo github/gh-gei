@@ -24,17 +24,9 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(GithubRepo);
         AddOption(GithubPat);
         AddOption(GitlabServerUrl);
+        AddOption(GitlabGroup);
         AddOption(GitlabProject);
-        AddOption(GitlabRepo);
         AddOption(GitlabPat);
-        AddOption(GitlabSharedHome);
-        AddOption(SshUser);
-        AddOption(SshPrivateKey);
-        AddOption(SshPort);
-        AddOption(ArchiveDownloadHost);
-        AddOption(SmbUser);
-        AddOption(SmbPassword);
-        AddOption(SmbDomain);
         AddOption(ArchivePath);
         AddOption(AzureStorageConnectionString);
         AddOption(AwsBucketName);
@@ -54,51 +46,46 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
     }
 
     public Option<string> GitlabServerUrl { get; } = new(
-        name: "--bbs-server-url",
-        description: "The full URL of the Bitbucket Server/Data Center to migrate from. E.g. http://bitbucket.contoso.com:7990")
+        name: "--gitlab-server-url",
+        description: "The full URL of the GitLab server, e.g. https://gitlab.mycompany.com")
+    {
+        IsRequired = true
+    };
+
+    public Option<string> GitlabGroup { get; } = new(
+        name: "--gitlab-group",
+        description: "The GitLab group to migrate.")
     {
         IsRequired = true
     };
 
     public Option<string> GitlabProject { get; } = new(
-        name: "--bbs-project",
-        description: "The Bitbucket project to migrate.")
-    {
-        IsRequired = true
-    };
-
-    public Option<string> GitlabRepo { get; } = new(
-        name: "--bbs-repo",
-        description: "The Bitbucket repository to migrate.")
+        name: "--gitlab-project",
+        description: "The GitLab project to migrate.")
     {
         IsRequired = true
     };
 
     public Option<string> GitlabPat { get; } = new(
-        name: "--bbs-pat",
-        description: "The Bitbucket PAT of the user specified by --bbs-username. If not set will be read from GITLAB_PAT environment variable.");
-
-    public Option<string> GitlabSharedHome { get; } = new(
-        name: "--bbs-shared-home",
-        description: "Bitbucket server's shared home directory. Defaults to \"/var/atlassian/application-data/bitbucket/shared\" if downloading the archive from a server using SSH " +
-                     "and \"c$\\atlassian\\applicationdata\\bitbucket\\shared\" if downloading using SMB.");
+        name: "--gitlab-pat",
+        description: "The GitLab PAT. If not passed, it will read the PAT from the GITLAB_PAT environment variable.");
 
     public Option<string> ArchiveUrl { get; } = new(
         name: "--archive-url",
         description:
-        "URL used to download Bitbucket Server migration archive. Only needed if you want to manually retrieve the archive from BBS instead of letting this CLI do that for you.");
+        "URL used to download the GitLab migration archive. Only needed if you want to manually retrieve the archive from GitLab instead of letting this CLI do that for you.");
 
     public Option<string> ArchivePath { get; } = new(
         name: "--archive-path",
-        description: "Path to Bitbucket Server migration archive on disk.");
+        description: "Path to the GitLab migration archive on disk.");
 
     public Option<string> AzureStorageConnectionString { get; } = new(
         name: "--azure-storage-connection-string",
-        description: "A connection string for an Azure Storage account, used to upload the BBS archive. If not set will be read from AZURE_STORAGE_CONNECTION_STRING environment variable.");
+        description: "A connection string for an Azure Storage account, used to upload the GitLab archive. If not passed, it will read the AZURE_STORAGE_CONNECTION_STRING environment variable.");
 
     public Option<string> AwsBucketName { get; } = new(
         name: "--aws-bucket-name",
-        description: "If using AWS, the name of the S3 bucket to upload the BBS archive to.");
+        description: "If using AWS, the name of the S3 bucket to upload the GitLab archive to.");
 
     public Option<string> AwsAccessKey { get; } = new(
         name: "--aws-access-key",
@@ -121,45 +108,6 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<string> GithubRepo { get; } = new("--github-repo");
 
-    public Option<string> ArchiveDownloadHost { get; } = new(
-        name: "--archive-download-host",
-        description: "The host to use to connect to the Bitbucket Server/Data Center instance via SSH or SMB. Defaults to the host from the Bitbucket Server URL (--bbs-server-url).");
-
-    public Option<string> SshUser { get; } = new(
-        name: "--ssh-user",
-        description: "The SSH user to be used for downloading the export archive off of the Bitbucket server.");
-
-    public Option<string> SshPrivateKey { get; } = new(
-        name: "--ssh-private-key",
-        description: "The full path of the private key file to be used for downloading the export archive off of the Bitbucket Server using SSH/SFTP." +
-                     Environment.NewLine +
-                     "Supported private key formats:" +
-                     Environment.NewLine +
-                     "  - RSA in OpenSSL PEM format." +
-                     Environment.NewLine +
-                     "  - DSA in OpenSSL PEM format." +
-                     Environment.NewLine +
-                     "  - ECDSA 256/384/521 in OpenSSL PEM format." +
-                     Environment.NewLine +
-                     "  - ECDSA 256/384/521, ED25519 and RSA in OpenSSH key format.");
-
-    public Option<int> SshPort { get; } = new(
-        name: "--ssh-port",
-        getDefaultValue: () => 22,
-        description: "The SSH port (default: 22).");
-
-    public Option<string> SmbUser { get; } = new(
-        name: "--smb-user",
-        description: "The SMB user used for authentication when downloading the export archive from the Bitbucket Server instance.");
-
-    public Option<string> SmbPassword { get; } = new(
-        name: "--smb-password",
-        description: "The SMB password used for authentication when downloading the export archive from the Bitbucket server instance. If not provided, it will be read from SMB_PASSWORD environment variable.");
-
-    public Option<string> SmbDomain { get; } = new(
-        name: "--smb-domain",
-        description: "The optional domain name when using SMB for downloading the export archive.");
-
     public Option<string> GithubPat { get; } = new(
         name: "--github-pat",
         description: "The GitHub personal access token to be used for the migration. If not set will be read from GH_PAT environment variable.");
@@ -174,7 +122,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<bool> Kerberos { get; } = new(
         name: "--kerberos",
-        description: "Use Kerberos authentication for downloading the export archive off of the Bitbucket server.")
+        description: "Use Kerberos authentication for downloading the export archive off of the GitLab server.")
     { IsHidden = true };
 
     public Option<bool> Verbose { get; } = new("--verbose");
@@ -192,8 +140,8 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
     { IsHidden = true };
     public Option<bool> NoSslVerify { get; } = new(
         name: "--no-ssl-verify",
-        description: "Disables SSL verification when communicating with your Bitbucket Server/Data Center instance. All other migration steps will continue to verify SSL. " +
-                     "If your Bitbucket instance has a self-signed SSL certificate then setting this flag will allow the migration archive to be exported.");
+        description: "Disables SSL verification when communicating with your GitLab instance. All other migration steps will continue to verify SSL. " +
+                     "If your GitLab instance has a self-signed SSL certificate, this flag will allow the migration archive to be exported.");
     public Option<bool> UseGithubStorage { get; } = new(
         name: "--use-github-storage",
         description: "Enables multipart uploads to a GitHub owned storage for use during migration. " +
@@ -217,7 +165,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         var fileSystemProvider = sp.GetRequiredService<FileSystemProvider>();
         GithubApi githubApi = null;
         GitlabApi gitlabApi = null;
-        IGitlabArchiveDownloader bbsArchiveDownloader = null;
+        IGitlabArchiveDownloader gitlabArchiveDownloader = null;
         AzureApi azureApi = null;
         AwsApi awsApi = null;
 
@@ -236,15 +184,8 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
                 : gitlabApiFactory.Create(args.GitlabServerUrl, args.GitlabPat, args.NoSslVerify);
         }
 
-        if (args.SshUser.HasValue() || args.SmbUser.HasValue())
-        {
-            var bbsArchiveDownloaderFactory = sp.GetRequiredService<GitlabArchiveDownloaderFactory>();
-            var bbsHost = args.ArchiveDownloadHost.HasValue() ? args.ArchiveDownloadHost : new Uri(args.GitlabServerUrl).Host;
-
-            bbsArchiveDownloader = args.SshUser.HasValue()
-                ? bbsArchiveDownloaderFactory.CreateSshDownloader(bbsHost, args.SshUser, args.SshPrivateKey, args.SshPort, args.GitlabSharedHome)
-                : bbsArchiveDownloaderFactory.CreateSmbDownloader(bbsHost, args.SmbUser, args.SmbPassword, args.SmbDomain, args.GitlabSharedHome);
-        }
+        var gitlabArchiveDownloaderFactory = sp.GetRequiredService<GitlabArchiveDownloaderFactory>();
+        gitlabArchiveDownloader = gitlabArchiveDownloaderFactory.CreateDownloader();
 
         var azureStorageConnectionString = args.AzureStorageConnectionString ?? environmentVariableProvider.AzureStorageConnectionString(false);
         if (azureStorageConnectionString.HasValue())
@@ -261,6 +202,6 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
         var warningsCountLogger = sp.GetRequiredService<WarningsCountLogger>();
 
-        return new MigrateRepoCommandHandler(log, githubApi, gitlabApi, environmentVariableProvider, bbsArchiveDownloader, azureApi, awsApi, fileSystemProvider, warningsCountLogger);
+        return new MigrateRepoCommandHandler(log, githubApi, gitlabApi, environmentVariableProvider, gitlabArchiveDownloader, azureApi, awsApi, fileSystemProvider, warningsCountLogger);
     }
 }
