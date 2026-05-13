@@ -29,7 +29,7 @@ public class GitlabApi
         return (string)JObject.Parse(content)["version"];
     }
 
-    public virtual async Task<long> StartExport(string groupPath, string projectPath)
+    public virtual async Task<string> StartExport(string groupPath, string projectPath)
     {
         var encodedProjectPath = GetEncodedProjectPath(groupPath, projectPath);
         var url = $"{_gitlabBaseUrl}/api/v4/projects/{encodedProjectPath}/export";
@@ -37,7 +37,7 @@ public class GitlabApi
         var exportResponse = await _client.PostAsync(url, new { });
         var exportData = JObject.Parse(exportResponse);
 
-        return (long)exportData["id"];
+        return (string)exportData["message"];
     }
 
     public virtual async Task<(string ExportStatus, string DownloadUrl)> GetExport(string groupPath, string projectPath)
