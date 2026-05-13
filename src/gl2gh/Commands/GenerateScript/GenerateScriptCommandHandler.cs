@@ -82,35 +82,34 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
             content.AppendLine();
             content.AppendLine($"# =========== Group: {groupPath} ===========");
 
-            var repos = await _gitlabApi.GetProjects(groupPath);
+            var projects = await _gitlabApi.GetProjects(groupPath);
 
-            if (!repos.Any())
+            if (!projects.Any())
             {
-                content.AppendLine("# Skipping this group because it has no git repos.");
+                content.AppendLine("# Skipping this group because it has no projects.");
                 continue;
             }
 
             content.AppendLine();
 
-            foreach (var (_, repoSlug, repoName, _) in repos)
+            foreach (var (_, projectPath, projectName, _) in projects)
             {
-                _log.LogInformation($"  Repo: {repoName}");
+                _log.LogInformation($"  Project: {projectName}");
 
-                content.AppendLine(Exec(MigrateGithubRepoScript(args, groupPath, repoSlug, true)));
+                content.AppendLine(Exec(MigrateGithubRepoScript(args, groupPath, projectPath, true)));
             }
         }
 
         return content.ToString();
     }
 
-    private string MigrateGithubRepoScript(GenerateScriptCommandArgs args, string bbsProjectKey, string bbsRepoSlug, bool wait)
+    private string MigrateGithubRepoScript(GenerateScriptCommandArgs args, string gitlabGroup, string gitlabProject, bool wait)
     {
-        var bbsServerUrlOption = $" --bbs-server-url \"{args.GitlabServerUrl}\"";
-        var bbsUsernameOption = args.GitlabUsername.HasValue() ? $" --bbs-username \"{args.GitlabUsername}\"" : "";
-        var bbsProjectOption = $" --bbs-group \"{bbsProjectKey}\"";
-        var bbsRepoOption = $" --bbs-repo \"{bbsRepoSlug}\"";
+        var gitlabServerUrlOption = $" --gitlab-server-url \"{args.GitlabServerUrl}\"";
+        var gitlabGroupOption = $" --gitlab-group \"{gitlabGroup}\"";
+        var gitlabProjectOption = $" --gitlab-project \"{gitlabProject}\"";
         var githubOrgOption = $" --github-org \"{args.GithubOrg}\"";
-        var githubRepoOption = $" --github-repo \"{GetGithubRepoName(bbsProjectKey, bbsRepoSlug)}\"";
+        var githubRepoOption = $" --github-repo \"{GetGithubRepoName(gitlabGroup, gitlabProject)}\"";
         var waitOption = wait ? "" : " --queue-only";
         var kerberosOption = args.Kerberos ? " --kerberos" : "";
         var verboseOption = args.Verbose ? " --verbose" : "";
@@ -123,7 +122,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         var targetUploadsUrlOption = args.TargetUploadsUrl.HasValue() ? $" --target-uploads-url \"{args.TargetUploadsUrl}\"" : "";
         var githubStorageOption = args.UseGithubStorage ? " --use-github-storage" : "";
 
-        return $"gh gl2gh migrate-repo{targetApiUrlOption}{targetUploadsUrlOption}{bbsServerUrlOption}{bbsUsernameOption}{bbsProjectOption}{bbsRepoOption}" +
+        return $"gh gl2gh migrate-repo{targetApiUrlOption}{targetUploadsUrlOption}{gitlabServerUrlOption}{gitlabGroupOption}{gitlabProjectOption}" +
                $"{githubOrgOption}{githubRepoOption}{verboseOption}{waitOption}{kerberosOption}{awsBucketNameOption}{awsRegionOption}{keepArchive}{noSslVerify}{targetRepoVisibility}{githubStorageOption}";
     }
 
@@ -131,7 +130,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
     private string Wrap(string script, string outerCommand = "") => script.IsNullOrWhiteSpace() ? string.Empty : $"{outerCommand} {{ {script} }}".Trim();
 
-    private string GetGithubRepoName(string bbsProjectKey, string bbsRepoSlug) => $"{bbsProjectKey}-{bbsRepoSlug}".ReplaceInvalidCharactersWithDash();
+    private string GetGithubRepoName(string gitlabGroup, string gitlabProject) => $"{gitlabGroup}-{gitlabProject}".ReplaceInvalidCharactersWithDash();
 
     private string VersionComment => $"# =========== Created with CLI version {_versionProvider.GetCurrentVersion()} ===========";
 
@@ -159,7 +158,7 @@ if (-not $env:GITLAB_PAT) {
     Write-Error ""GITLAB_PAT environment variable must be set to a valid PAT that will be used to call the GitLab API to generate a migration archive.""
     exit 1
 } else {
-    Write-Host ""GITLAB_PAT environment variable is set and will be used to authenticate to Bitbucket Server/Data Center APIs.""
+    Write-Host ""GITLAB_PAT environment variable is set and will be used to authenticate to the GitLab API.""
 }";
     private const string VALIDATE_AZURE_STORAGE_CONNECTION_STRING = @"
 if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
