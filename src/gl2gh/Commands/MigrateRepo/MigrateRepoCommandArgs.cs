@@ -36,7 +36,7 @@ public class MigrateRepoCommandArgs : CommandArgs
     public string GitlabGroup { get; set; }
     public string GitlabProject { get; set; }
     [Secret]
-    public string GitlabPassword { get; set; }
+    public string GitlabPat { get; set; }
     public string GitlabSharedHome { get; set; }
     public bool NoSslVerify { get; set; }
 
@@ -93,9 +93,9 @@ public class MigrateRepoCommandArgs : CommandArgs
 
     private void ValidateNoGenerateOptions()
     {
-        if (GitlabPassword.HasValue())
+        if (GitlabPat.HasValue())
         {
-            throw new OctoshiftCliException("--gitlab-password cannot be provided with --archive-path or --archive-url.");
+            throw new OctoshiftCliException("--gitlab-pat cannot be provided with --archive-path or --archive-url.");
         }
 
         if (NoSslVerify)
@@ -120,9 +120,9 @@ public class MigrateRepoCommandArgs : CommandArgs
 
     private void ValidateGenerateOptions()
     {
-        if (Kerberos && GitlabPassword.HasValue())
+        if (Kerberos && GitlabPat.HasValue())
         {
-            throw new OctoshiftCliException("--gitlab-password cannot be provided with --kerberos.");
+            throw new OctoshiftCliException("--gitlab-pat cannot be provided with --kerberos.");
         }
 
         if (GitlabGroup.IsNullOrWhiteSpace() || GitlabProject.IsNullOrWhiteSpace())

@@ -59,7 +59,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         content.AppendLine(VALIDATE_GH_PAT);
         if (!args.Kerberos)
         {
-            content.AppendLine(VALIDATE_BBS_PASSWORD);
+            content.AppendLine(VALIDATE_GITLAB_PAT);
         }
         if (args.GitlabUsername.IsNullOrWhiteSpace() && !args.Kerberos)
         {
@@ -175,12 +175,12 @@ if (-not $env:BBS_USERNAME) {
 } else {
     Write-Host ""BBS_USERNAME environment variable is set and will be used to authenticate to Bitbucket Server/Data Center APIs.""
 }";
-    private const string VALIDATE_BBS_PASSWORD = @"
-if (-not $env:BBS_PASSWORD) {
-    Write-Error ""BBS_PASSWORD environment variable must be set to a valid password that will be used to call Bitbucket Server/Data Center API's to generate a migration archive.""
+    private const string VALIDATE_GITLAB_PAT = @"
+if (-not $env:GITLAB_PAT) {
+    Write-Error ""GITLAB_PAT environment variable must be set to a valid password that will be used to call Bitbucket Server/Data Center API's to generate a migration archive.""
     exit 1
 } else {
-    Write-Host ""BBS_PASSWORD environment variable is set and will be used to authenticate to Bitbucket Server/Data Center APIs.""
+    Write-Host ""GITLAB_PAT environment variable is set and will be used to authenticate to Bitbucket Server/Data Center APIs.""
 }";
     private const string VALIDATE_AZURE_STORAGE_CONNECTION_STRING = @"
 if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {

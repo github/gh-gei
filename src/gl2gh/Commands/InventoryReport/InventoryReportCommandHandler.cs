@@ -54,12 +54,12 @@ public class InventoryReportCommandHandler : ICommandHandler<InventoryReportComm
         _log.LogInformation($"Found {projectCount} Projects");
 
         _log.LogInformation("Generating data for groups.csv...");
-        var groupsCsvText = await _groupsCsvGenerator.Generate(args.GitlabServerUrl, args.GitlabPassword, args.NoSslVerify, args.GitlabGroup, args.Minimal);
+        var groupsCsvText = await _groupsCsvGenerator.Generate(args.GitlabServerUrl, args.GitlabPat, args.NoSslVerify, args.GitlabGroup, args.Minimal);
         await WriteToFile("groups.csv", groupsCsvText);
         _log.LogSuccess("groups.csv generated");
 
         _log.LogInformation("Generating projects.csv...");
-        var projectsCsvText = await _projectsCsvGenerator.Generate(args.GitlabServerUrl, args.GitlabPassword, args.NoSslVerify, args.GitlabGroup, args.Minimal);
+        var projectsCsvText = await _projectsCsvGenerator.Generate(args.GitlabServerUrl, args.GitlabPat, args.NoSslVerify, args.GitlabGroup, args.Minimal);
         await WriteToFile("projects.csv", projectsCsvText);
         _log.LogSuccess("projects.csv generated");
     }

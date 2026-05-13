@@ -11,7 +11,7 @@ public class GenerateScriptCommandArgs : CommandArgs
     public string GithubOrg { get; set; }
     public string GitlabUsername { get; set; }
     [Secret]
-    public string GitlabPassword { get; set; }
+    public string GitlabPat { get; set; }
     public string GitlabGroup { get; set; }
     public string GitlabSharedHome { get; set; }
     public string ArchiveDownloadHost { get; set; }

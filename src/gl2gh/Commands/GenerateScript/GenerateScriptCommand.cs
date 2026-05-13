@@ -18,7 +18,7 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         AddOption(GitlabServerUrl);
         AddOption(GithubOrg);
         AddOption(TargetApiUrl);
-        AddOption(GitlabPassword);
+        AddOption(GitlabPat);
         AddOption(GitlabProject);
         AddOption(GitlabSharedHome);
         AddOption(SshUser);
@@ -42,11 +42,11 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         description: "The full URL of the Bitbucket Server/Data Center to migrate from.")
     { IsRequired = true };
 
-    public Option<string> GitlabPassword { get; } = new(
-        name: "--bbs-password",
-        description: "The Bitbucket password of a user with site admin privileges to get the list of all projects and their repos. If not set will be read from BBS_PASSWORD environment variable." +
+    public Option<string> GitlabPat { get; } = new(
+        name: "--bbs-pat",
+        description: "The Bitbucket PAT of a user with site admin privileges to get the list of all projects and their repos. If not set will be read from BBS_PASSWORD environment variable." +
                       $"{Environment.NewLine}" +
-                      "Note: The password will not get included in the generated script and it has to be set as an env variable before running the script.");
+                      "Note: The PAT will not get included in the generated script and it has to be set as an env variable before running the script.");
 
     public Option<string> GitlabProject { get; } = new(
         name: "--bbs-project",
@@ -147,7 +147,7 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         var gitlabApiFactory = sp.GetRequiredService<GitlabApiFactory>();
         var gitlabApi = args.Kerberos
             ? gitlabApiFactory.CreateKerberos(args.GitlabServerUrl, args.NoSslVerify)
-            : gitlabApiFactory.Create(args.GitlabServerUrl, args.GitlabPassword, args.NoSslVerify);
+            : gitlabApiFactory.Create(args.GitlabServerUrl, args.GitlabPat, args.NoSslVerify);
 
         return new GenerateScriptCommandHandler(log, versionProvider, fileSystemProvider, gitlabApi, environmentVariableProvider);
     }

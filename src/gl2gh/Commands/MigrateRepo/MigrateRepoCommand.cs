@@ -15,7 +15,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 {
     public MigrateRepoCommand() : base(
             name: "migrate-repo",
-            description: "Import a Bitbucket Server archive to GitHub." +
+            description: "Import a GitLab archive to GitHub." +
                          Environment.NewLine +
                          "Note: Expects GH_PAT env variable or --github-pat option to be set.")
     {
@@ -26,7 +26,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(GitlabServerUrl);
         AddOption(GitlabProject);
         AddOption(GitlabRepo);
-        AddOption(GitlabPassword);
+        AddOption(GitlabPat);
         AddOption(GitlabSharedHome);
         AddOption(SshUser);
         AddOption(SshPrivateKey);
@@ -74,9 +74,9 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         IsRequired = true
     };
 
-    public Option<string> GitlabPassword { get; } = new(
-        name: "--bbs-password",
-        description: "The Bitbucket password of the user specified by --bbs-username. If not set will be read from BBS_PASSWORD environment variable.");
+    public Option<string> GitlabPat { get; } = new(
+        name: "--bbs-pat",
+        description: "The Bitbucket PAT of the user specified by --bbs-username. If not set will be read from GITLAB_PAT environment variable.");
 
     public Option<string> GitlabSharedHome { get; } = new(
         name: "--bbs-shared-home",
@@ -233,7 +233,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
             gitlabApi = args.Kerberos
                 ? gitlabApiFactory.CreateKerberos(args.GitlabServerUrl, args.NoSslVerify)
-                : gitlabApiFactory.Create(args.GitlabServerUrl, args.GitlabPassword, args.NoSslVerify);
+                : gitlabApiFactory.Create(args.GitlabServerUrl, args.GitlabPat, args.NoSslVerify);
         }
 
         if (args.SshUser.HasValue() || args.SmbUser.HasValue())

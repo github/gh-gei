@@ -18,13 +18,12 @@ public class GitlabClient
     private readonly OctoLogger _log;
     private readonly RetryPolicy _retryPolicy;
 
-    public GitlabClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider, RetryPolicy retryPolicy, string username, string password) :
+    public GitlabClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider, RetryPolicy retryPolicy, string gitlabPat) :
         this(log, httpClient, versionProvider, retryPolicy)
     {
         if (_httpClient != null)
         {
-            var authCredentials = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{username}:{password}"));
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authCredentials);
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("PRIVATE-TOKEN", gitlabPat);
         }
     }
 

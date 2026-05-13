@@ -21,14 +21,14 @@ public class GitlabApiFactory
         _retryPolicy = retryPolicy;
     }
 
-    public virtual GitlabApi Create(string gitlabServerUrl, string gitlabPassword, bool noSsl = false)
+    public virtual GitlabApi Create(string gitlabServerUrl, string gitlabPat, bool noSsl = false)
     {
-        gitlabPassword ??= _environmentVariableProvider.GitlabPassword();
+        gitlabPat ??= _environmentVariableProvider.GitlabPat();
 
         var httpClient = noSsl ? _clientFactory.CreateClient("NoSSL") : _clientFactory.CreateClient("Default");
 
         var clientRetryPolicy = (_retryPolicy ?? new RetryPolicy(_octoLogger)).WithServiceName("GitLab");
-        var gitlabClient = new GitlabClient(_octoLogger, httpClient, _versionProvider, clientRetryPolicy, gitlabPassword);
+        var gitlabClient = new GitlabClient(_octoLogger, httpClient, _versionProvider, clientRetryPolicy, gitlabPat);
         return new GitlabApi(gitlabClient, gitlabServerUrl, _octoLogger);
     }
 
