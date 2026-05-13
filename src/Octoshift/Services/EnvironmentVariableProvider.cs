@@ -15,7 +15,6 @@ public class EnvironmentVariableProvider
     private const string AWS_REGION = "AWS_REGION";
     private const string BBS_USERNAME = "BBS_USERNAME";
     private const string BBS_PASSWORD = "BBS_PASSWORD";
-    private const string GITLAB_USERNAME = "GITLAB_USERNAME";
     private const string GITLAB_PASSWORD = "GITLAB_PASSWORD";
     private const string SMB_PASSWORD = "SMB_PASSWORD";
     private const string GEI_SKIP_STATUS_CHECK = "GEI_SKIP_STATUS_CHECK";
@@ -58,9 +57,6 @@ public class EnvironmentVariableProvider
 
     public virtual string BbsPassword(bool throwIfNotFound = true) =>
         GetSecret(BBS_PASSWORD, throwIfNotFound);
-
-    public virtual string GitlabUsername(bool throwIfNotFound = true) =>
-        GetSecret(BBS_USERNAME, throwIfNotFound);
 
     public virtual string GitlabPassword(bool throwIfNotFound = true) =>
         GetSecret(BBS_PASSWORD, throwIfNotFound);
