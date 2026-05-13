@@ -61,10 +61,6 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         {
             content.AppendLine(VALIDATE_GITLAB_PAT);
         }
-        if (args.GitlabUsername.IsNullOrWhiteSpace() && !args.Kerberos)
-        {
-            content.AppendLine(VALIDATE_BBS_USERNAME);
-        }
         if (args.AwsBucketName.HasValue() || args.AwsRegion.HasValue())
         {
             content.AppendLine(VALIDATE_AWS_ACCESS_KEY_ID);
@@ -73,10 +69,6 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         else if (!args.UseGithubStorage)
         {
             content.AppendLine(VALIDATE_AZURE_STORAGE_CONNECTION_STRING);
-        }
-        if (args.SmbUser.HasValue())
-        {
-            content.AppendLine(VALIDATE_SMB_PASSWORD);
         }
 
         var groups = args.GitlabGroup.HasValue()
@@ -122,12 +114,6 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         var waitOption = wait ? "" : " --queue-only";
         var kerberosOption = args.Kerberos ? " --kerberos" : "";
         var verboseOption = args.Verbose ? " --verbose" : "";
-        var sshArchiveDownloadOptions = args.SshUser.HasValue()
-            ? $" --ssh-user \"{args.SshUser}\" --ssh-private-key \"{args.SshPrivateKey}\"{(args.SshPort.HasValue() ? $" --ssh-port {args.SshPort}" : "")}{(args.ArchiveDownloadHost.HasValue() ? $" --archive-download-host {args.ArchiveDownloadHost}" : "")}" : "";
-        var smbArchiveDownloadOptions = args.SmbUser.HasValue()
-            ? $" --smb-user \"{args.SmbUser}\"{(args.SmbDomain.HasValue() ? $" --smb-domain {args.SmbDomain}" : "")}{(args.ArchiveDownloadHost.HasValue() ? $" --archive-download-host {args.ArchiveDownloadHost}" : "")}"
-            : "";
-        var bbsSharedHomeOption = args.GitlabSharedHome.HasValue() ? $" --bbs-shared-home \"{args.GitlabSharedHome}\"" : "";
         var awsBucketNameOption = args.AwsBucketName.HasValue() ? $" --aws-bucket-name \"{args.AwsBucketName}\"" : "";
         var awsRegionOption = args.AwsRegion.HasValue() ? $" --aws-region \"{args.AwsRegion}\"" : "";
         var keepArchive = args.KeepArchive ? " --keep-archive" : "";
@@ -137,8 +123,8 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         var targetUploadsUrlOption = args.TargetUploadsUrl.HasValue() ? $" --target-uploads-url \"{args.TargetUploadsUrl}\"" : "";
         var githubStorageOption = args.UseGithubStorage ? " --use-github-storage" : "";
 
-        return $"gh gl2gh migrate-repo{targetApiUrlOption}{targetUploadsUrlOption}{bbsServerUrlOption}{bbsUsernameOption}{bbsSharedHomeOption}{bbsProjectOption}{bbsRepoOption}{sshArchiveDownloadOptions}" +
-               $"{smbArchiveDownloadOptions}{githubOrgOption}{githubRepoOption}{verboseOption}{waitOption}{kerberosOption}{awsBucketNameOption}{awsRegionOption}{keepArchive}{noSslVerify}{targetRepoVisibility}{githubStorageOption}";
+        return $"gh gl2gh migrate-repo{targetApiUrlOption}{targetUploadsUrlOption}{bbsServerUrlOption}{bbsUsernameOption}{bbsProjectOption}{bbsRepoOption}" +
+               $"{githubOrgOption}{githubRepoOption}{verboseOption}{waitOption}{kerberosOption}{awsBucketNameOption}{awsRegionOption}{keepArchive}{noSslVerify}{targetRepoVisibility}{githubStorageOption}";
     }
 
     private string Exec(string script) => Wrap(script, "Exec");
@@ -168,16 +154,9 @@ if (-not $env:GH_PAT) {
 } else {
     Write-Host ""GH_PAT environment variable is set and will be used to authenticate to GitHub.""
 }";
-    private const string VALIDATE_BBS_USERNAME = @"
-if (-not $env:BBS_USERNAME) {
-    Write-Error ""BBS_USERNAME environment variable must be set to a valid user that will be used to call Bitbucket Server/Data Center API's to generate a migration archive.""
-    exit 1
-} else {
-    Write-Host ""BBS_USERNAME environment variable is set and will be used to authenticate to Bitbucket Server/Data Center APIs.""
-}";
     private const string VALIDATE_GITLAB_PAT = @"
 if (-not $env:GITLAB_PAT) {
-    Write-Error ""GITLAB_PAT environment variable must be set to a valid password that will be used to call Bitbucket Server/Data Center API's to generate a migration archive.""
+    Write-Error ""GITLAB_PAT environment variable must be set to a valid PAT that will be used to call the GitLab API to generate a migration archive.""
     exit 1
 } else {
     Write-Host ""GITLAB_PAT environment variable is set and will be used to authenticate to Bitbucket Server/Data Center APIs.""
@@ -202,12 +181,5 @@ if (-not $env:AWS_SECRET_ACCESS_KEY) {
     exit 1
 } else {
     Write-Host ""AWS_SECRET_ACCESS_KEY environment variable is set and will be used to upload the migration archive to AWS S3.""
-}";
-    private const string VALIDATE_SMB_PASSWORD = @"
-if (-not $env:SMB_PASSWORD) {
-    Write-Error ""SMB_PASSWORD environment variable must be set to a valid password that will be used to download the migration archive from your BBS server using SMB.""
-    exit 1
-} else {
-    Write-Host ""SMB_PASSWORD environment variable is set and will be used to download the migration archive from your BBS server using SMB.""
 }";
 }
