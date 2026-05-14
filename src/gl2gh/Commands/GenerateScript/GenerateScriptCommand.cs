@@ -20,13 +20,7 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         AddOption(TargetApiUrl);
         AddOption(GitlabPat);
         AddOption(GitlabProject);
-        AddOption(GitlabSharedHome);
-        AddOption(SshUser);
-        AddOption(SshPrivateKey);
-        AddOption(SshPort);
         AddOption(ArchiveDownloadHost);
-        AddOption(SmbUser);
-        AddOption(SmbDomain);
         AddOption(Output);
         AddOption(Kerberos);
         AddOption(Verbose);
@@ -52,37 +46,9 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         name: "--bbs-project",
         description: "The Bitbucket project to migrate. If not set will migrate all projects.");
 
-    public Option<string> GitlabSharedHome { get; } = new(
-        name: "--bbs-shared-home",
-        description: "Bitbucket server's shared home directory. Defaults to \"/var/atlassian/application-data/bitbucket/shared\" if downloading the archive from a server using SSH " +
-                     "and \"c$\\atlassian\\applicationdata\\bitbucket\\shared\" if downloading using SMB.");
-
     public Option<string> ArchiveDownloadHost { get; } = new(
         name: "--archive-download-host",
         description: "The host to use to connect to the Bitbucket Server/Data Center instance via SSH or SMB. Defaults to the host from the Bitbucket Server URL (--bbs-server-url).");
-
-    public Option<string> SshUser { get; } = new(
-        name: "--ssh-user",
-        description: "The SSH user to be used for downloading the export archive off of the Bitbucket server.");
-
-    public Option<string> SshPrivateKey { get; } = new(
-        name: "--ssh-private-key",
-        description: "The full path of the private key file to be used for downloading the export archive off of the Bitbucket Server using SSH/SFTP.");
-
-    public Option<int> SshPort { get; } = new(
-        name: "--ssh-port",
-        description: "The SSH port (default: 22).",
-        getDefaultValue: () => 22);
-
-    public Option<string> SmbUser { get; } = new(
-        name: "--smb-user",
-        description: "The SMB user used for authentication when downloading the export archive from the Bitbucket Server instance." +
-                     $"{Environment.NewLine}" +
-                     "Note: You must also specify the SMB password using the SMB_PASSWORD environment variable.");
-
-    public Option<string> SmbDomain { get; } = new(
-        name: "--smb-domain",
-        description: "The optional domain name when using SMB for downloading the export archive.");
 
     public Option<string> GithubOrg { get; } = new("--github-org")
     { IsRequired = true };
