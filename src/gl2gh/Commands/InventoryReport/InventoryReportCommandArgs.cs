@@ -6,7 +6,6 @@ namespace OctoshiftCLI.GitlabToGithub.Commands.InventoryReport
     {
         public string GitlabServerUrl { get; set; }
         public string GitlabGroup { get; set; }
-        public string GitlabUsername { get; set; }
         [Secret]
         public string GitlabPat { get; set; }
         public bool NoSslVerify { get; set; }
