@@ -11,7 +11,7 @@ namespace OctoshiftCLI.GitlabToGithub.Commands.InventoryReport
     {
         public InventoryReportCommand() : base(
                 name: "inventory-report",
-                description: "Generates several CSV files containing lists of BBS projects and repos. Useful for planning large migrations. Personal repositories owned by individual users will not be included." +
+                description: "Generates several CSV files containing lists of GitLab groups and projects. Useful for planning large migrations. Personal projects owned by individual users will not be included." +
                              Environment.NewLine +
                              "Note: Expects GITLAB_PAT env variable or --gitlab-pat options to be set.")
         {
@@ -30,16 +30,16 @@ namespace OctoshiftCLI.GitlabToGithub.Commands.InventoryReport
 
         public Option<string> GitlabGroup { get; } = new(
             name: "--gitlab-group",
-            description: "The Bitbucket project key. If not provided will iterate over all projects that the user has access to.");
+            description: "The GitLab group. Iterates over all projects that the user has access to if not provided.");
 
         public Option<string> GitlabPat { get; } = new(
             name: "--gitlab-pat",
-            description: "The Bitbucket password of the user specified by --gitlab-username. If not set will be read from BBS_PASSWORD environment variable.");
+            description: "The GitLab PAT. If not passed, it will read the PAT from the GITLAB_PAT environment variable.");
 
         public Option<bool> NoSslVerify { get; } = new(
             name: "--no-ssl-verify",
-            description: "Disables SSL verification when communicating with your Bitbucket Server/Data Center instance. " +
-                        "If your Bitbucket instance has a self-signed SSL certificate then setting this flag will allow data to be extracted.");
+            description: "Disables SSL verification when communicating with your GitLab instance. " +
+                        "If your GitLab instance has a self-signed SSL certificate then setting this flag will allow data to be extracted.");
 
         public Option<bool> Minimal { get; } = new(
             name: "--minimal",
