@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -17,21 +18,23 @@ public class GitlabClient
     private readonly HttpClient _httpClient;
     private readonly OctoLogger _log;
     private readonly RetryPolicy _retryPolicy;
+    private readonly FileSystemProvider _fileSystemProvider;
 
-    public GitlabClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider, RetryPolicy retryPolicy, string gitlabPat) :
-        this(log, httpClient, versionProvider, retryPolicy)
+    public GitlabClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider, RetryPolicy retryPolicy, string gitlabPat, FileSystemProvider fileSystemProvider) :
+        this(log, httpClient, versionProvider, retryPolicy, fileSystemProvider)
     {
         if (_httpClient != null)
         {
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("PRIVATE-TOKEN", gitlabPat);
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", gitlabPat);
         }
     }
 
-    public GitlabClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider, RetryPolicy retryPolicy)
+    public GitlabClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider, RetryPolicy retryPolicy, FileSystemProvider fileSystemProvider)
     {
         _log = log;
         _httpClient = httpClient;
         _retryPolicy = retryPolicy;
+        _fileSystemProvider = fileSystemProvider;
 
         if (_httpClient != null)
         {
@@ -125,5 +128,21 @@ public class GitlabClient
         queryParams["limit"] = limit.ToString();
 
         return $"{path}?{queryParams}";
+    }
+
+    public virtual async Task DownloadToFile(string url, string file)
+    {
+        _log.LogVerbose($"HTTP GET: {url}");
+
+        using var response = await _retryPolicy.Retry(async () =>
+            await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead));
+
+        _log.LogVerbose($"RESPONSE ({response.StatusCode}): <truncated>");
+
+        response.EnsureSuccessStatusCode();
+
+        await using var streamToReadFrom = await response.Content.ReadAsStreamAsync();
+        await using var streamToWriteTo = _fileSystemProvider.Open(file, FileMode.Create);
+        await _fileSystemProvider.CopySourceToTargetStreamAsync(streamToReadFrom, streamToWriteTo);
     }
 }

@@ -11,14 +11,22 @@ public class GitlabApiFactory
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
     private readonly IVersionProvider _versionProvider;
     private readonly RetryPolicy _retryPolicy;
+    private readonly FileSystemProvider _fileSystemProvider;
 
-    public GitlabApiFactory(OctoLogger octoLogger, IHttpClientFactory clientFactory, EnvironmentVariableProvider environmentVariableProvider, IVersionProvider versionProvider, RetryPolicy retryPolicy)
+    public GitlabApiFactory(
+        OctoLogger octoLogger,
+        IHttpClientFactory clientFactory,
+        EnvironmentVariableProvider environmentVariableProvider,
+        IVersionProvider versionProvider,
+        RetryPolicy retryPolicy,
+        FileSystemProvider fileSystemProvider)
     {
         _octoLogger = octoLogger;
         _clientFactory = clientFactory;
         _environmentVariableProvider = environmentVariableProvider;
         _versionProvider = versionProvider;
         _retryPolicy = retryPolicy;
+        _fileSystemProvider = fileSystemProvider;
     }
 
     public virtual GitlabApi Create(string gitlabServerUrl, string gitlabPat, bool noSsl = false)
@@ -28,7 +36,7 @@ public class GitlabApiFactory
         var httpClient = noSsl ? _clientFactory.CreateClient("NoSSL") : _clientFactory.CreateClient("Default");
 
         var clientRetryPolicy = (_retryPolicy ?? new RetryPolicy(_octoLogger)).WithServiceName("GitLab");
-        var gitlabClient = new GitlabClient(_octoLogger, httpClient, _versionProvider, clientRetryPolicy, gitlabPat);
+        var gitlabClient = new GitlabClient(_octoLogger, httpClient, _versionProvider, clientRetryPolicy, gitlabPat, _fileSystemProvider);
         return new GitlabApi(gitlabClient, gitlabServerUrl, _octoLogger);
     }
 
@@ -37,7 +45,7 @@ public class GitlabApiFactory
         var httpClient = noSsl ? _clientFactory.CreateClient("KerberosNoSSL") : _clientFactory.CreateClient("Kerberos");
 
         var clientRetryPolicy = (_retryPolicy ?? new RetryPolicy(_octoLogger)).WithServiceName("GitLab");
-        var gitlabClient = new GitlabClient(_octoLogger, httpClient, _versionProvider, clientRetryPolicy);
+        var gitlabClient = new GitlabClient(_octoLogger, httpClient, _versionProvider, clientRetryPolicy, _fileSystemProvider);
         return new GitlabApi(gitlabClient, gitlabServerUrl, _octoLogger);
     }
 }
