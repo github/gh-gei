@@ -37,18 +37,7 @@ public class MigrateRepoCommandArgs : CommandArgs
     public string GitlabProject { get; set; }
     [Secret]
     public string GitlabPat { get; set; }
-    public string GitlabSharedHome { get; set; }
     public bool NoSslVerify { get; set; }
-
-    public string ArchiveDownloadHost { get; set; }
-    public string SshUser { get; set; }
-    public string SshPrivateKey { get; set; }
-    public int SshPort { get; set; } = 22;
-
-    public string SmbUser { get; set; }
-    [Secret]
-    public string SmbPassword { get; set; }
-    public string SmbDomain { get; set; }
 
     public bool KeepArchive { get; set; }
     public bool UseGithubStorage { get; set; }
@@ -68,7 +57,6 @@ public class MigrateRepoCommandArgs : CommandArgs
         if (ShouldGenerateArchive())
         {
             ValidateGenerateOptions();
-            ValidateDownloadOptions();
         }
         else
         {
@@ -84,11 +72,6 @@ public class MigrateRepoCommandArgs : CommandArgs
         {
             ValidateImportOptions();
         }
-
-        if (SshPort == 7999)
-        {
-            log?.LogWarning("--ssh-port is set to 7999, which is the default port that Bitbucket Server and Bitbucket Data Center use for Git operations over SSH. This is probably the wrong value, because --ssh-port should be configured with the SSH port used to manage the server where Bitbucket Server/Bitbucket Data Center is running, not the port used for Git operations over SSH.");
-        }
     }
 
     private void ValidateNoGenerateOptions()
@@ -102,16 +85,9 @@ public class MigrateRepoCommandArgs : CommandArgs
         {
             throw new OctoshiftCliException("--no-ssl-verify cannot be provided with --archive-path or --archive-url.");
         }
-
-        if (new[] { SshUser, SshPrivateKey, ArchiveDownloadHost, SmbUser, SmbPassword, SmbDomain }.Any(obj => obj.HasValue()))
-        {
-            throw new OctoshiftCliException("SSH or SMB download options cannot be provided with --archive-path or --archive-url.");
-        }
     }
 
     public bool ShouldGenerateArchive() => GitlabServerUrl.HasValue() && !ArchivePath.HasValue() && !ArchiveUrl.HasValue();
-
-    public bool ShouldDownloadArchive() => SshUser.HasValue() || SmbUser.HasValue();
 
     public bool ShouldUploadArchive() => ArchiveUrl.IsNullOrWhiteSpace() && GithubOrg.HasValue();
 
@@ -128,29 +104,6 @@ public class MigrateRepoCommandArgs : CommandArgs
         if (GitlabGroup.IsNullOrWhiteSpace() || GitlabProject.IsNullOrWhiteSpace())
         {
             throw new OctoshiftCliException("Both --gitlab-group and --gitlab-project must be provided.");
-        }
-    }
-
-    private void ValidateDownloadOptions()
-    {
-        var sshArgs = new[] { SshUser, SshPrivateKey };
-        var smbArgs = new[] { SmbUser, SmbPassword };
-        var shouldUseSsh = sshArgs.Any(arg => arg.HasValue());
-        var shouldUseSmb = smbArgs.Any(arg => arg.HasValue());
-
-        if (shouldUseSsh && shouldUseSmb)
-        {
-            throw new OctoshiftCliException("You can't provide both SSH and SMB credentials together.");
-        }
-
-        if (SshUser.HasValue() ^ SshPrivateKey.HasValue())
-        {
-            throw new OctoshiftCliException("Both --ssh-user and --ssh-private-key must be specified for SSH download.");
-        }
-
-        if (ArchiveDownloadHost.HasValue() && !shouldUseSsh && !shouldUseSmb)
-        {
-            throw new OctoshiftCliException("--archive-download-host can only be provided if SSH or SMB download options are provided.");
         }
     }
 
