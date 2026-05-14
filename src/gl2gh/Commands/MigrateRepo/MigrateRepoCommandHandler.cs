@@ -277,8 +277,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private string GetGitlabPat(MigrateRepoCommandArgs args) => args.GitlabPat.HasValue() ? args.GitlabPat : _environmentVariableProvider.GitlabPat(false);
 
-    private string GetSmbPassword(MigrateRepoCommandArgs args) => args.SmbPassword.HasValue() ? args.SmbPassword : _environmentVariableProvider.SmbPassword(false);
-
     private string GetGitlabProjectUrl(MigrateRepoCommandArgs args)
     {
         return args.GitlabServerUrl.HasValue() && args.GitlabGroup.HasValue() && args.GitlabProject.HasValue()
@@ -296,17 +294,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 {
                     throw new OctoshiftCliException("BBS password must be either set as BBS_PAT environment variable or passed as --bbs-pat.");
                 }
-            }
-
-            if ((args.SmbUser.HasValue() && GetSmbPassword(args).IsNullOrWhiteSpace()) || (args.SmbPassword.HasValue() && args.SmbUser.IsNullOrWhiteSpace()))
-            {
-                throw new OctoshiftCliException("Both --smb-user and --smb-password (or SMB_PASSWORD env. variable) must be specified for SMB download.");
-            }
-
-            // Validate --bbs-shared-home if running on Bitbucket instance (not using SSH/SMB)
-            if (!args.ShouldDownloadArchive() && args.GitlabSharedHome.HasValue() && !_fileSystemProvider.DirectoryExists(args.GitlabSharedHome))
-            {
-                throw new OctoshiftCliException($"The path provided for --bbs-shared-home does not exist or is not accessible: {args.GitlabSharedHome}");
             }
         }
 
