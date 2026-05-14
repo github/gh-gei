@@ -361,7 +361,7 @@ public class GithubApi
                 name = "GitLab Source",
                 url = "https://not-used",
                 ownerId = orgId,
-                type = "GITLAB_ARCHIVE"
+                type = "GITLAB"
             },
             operationName = "createMigrationSource"
         };
