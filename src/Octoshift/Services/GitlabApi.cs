@@ -54,6 +54,14 @@ public class GitlabApi
         );
     }
 
+    public virtual async Task DownloadExportArchive(string groupPath, string projectPath, string file)
+    {
+        var encodedProjectPath = GetEncodedProjectPath(groupPath, projectPath);
+        var url = $"{_gitlabBaseUrl}/api/v4/projects/{encodedProjectPath}/export/download";
+
+        await _client.DownloadToFile(url, file);
+    }
+
     public virtual async Task<IEnumerable<(long Id, string Path, string Name, bool Archived)>> GetProjects(string groupPath)
     {
         var encodedGroupPath = Uri.EscapeDataString(groupPath);
