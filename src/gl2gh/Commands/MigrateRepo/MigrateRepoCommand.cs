@@ -162,9 +162,11 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         var log = sp.GetRequiredService<OctoLogger>();
         var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
         var fileSystemProvider = sp.GetRequiredService<FileSystemProvider>();
+        var httpDownloadServiceFactory = sp.GetRequiredService<HttpDownloadServiceFactory>();
+        var httpDownloadService = args.NoSslVerify ? httpDownloadServiceFactory.CreateClientNoSsl() : httpDownloadServiceFactory.CreateDefault();
+
         GithubApi githubApi = null;
         GitlabApi gitlabApi = null;
-        IGitlabArchiveDownloader gitlabArchiveDownloader = null;
         AzureApi azureApi = null;
         AwsApi awsApi = null;
 
@@ -183,9 +185,6 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
                 : gitlabApiFactory.Create(args.GitlabServerUrl, args.GitlabPat, args.NoSslVerify);
         }
 
-        var gitlabArchiveDownloaderFactory = sp.GetRequiredService<GitlabArchiveDownloaderFactory>();
-        gitlabArchiveDownloader = gitlabArchiveDownloaderFactory.CreateDownloader();
-
         var azureStorageConnectionString = args.AzureStorageConnectionString ?? environmentVariableProvider.AzureStorageConnectionString(false);
         if (azureStorageConnectionString.HasValue())
         {
@@ -201,6 +200,6 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
         var warningsCountLogger = sp.GetRequiredService<WarningsCountLogger>();
 
-        return new MigrateRepoCommandHandler(log, githubApi, gitlabApi, environmentVariableProvider, gitlabArchiveDownloader, azureApi, awsApi, fileSystemProvider, warningsCountLogger);
+        return new MigrateRepoCommandHandler(log, githubApi, gitlabApi, environmentVariableProvider, azureApi, awsApi, httpDownloadService, fileSystemProvider, warningsCountLogger);
     }
 }

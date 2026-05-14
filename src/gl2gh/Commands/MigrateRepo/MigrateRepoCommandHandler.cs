@@ -15,7 +15,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private readonly AzureApi _azureApi;
     private readonly AwsApi _awsApi;
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
-    private readonly IGitlabArchiveDownloader _bbsArchiveDownloader;
+    private readonly HttpDownloadService _httpDownloadService;
     private readonly FileSystemProvider _fileSystemProvider;
     private readonly WarningsCountLogger _warningsCountLogger;
     private const int CHECK_EXPORT_STATUS_DELAY_IN_MILLISECONDS = 10000;
@@ -26,9 +26,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         GithubApi githubApi,
         GitlabApi gitlabApi,
         EnvironmentVariableProvider environmentVariableProvider,
-        IGitlabArchiveDownloader bbsArchiveDownloader,
         AzureApi azureApi,
         AwsApi awsApi,
+        HttpDownloadService httpDownloadService,
         FileSystemProvider fileSystemProvider,
         WarningsCountLogger warningsCountLogger)
     {
@@ -37,8 +37,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _gitlabApi = gitlabApi;
         _azureApi = azureApi;
         _awsApi = awsApi;
+        _httpDownloadService = httpDownloadService;
         _environmentVariableProvider = environmentVariableProvider;
-        _bbsArchiveDownloader = bbsArchiveDownloader;
         _fileSystemProvider = fileSystemProvider;
         _warningsCountLogger = warningsCountLogger;
     }
@@ -52,7 +52,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         ValidateOptions(args);
 
-        var exportId = 0L;
         var migrationSourceId = "";
 
         if (args.ShouldImportArchive())
@@ -69,27 +68,18 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (args.ShouldGenerateArchive())
         {
-            exportId = await GenerateArchive(args);
+            await GenerateArchive(args);
 
-            if (args.ShouldDownloadArchive())
-            {
-                args.ArchivePath = await DownloadArchive(exportId);
-            }
+            _log.LogInformation($"Downloading GitLab archive...");
 
-            if (!args.ShouldDownloadArchive() && args.ShouldUploadArchive())
-            {
-                _log.LogWarning($"You haven't specified --ssh-user or --smb-user, so we assume that you're running the CLI on the Bitbucket instance itself. If you are not running this command on the Bitbucket instance, run this command again with the --ssh-user or --smb-user argument to allow the CLI to download the migration archive from the server.");
-            }
+            args.ArchivePath ??= _fileSystemProvider.GetTempFileName();
+            await _gitlabApi.DownloadExportArchive(args.GitlabGroup, args.GitlabProject, args.ArchivePath);
+
+            _log.LogInformation(args.KeepArchive ? $"Archive downloaded to \"{args.ArchivePath}\"" : "Archive download complete");
         }
 
         if (args.ShouldUploadArchive())
         {
-            // This is for the case where the CLI is being run on the BBS server itself
-            if (args.ArchivePath.IsNullOrWhiteSpace())
-            {
-                args.ArchivePath = GetSourceExportArchiveAbsolutePath(args.GitlabSharedHome, exportId);
-            }
-
             _log.LogInformation($"Archive path: {args.ArchivePath}");
 
             try
@@ -112,7 +102,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             }
             finally
             {
-                if (!args.KeepArchive && args.ShouldDownloadArchive())
+                if (!args.KeepArchive)
                 {
                     DeleteArchive(args.ArchivePath);
                 }
@@ -123,18 +113,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         {
             await ImportArchive(args, migrationSourceId, args.ArchiveUrl);
         }
-    }
-
-    private string GetSourceExportArchiveAbsolutePath(string bbsSharedHomeDirectory, long exportId)
-    {
-        if (bbsSharedHomeDirectory.IsNullOrWhiteSpace())
-        {
-            bbsSharedHomeDirectory = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                ? GitlabSettings.DEFAULT_BBS_SHARED_HOME_DIRECTORY_WINDOWS
-                : GitlabSettings.DEFAULT_BBS_SHARED_HOME_DIRECTORY_LINUX;
-        }
-
-        return IGitlabArchiveDownloader.GetSourceExportArchiveAbsolutePath(bbsSharedHomeDirectory, exportId);
     }
 
     private void DeleteArchive(string path)
@@ -152,38 +130,29 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         }
     }
 
-    private async Task<string> DownloadArchive(long exportId)
+    private async Task<string> GenerateArchive(MigrateRepoCommandArgs args)
     {
-        _log.LogInformation($"Download archive {exportId} started...");
-        var downloadedArchiveFullPath = await _bbsArchiveDownloader.Download(exportId);
-        _log.LogInformation($"Archive was successfully downloaded at \"{downloadedArchiveFullPath}\".");
+        await _gitlabApi.StartExport(args.GitlabGroup, args.GitlabProject);
 
-        return downloadedArchiveFullPath;
-    }
+        _log.LogInformation($"Export started.");
 
-    private async Task<long> GenerateArchive(MigrateRepoCommandArgs args)
-    {
-        var exportId = await _gitlabApi.StartExport(args.GitlabGroup, args.GitlabProject);
-
-        _log.LogInformation($"Export started. Export ID: {exportId}");
-
-        var (exportState, exportMessage, exportProgress) = await _gitlabApi.GetExport(args.GitlabGroup, args.GitlabProject);
+        var (exportState, archiveUrl) = await _gitlabApi.GetExport(args.GitlabGroup, args.GitlabProject);
 
         while (ExportState.IsInProgress(exportState))
         {
-            _log.LogInformation($"Export status: {exportState}; {exportProgress}% complete");
+            _log.LogInformation($"Export status: {exportState}.");
             await Task.Delay(CHECK_EXPORT_STATUS_DELAY_IN_MILLISECONDS);
-            (exportState, exportMessage, exportProgress) = await _gitlabApi.GetExport(args.GitlabGroup, args.GitlabProject);
+            (exportState, archiveUrl) = await _gitlabApi.GetExport(args.GitlabGroup, args.GitlabProject);
         }
 
         if (ExportState.IsError(exportState))
         {
-            throw new OctoshiftCliException($"Bitbucket export failed --> State: {exportState}; Message: {exportMessage}");
+            throw new OctoshiftCliException($"GitLab archive export failed!");
         }
 
-        _log.LogInformation($"Export completed. Your migration archive should be ready **on your Bitbucket instance** at $BITBUCKET_SHARED_HOME/data/migration/export/Bitbucket_export_{exportId}.tar");
+        _log.LogInformation($"Archive export completed.");
 
-        return exportId;
+        return archiveUrl;
     }
 
     private async Task<string> UploadArchiveToAzure(string archivePath)
