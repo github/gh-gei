@@ -49,7 +49,6 @@ namespace OctoshiftCLI.GitlabToGithub
                 .AddSingleton<DateTimeProvider>()
                 .AddSingleton<WarningsCountLogger>()
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
-                .AddSingleton<GitlabArchiveDownloaderFactory>()
                 .AddSingleton<ConfirmationService>()
                 .AddHttpClient("Kerberos", kerberos: true, noSsl: false)
                 .AddHttpClient("NoSSL", kerberos: false, noSsl: true)

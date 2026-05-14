@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using OctoshiftCLI.GitlabToGithub.Services;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
