@@ -43,7 +43,7 @@ namespace OctoshiftCLI.GitlabToGithub.Commands.InventoryReport
 
         public Option<bool> Minimal { get; } = new(
             name: "--minimal",
-            description: "Significantly speeds up the generation of the CSV files by including the bare minimum info. Will omit the archived state and PR count for repos and the PR count for projects.");
+            description: "Omit the MR count from group and project reports for quicker report generation.");
 
         public Option<bool> Verbose { get; } = new("--verbose");
 

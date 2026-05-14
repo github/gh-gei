@@ -24,8 +24,8 @@ namespace OctoshiftCLI.GitlabToGithub
             var inspector = _gitlabInspectorServiceFactory.Create(gitlabApi);
             var result = new StringBuilder();
 
-            result.Append("group-path,group-name,project,url,last-commit-date,repo-size-in-bytes,attachments-size-in-bytes");
-            result.AppendLine(!minimal ? ",is-archived,mr-count" : null);
+            result.Append("group-path,group-name,project,url,last-commit-date,repo-size-in-bytes,attachments-size-in-bytes,is-archived");
+            result.AppendLine(!minimal ? ",mr-count" : null);
 
             var groups = string.IsNullOrWhiteSpace(gitlabGroup) ? await inspector.GetGroups() : new[] { await inspector.GetGroup(gitlabGroup) };
 
@@ -43,14 +43,14 @@ namespace OctoshiftCLI.GitlabToGithub
 
                     if (lastCommitDate == null)
                     {
-                        result.Append($"\"{groupPath}\",\"{group}\",\"{projectName}\",\"{url}\",,\"{repoSize:D}\",\"{attachmentsSize:D}\"");
+                        result.Append($"\"{groupPath}\",\"{group}\",\"{projectName}\",\"{url}\",,\"{repoSize:D}\",\"{attachmentsSize:D}\",\"{project.Archived}\"");
                     }
                     else
                     {
-                        result.Append($"\"{groupPath}\",\"{group}\",\"{projectName}\",\"{url}\",\"{lastCommitDate:yyyy-MM-dd hh:mm tt}\",\"{repoSize:D}\",\"{attachmentsSize:D}\"");
+                        result.Append($"\"{groupPath}\",\"{group}\",\"{projectName}\",\"{url}\",\"{lastCommitDate:yyyy-MM-dd hh:mm tt}\",\"{repoSize:D}\",\"{attachmentsSize:D}\",\"{project.Archived}\"");
                     }
 
-                    result.AppendLine(!minimal ? $",\"{project.Archived}\",{mrCount}" : null);
+                    result.AppendLine(!minimal ? $",{mrCount}" : null);
                 }
             }
 
