@@ -1,0 +1,1 @@
+- **ado2gh**: Fixed `rewire-pipeline` for Classic (Designer) pipelines by detecting the pipeline process type and using the correct settingsSourceType and trigger configuration.

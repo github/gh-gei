@@ -253,6 +253,7 @@ jobs:
           ADO_SERVER_PAT: ${{ secrets.ADO_SERVER_PAT }}
           BBS_USERNAME: ${{ secrets.BBS_USERNAME }}
           BBS_PASSWORD: ${{ secrets.BBS_PASSWORD }}
+          BBS_ARCHIVE_URL: ${{ secrets.BBS_ARCHIVE_URL }}
           SSH_KEY_BBS: ${{ secrets.SSH_KEY_BBS }}
           SSH_PORT_BBS: ${{ secrets.SSH_PORT_BBS }}
           SMB_PASSWORD: ${{ secrets.SMB_PASSWORD }}
