@@ -13,20 +13,20 @@ public class InventoryReportCommandHandler : ICommandHandler<InventoryReportComm
 
     private readonly OctoLogger _log;
     private readonly GitlabApi _gitlabApi;
-    private readonly GitlabInspectorService _bbsInspectorService;
+    private readonly GitlabInspectorService _gitlabInspectorService;
     private readonly GroupsCsvGeneratorService _groupsCsvGenerator;
     private readonly ProjectsCsvGeneratorService _projectsCsvGenerator;
 
     public InventoryReportCommandHandler(
         OctoLogger log,
         GitlabApi gitlabApi,
-        GitlabInspectorService bbsInspectorService,
+        GitlabInspectorService gitlabInspectorService,
         GroupsCsvGeneratorService groupsCsvGeneratorService,
         ProjectsCsvGeneratorService projectsCsvGeneratorService)
     {
         _log = log;
         _gitlabApi = gitlabApi;
-        _bbsInspectorService = bbsInspectorService;
+        _gitlabInspectorService = gitlabInspectorService;
         _groupsCsvGenerator = groupsCsvGeneratorService;
         _projectsCsvGenerator = projectsCsvGeneratorService;
     }
@@ -50,7 +50,7 @@ public class InventoryReportCommandHandler : ICommandHandler<InventoryReportComm
         }
 
         _log.LogInformation("Finding Projects...");
-        var projectCount = string.IsNullOrWhiteSpace(args.GitlabGroup) ? await _bbsInspectorService.GetProjectCount(groupPaths) : await _bbsInspectorService.GetProjectCount(args.GitlabGroup);
+        var projectCount = string.IsNullOrWhiteSpace(args.GitlabGroup) ? await _gitlabInspectorService.GetProjectCount(groupPaths) : await _gitlabInspectorService.GetProjectCount(args.GitlabGroup);
         _log.LogInformation($"Found {projectCount} Projects");
 
         _log.LogInformation("Generating data for groups.csv...");
