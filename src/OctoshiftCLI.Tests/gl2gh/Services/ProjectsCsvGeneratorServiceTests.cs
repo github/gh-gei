@@ -1,92 +1,89 @@
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
+using Octoshift.Models;
 using OctoshiftCLI.GitlabToGithub;
 using OctoshiftCLI.GitlabToGithub.Factories;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.GitlabToGithub.Commands
+namespace OctoshiftCLI.Tests.GitlabToGithub.Services;
+
+public class ProjectsCsvGeneratorServiceTests
 {
-    public class ProjectsCsvGeneratorServiceTests
+    private const string GITLAB_SERVER_URL = "https://gitlab.contoso.com";
+    private const string GITLAB_PAT = "gitlab-pat";
+    private const bool NO_SSL_VERIFY = true;
+
+    private const string GROUP_PATH = "group-1";
+    private const string GROUP_NAME = "Group 1";
+    private const string PROJECT_PATH = "project-1";
+    private const string PROJECT_NAME = "Project 1";
+
+    private const string FULL_CSV_HEADER = "group-path,group-name,project,url,last-commit-date,repo-size-in-bytes,attachments-size-in-bytes,is-archived,mr-count";
+    private const string MINIMAL_CSV_HEADER = "group-path,group-name,project,url,last-commit-date,repo-size-in-bytes,attachments-size-in-bytes,is-archived";
+
+    private readonly Mock<GitlabApi> _mockGitlabApi = TestHelpers.CreateMock<GitlabApi>();
+    private readonly Mock<GitlabApiFactory> _mockGitlabApiFactory = TestHelpers.CreateMock<GitlabApiFactory>();
+    private readonly Mock<GitlabInspectorService> _mockGitlabInspectorService = TestHelpers.CreateMock<GitlabInspectorService>();
+    private readonly Mock<GitlabInspectorServiceFactory> _mockGitlabInspectorServiceFactory = TestHelpers.CreateMock<GitlabInspectorServiceFactory>();
+
+    private readonly ProjectsCsvGeneratorService _service;
+
+    public ProjectsCsvGeneratorServiceTests()
     {
-        private const string FULL_CSV_HEADER = "project-key,project-name,url,repo-count,pr-count";
-        private const string MINIMAL_CSV_HEADER = "project-key,project-name,url,repo-count";
+        _mockGitlabApiFactory.Setup(m => m.Create(GITLAB_SERVER_URL, GITLAB_PAT, NO_SSL_VERIFY)).Returns(_mockGitlabApi.Object);
+        _mockGitlabInspectorServiceFactory.Setup(m => m.Create(_mockGitlabApi.Object)).Returns(_mockGitlabInspectorService.Object);
+        _service = new ProjectsCsvGeneratorService(_mockGitlabInspectorServiceFactory.Object, _mockGitlabApiFactory.Object);
+    }
 
-        private readonly Mock<GitlabApi> _mockGitlabApi = TestHelpers.CreateMock<GitlabApi>();
-        private readonly Mock<GitlabApiFactory> _mockGitlabApiFactory = TestHelpers.CreateMock<GitlabApiFactory>();
-        private readonly Mock<GitlabInspectorService> _mockGitlabInspectorService = TestHelpers.CreateMock<GitlabInspectorService>();
-        private readonly Mock<GitlabInspectorServiceFactory> _mockGitlabInspectorServiceFactory = TestHelpers.CreateMock<GitlabInspectorServiceFactory>();
+    [Fact]
+    public async Task Generate_Returns_Csv_For_Single_Group()
+    {
+        var lastCommitDate = new DateTimeOffset(2024, 1, 2, 3, 4, 5, TimeSpan.Zero);
+        const long repoSize = 1234;
+        const long attachmentsSize = 5678;
+        const int mrCount = 7;
 
-        private const string BBS_SERVER_URL = "http://bbs-server-url";
-        private const string BBS_FOO_PROJECT = "project1";
-        private const string BBS_BAR_PROJECT = "project2";
-        private const string BBS_FOO_PROJECT_KEY = "FP";
-        private const string BBS_BAR_PROJECT_KEY = "BP";
-        private const string BBS_USERNAME = "bbs-username";
-        private const string BBS_PASSWORD = "bbs-password";
-        private const bool NO_SSL_VERIFY = true;
-        private readonly (string, string) _bbsProject = (BBS_FOO_PROJECT_KEY, BBS_FOO_PROJECT);
-        private readonly IEnumerable<(string, string)> _bbsProjects = [(BBS_FOO_PROJECT_KEY, BBS_FOO_PROJECT), (BBS_BAR_PROJECT_KEY, BBS_BAR_PROJECT)];
+        _mockGitlabInspectorService.Setup(m => m.GetGroup(GROUP_PATH)).ReturnsAsync((GROUP_PATH, GROUP_NAME));
+        _mockGitlabInspectorService
+            .Setup(m => m.GetProjects(GROUP_PATH))
+            .ReturnsAsync(new[] { new GitlabProject { Name = PROJECT_NAME, Path = PROJECT_PATH } });
+        _mockGitlabApi.Setup(m => m.GetRepositoryLatestCommitDate(GROUP_PATH, PROJECT_PATH)).ReturnsAsync(lastCommitDate);
+        _mockGitlabApi.Setup(m => m.GetRepositoryAndAttachmentsSize(GROUP_PATH, PROJECT_PATH)).ReturnsAsync((repoSize, attachmentsSize));
+        _mockGitlabInspectorService.Setup(m => m.GetProjectMergeRequestCount(GROUP_PATH, PROJECT_PATH)).ReturnsAsync(mrCount);
 
-        private readonly ProjectsCsvGeneratorService _service;
+        var result = await _service.Generate(GITLAB_SERVER_URL, GITLAB_PAT, NO_SSL_VERIFY, GROUP_PATH);
 
-        public ProjectsCsvGeneratorServiceTests()
-        {
-            _mockGitlabInspectorServiceFactory.Setup(m => m.Create(_mockGitlabApi.Object)).Returns(_mockGitlabInspectorService.Object);
-            _service = new ProjectsCsvGeneratorService(_mockGitlabInspectorServiceFactory.Object, _mockGitlabApiFactory.Object);
-        }
+        var expected =
+            $"{FULL_CSV_HEADER}{Environment.NewLine}" +
+            $"\"{GROUP_PATH}\",\"{GROUP_NAME}\",\"{PROJECT_NAME}\",\"{GITLAB_SERVER_URL}/{GROUP_PATH}/{PROJECT_PATH}\",\"{lastCommitDate:yyyy-MM-dd hh:mm tt}\",\"{repoSize:D}\",\"{attachmentsSize:D}\",\"\",{mrCount}{Environment.NewLine}";
 
-        [Fact]
-        public async Task Generate_Should_Return_Correct_Csv_For_One_Project()
-        {
-            // Arrange
-            var repoCount = 82;
-            var prCount = 822;
+        result.Should().Be(expected);
+    }
 
-            _mockGitlabApiFactory.Setup(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY)).Returns(_mockGitlabApi.Object);
+    [Fact]
+    public async Task Generate_Returns_Minimal_Csv_When_Requested()
+    {
+        const long repoSize = 1234;
+        const long attachmentsSize = 5678;
+        var lastCommitDate = new DateTimeOffset(2024, 1, 2, 3, 4, 5, TimeSpan.Zero);
 
-            _mockGitlabInspectorService.Setup(m => m.GetProject(BBS_FOO_PROJECT_KEY)).ReturnsAsync(_bbsProject);
-            _mockGitlabInspectorService.Setup(m => m.GetRepoCount(BBS_FOO_PROJECT_KEY)).ReturnsAsync(repoCount);
-            _mockGitlabInspectorService.Setup(m => m.GetPullRequestCount(BBS_FOO_PROJECT_KEY)).ReturnsAsync(prCount);
+        _mockGitlabInspectorService.Setup(m => m.GetGroup(GROUP_PATH)).ReturnsAsync((GROUP_PATH, GROUP_NAME));
+        _mockGitlabInspectorService
+            .Setup(m => m.GetProjects(GROUP_PATH))
+            .ReturnsAsync(new[] { new GitlabProject { Name = PROJECT_NAME, Path = PROJECT_PATH } });
+        _mockGitlabApi.Setup(m => m.GetRepositoryLatestCommitDate(GROUP_PATH, PROJECT_PATH)).ReturnsAsync(lastCommitDate);
+        _mockGitlabApi.Setup(m => m.GetRepositoryAndAttachmentsSize(GROUP_PATH, PROJECT_PATH)).ReturnsAsync((repoSize, attachmentsSize));
 
-            // Act
-            var result = await _service.Generate(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY, BBS_FOO_PROJECT_KEY);
+        var result = await _service.Generate(GITLAB_SERVER_URL, GITLAB_PAT, NO_SSL_VERIFY, GROUP_PATH, minimal: true);
 
-            // Assert
-            var expected = $"{FULL_CSV_HEADER}{Environment.NewLine}";
+        var expected =
+            $"{MINIMAL_CSV_HEADER}{Environment.NewLine}" +
+            $"\"{GROUP_PATH}\",\"{GROUP_NAME}\",\"{PROJECT_NAME}\",\"{GITLAB_SERVER_URL}/{GROUP_PATH}/{PROJECT_PATH}\",\"{lastCommitDate:yyyy-MM-dd hh:mm tt}\",\"{repoSize:D}\",\"{attachmentsSize:D}\",\"\"{Environment.NewLine}";
 
-            expected += $"\"{BBS_FOO_PROJECT_KEY}\",\"{BBS_FOO_PROJECT}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_FOO_PROJECT_KEY}\",{repoCount},{prCount}{Environment.NewLine}";
-
-            result.Should().Be(expected);
-        }
-
-        [Fact]
-        public async Task Generate_Should_Return_Minimal_Csv_When_Minimal_Is_True()
-        {
-            // Arrange
-            const int repoCount1 = 82;
-            const int repoCount2 = 0;
-            const bool minimal = true;
-
-            _mockGitlabApiFactory.Setup(m => m.Create(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY)).Returns(_mockGitlabApi.Object);
-
-            _mockGitlabInspectorService.Setup(m => m.GetProjects()).ReturnsAsync(_bbsProjects);
-            _mockGitlabInspectorService.Setup(m => m.GetRepoCount(BBS_FOO_PROJECT_KEY)).ReturnsAsync(repoCount1);
-            _mockGitlabInspectorService.Setup(m => m.GetRepoCount(BBS_BAR_PROJECT_KEY)).ReturnsAsync(repoCount2);
-
-            // Act
-            var result = await _service.Generate(BBS_SERVER_URL, BBS_USERNAME, BBS_PASSWORD, NO_SSL_VERIFY, "", minimal);
-
-            // Assert
-            var expected = $"{MINIMAL_CSV_HEADER}{Environment.NewLine}";
-            expected += $"\"{BBS_FOO_PROJECT_KEY}\",\"{BBS_FOO_PROJECT}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_FOO_PROJECT_KEY}\",{repoCount1}{Environment.NewLine}";
-            expected += $"\"{BBS_BAR_PROJECT_KEY}\",\"{BBS_BAR_PROJECT}\",\"{BBS_SERVER_URL.TrimEnd('/')}/projects/{BBS_BAR_PROJECT_KEY}\",{repoCount2}{Environment.NewLine}";
-
-            result.Should().Be(expected);
-            _mockGitlabInspectorService.Verify(m => m.GetPullRequestCount(It.IsAny<string>()), Times.Never);
-        }
+        result.Should().Be(expected);
+        _mockGitlabInspectorService.Verify(m => m.GetProjectMergeRequestCount(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 }

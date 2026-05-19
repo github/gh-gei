@@ -6,42 +6,25 @@ using OctoshiftCLI.GitlabToGithub.Factories;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.bbs2gh.Factories;
+namespace OctoshiftCLI.Tests.GitlabToGithub.Factories;
 
 public class GitlabApiFactoryTests
 {
-    private const string BBS_SERVER_URL = "http://bbs.contoso.com:7990";
+    private const string GITLAB_SERVER_URL = "https://gitlab.contoso.com";
 
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
-    private readonly Mock<IHttpClientFactory> _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+    private readonly Mock<IHttpClientFactory> _mockHttpClientFactory = new();
 
     private readonly GitlabApiFactory _gitlabApiFactory;
 
     public GitlabApiFactoryTests()
     {
-        _gitlabApiFactory = new GitlabApiFactory(_mockOctoLogger.Object, _mockHttpClientFactory.Object, _mockEnvironmentVariableProvider.Object, null, null);
+        _gitlabApiFactory = new GitlabApiFactory(_mockOctoLogger.Object, _mockHttpClientFactory.Object, _mockEnvironmentVariableProvider.Object, null, null, null);
     }
 
     [Fact]
-    public void Should_Create_GitlabApi_For_Source_Gitlab_Api_With_Kerberos()
-    {
-        using var httpClient = new HttpClient();
-
-        _mockHttpClientFactory
-            .Setup(x => x.CreateClient("Kerberos"))
-            .Returns(httpClient);
-
-        // Act
-        var githubApi = _gitlabApiFactory.CreateKerberos(BBS_SERVER_URL);
-
-        // Assert
-        githubApi.Should().NotBeNull();
-        httpClient.DefaultRequestHeaders.Accept.First().MediaType.Should().Be("application/json");
-    }
-
-    [Fact]
-    public void Should_Create_GitlabApi_For_Source_Gitlab_Api_With_Default()
+    public void Should_Create_GitlabApi_With_Default()
     {
         using var httpClient = new HttpClient();
 
@@ -50,10 +33,10 @@ public class GitlabApiFactoryTests
             .Returns(httpClient);
 
         // Act
-        var githubApi = _gitlabApiFactory.Create(BBS_SERVER_URL, "user", "pass");
+        var gitlabApi = _gitlabApiFactory.Create(GITLAB_SERVER_URL, "pat");
 
         // Assert
-        githubApi.Should().NotBeNull();
+        gitlabApi.Should().NotBeNull();
         httpClient.DefaultRequestHeaders.Accept.First().MediaType.Should().Be("application/json");
     }
 
@@ -67,27 +50,10 @@ public class GitlabApiFactoryTests
             .Returns(httpClient);
 
         // Act
-        var githubApi = _gitlabApiFactory.Create(BBS_SERVER_URL, "user", "pass", true);
+        var gitlabApi = _gitlabApiFactory.Create(GITLAB_SERVER_URL, "pat", true);
 
         // Assert
-        githubApi.Should().NotBeNull();
-        httpClient.DefaultRequestHeaders.Accept.First().MediaType.Should().Be("application/json");
-    }
-
-    [Fact]
-    public void Should_Create_GitlabApi_With_Kerberos_And_No_Ssl_Verify()
-    {
-        using var httpClient = new HttpClient();
-
-        _mockHttpClientFactory
-            .Setup(x => x.CreateClient("KerberosNoSSL"))
-            .Returns(httpClient);
-
-        // Act
-        var githubApi = _gitlabApiFactory.CreateKerberos(BBS_SERVER_URL, true);
-
-        // Assert
-        githubApi.Should().NotBeNull();
+        gitlabApi.Should().NotBeNull();
         httpClient.DefaultRequestHeaders.Accept.First().MediaType.Should().Be("application/json");
     }
 }

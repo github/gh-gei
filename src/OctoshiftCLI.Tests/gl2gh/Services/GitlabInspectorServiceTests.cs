@@ -1,171 +1,106 @@
-using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
-using Octoshift.Models;
 using OctoshiftCLI.GitlabToGithub;
 using OctoshiftCLI.Services;
 using Xunit;
 
-namespace OctoshiftCLI.Tests.GitlabToGithub.Commands
+namespace OctoshiftCLI.Tests.GitlabToGithub.Services;
+
+public class GitlabInspectorServiceTests
 {
-    public class GitlabInspectorServiceTests
+    private readonly OctoLogger _logger = TestHelpers.CreateMock<OctoLogger>().Object;
+    private readonly Mock<GitlabApi> _mockGitlabApi = TestHelpers.CreateMock<GitlabApi>();
+    private readonly GitlabInspectorService _service;
+
+    private const string GROUP_PATH_1 = "group-1";
+    private const string GROUP_NAME_1 = "Group 1";
+    private const string GROUP_PATH_2 = "group-2";
+    private const string GROUP_NAME_2 = "Group 2";
+
+    public GitlabInspectorServiceTests() => _service = new(_logger, _mockGitlabApi.Object);
+
+    [Fact]
+    public async Task GetGroups_Returns_Path_And_Name()
     {
-        private readonly OctoLogger _logger = TestHelpers.CreateMock<OctoLogger>().Object;
-        private readonly Mock<GitlabApi> _mockGitlabApi = TestHelpers.CreateMock<GitlabApi>();
-        private readonly GitlabInspectorService _service;
-
-        private const string BBS_FOO_PROJECT_KEY = "FP";
-        private const string BBS_BAR_PROJECT_KEY = "BP";
-
-        public GitlabInspectorServiceTests() => _service = new(_logger, _mockGitlabApi.Object);
-
-        [Fact]
-        public async Task GetProjects_Should_Return_All_Projects()
-        {
-            // Arrange
-            var project1 = "project1";
-            var project2 = "project2";
-            var projects = new[] {
-                (Id: 1, Key: BBS_FOO_PROJECT_KEY, Name: project1),
-                (Id: 1, Key: BBS_BAR_PROJECT_KEY, Name: project2)
-            };
-
-            _mockGitlabApi.Setup(m => m.GetProjects()).ReturnsAsync(projects);
-
-            // Act
-            var result = await _service.GetProjects();
-
-            // Assert
-            result.Should().BeEquivalentTo([(BBS_FOO_PROJECT_KEY, project1), (BBS_BAR_PROJECT_KEY, project2)]);
-        }
-
-        [Fact]
-        public async Task GetRepos_Should_Return_All_Repos()
-        {
-            // Arrange
-            var repo1 = "repo1";
-            var repo2 = "repo2";
-            var repos = new[]
+        _mockGitlabApi
+            .Setup(m => m.GetGroups())
+            .ReturnsAsync(new[]
             {
-                (Id: 1, Slug: repo1, Name: repo1),
-                (Id: 2, Slug: repo2, Name: repo2)
-            };
+                (Id: 1L, Path: GROUP_PATH_1, Name: GROUP_NAME_1),
+                (Id: 2L, Path: GROUP_PATH_2, Name: GROUP_NAME_2)
+            });
 
-            _mockGitlabApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(repos);
+        var result = await _service.GetGroups();
 
-            // Act
-            var result = await _service.GetRepos(BBS_FOO_PROJECT_KEY);
+        result.Should().BeEquivalentTo([(GROUP_PATH_1, GROUP_NAME_1), (GROUP_PATH_2, GROUP_NAME_2)]);
+    }
 
-            // Assert
-            result.Should().BeEquivalentTo(new List<GitlabRepository>() { new() { Name = repo1, Slug = repo1 }, new() { Name = repo2, Slug = repo2 } });
-        }
-
-        [Fact]
-        public async Task GetRepoCount_Should_Return_Count()
-        {
-            // Arrange
-            var project = "project";
-            var projects = new[] {
-                (Id: 1, Key: BBS_FOO_PROJECT_KEY, Name: project)
-            };
-            var repo1 = "repo1";
-            var repo2 = "repo2";
-            var repos = new[]
+    [Fact]
+    public async Task GetProjects_Returns_Projects_For_Group()
+    {
+        _mockGitlabApi
+            .Setup(m => m.GetProjects(GROUP_PATH_1))
+            .ReturnsAsync(new[]
             {
-                (Id: 1, Slug: repo1, Name: repo1),
-                (Id: 2, Slug: repo2, Name: repo2)
-            };
-            var expectedCount = 2;
+                (Id: 1L, Path: "project-1", Name: "Project 1", Archived: false),
+                (Id: 2L, Path: "project-2", Name: "Project 2", Archived: true)
+            });
 
-            _mockGitlabApi.Setup(m => m.GetProjects()).ReturnsAsync(projects);
-            _mockGitlabApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(repos);
+        var result = (await _service.GetProjects(GROUP_PATH_1)).ToList();
 
-            // Act
-            var result = await _service.GetRepoCount();
+        result.Should().HaveCount(2);
+        result[0].Path.Should().Be("project-1");
+        result[0].Name.Should().Be("Project 1");
+        result[1].Path.Should().Be("project-2");
+        result[1].Name.Should().Be("Project 2");
+    }
 
-            // Assert
-            result.Should().Be(expectedCount);
-        }
-
-        [Fact]
-        public async Task GetRepoCount_With_Project_Keys_Should_Return_Count()
-        {
-            // Arrange
-            var repo1 = "repo1";
-            var repo2 = "repo2";
-            var repos = new[]
+    [Fact]
+    public async Task GetProjectCount_For_Group_Returns_Count()
+    {
+        _mockGitlabApi
+            .Setup(m => m.GetProjects(GROUP_PATH_1))
+            .ReturnsAsync(new[]
             {
-                (Id: 1, Slug: repo1, Name: repo1),
-                (Id: 2, Slug: repo2, Name: repo2)
-            };
-            var expectedCount = 2;
+                (Id: 1L, Path: "p1", Name: "p1", Archived: false),
+                (Id: 2L, Path: "p2", Name: "p2", Archived: false)
+            });
 
-            _mockGitlabApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(repos);
+        var result = await _service.GetProjectCount(GROUP_PATH_1);
 
-            // Act
-            var result = await _service.GetRepoCount(new[] { BBS_FOO_PROJECT_KEY });
+        result.Should().Be(2);
+    }
 
-            // Assert
-            result.Should().Be(expectedCount);
-            _mockGitlabApi.Verify(m => m.GetProjects(), Times.Never);
-        }
-
-        [Fact]
-        public async Task GetPullRequestCount_Should_Return_Count()
-        {
-            // Arrange
-            var project = "project";
-            var repo1 = "repo1";
-            var repo2 = "repo2";
-            var repos = new[]
+    [Fact]
+    public async Task GetProjectCount_For_Multiple_Groups_Returns_Sum()
+    {
+        _mockGitlabApi
+            .Setup(m => m.GetProjects(GROUP_PATH_1))
+            .ReturnsAsync(new[] { (Id: 1L, Path: "p1", Name: "p1", Archived: false) });
+        _mockGitlabApi
+            .Setup(m => m.GetProjects(GROUP_PATH_2))
+            .ReturnsAsync(new[]
             {
-                (Id: 1, Slug: repo1, Name: repo1),
-                (Id: 2, Slug: repo2, Name: repo2)
-            };
+                (Id: 2L, Path: "p2", Name: "p2", Archived: false),
+                (Id: 3L, Path: "p3", Name: "p3", Archived: false)
+            });
 
-            var prs1 = new[]
-            {
-                (Id: 1, Name: "pr1"),
-                (Id: 2, Name: "pr2")
-            };
-            var prs2 = new[]
-            {
-                (Id: 3, Name: "pr3")
-            };
-            var expectedCount = 3;
+        var result = await _service.GetProjectCount(new[] { GROUP_PATH_1, GROUP_PATH_2 });
 
-            _mockGitlabApi.Setup(m => m.GetRepos(project)).ReturnsAsync(repos);
-            _mockGitlabApi.Setup(m => m.GetRepositoryPullRequests(project, repo1)).ReturnsAsync(prs1);
-            _mockGitlabApi.Setup(m => m.GetRepositoryPullRequests(project, repo2)).ReturnsAsync(prs2);
+        result.Should().Be(3);
+    }
 
-            // Act
-            var result = await _service.GetPullRequestCount(project);
+    [Fact]
+    public async Task GetProjectMergeRequestCount_Returns_Count_From_Api()
+    {
+        _mockGitlabApi
+            .Setup(m => m.GetMergeRequestCount(GROUP_PATH_1, "project-1"))
+            .ReturnsAsync(7);
 
-            // Assert
-            result.Should().Be(expectedCount);
-        }
+        var result = await _service.GetProjectMergeRequestCount(GROUP_PATH_1, "project-1");
 
-        [Fact]
-        public async Task GetRepositoryPullRequestCount_Should_Return_Count()
-        {
-            // Arrange
-            var project = "project";
-            var repo = "repo1";
-            var prs = new[]
-            {
-                (Id: 1, Name: "pr1"),
-                (Id: 2, Name: "pr2")
-            };
-            var expectedCount = 2;
-
-            _mockGitlabApi.Setup(m => m.GetRepositoryPullRequests(project, repo)).ReturnsAsync(prs);
-
-            // Act
-            var result = await _service.GetRepositoryPullRequestCount(project, repo);
-
-            // Assert
-            result.Should().Be(expectedCount);
-        }
+        result.Should().Be(7);
     }
 }
