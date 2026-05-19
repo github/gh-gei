@@ -35,7 +35,6 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(AwsRegion);
         AddOption(QueueOnly);
         AddOption(TargetRepoVisibility.FromAmong("public", "private", "internal"));
-        AddOption(Kerberos);
         AddOption(Verbose);
         AddOption(KeepArchive);
         AddOption(NoSslVerify);
@@ -118,11 +117,6 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
     public Option<string> TargetRepoVisibility { get; } = new(
         name: "--target-repo-visibility",
         description: "The visibility of the target repo. Defaults to private. Valid values are public, private, or internal.");
-
-    public Option<bool> Kerberos { get; } = new(
-        name: "--kerberos",
-        description: "Use Kerberos authentication for downloading the export archive off of the GitLab server.")
-    { IsHidden = true };
 
     public Option<bool> Verbose { get; } = new("--verbose");
 

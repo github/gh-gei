@@ -30,7 +30,6 @@ public class MigrateRepoCommandArgs : CommandArgs
     public string TargetRepoVisibility { get; set; }
     public string TargetApiUrl { get; set; }
     public string TargetUploadsUrl { get; set; }
-    public bool Kerberos { get; set; }
 
     public string GitlabServerUrl { get; set; }
     public string GitlabGroup { get; set; }
@@ -96,11 +95,6 @@ public class MigrateRepoCommandArgs : CommandArgs
 
     private void ValidateGenerateOptions()
     {
-        if (Kerberos && GitlabPat.HasValue())
-        {
-            throw new OctoshiftCliException("--gitlab-pat cannot be provided with --kerberos.");
-        }
-
         if (GitlabGroup.IsNullOrWhiteSpace() || GitlabProject.IsNullOrWhiteSpace())
         {
             throw new OctoshiftCliException("Both --gitlab-group and --gitlab-project must be provided.");
@@ -127,12 +121,12 @@ public class MigrateRepoCommandArgs : CommandArgs
     {
         if (GithubOrg.IsNullOrWhiteSpace())
         {
-            throw new OctoshiftCliException("--github-org must be provided in order to import the Bitbucket archive.");
+            throw new OctoshiftCliException("--github-org must be provided in order to import the GitLab archive.");
         }
 
         if (GithubRepo.IsNullOrWhiteSpace())
         {
-            throw new OctoshiftCliException("--github-repo must be provided in order to import the Bitbucket archive.");
+            throw new OctoshiftCliException("--github-repo must be provided in order to import the GitLab archive.");
         }
     }
 }

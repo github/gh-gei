@@ -218,7 +218,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         archiveUrl ??= args.ArchiveUrl;
 
-        var bbsRepoUrl = GetGitlabProjectUrl(args);
+        var gitlabRepoUrl = GetGitlabProjectUrl(args);
 
         args.GithubPat ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
         var githubOrgId = await _githubApi.GetOrganizationId(args.GithubOrg);
@@ -227,7 +227,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         try
         {
-            migrationId = await _githubApi.StartGitlabMigration(migrationSourceId, bbsRepoUrl, githubOrgId, args.GithubRepo, args.GithubPat, archiveUrl, args.TargetRepoVisibility);
+            migrationId = await _githubApi.StartGitlabMigration(migrationSourceId, gitlabRepoUrl, githubOrgId, args.GithubRepo, args.GithubPat, archiveUrl, args.TargetRepoVisibility);
         }
         catch (OctoshiftCliException ex) when (ex.Message == $"A repository called {args.GithubOrg}/{args.GithubRepo} already exists")
         {
@@ -288,12 +288,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     {
         if (args.ShouldGenerateArchive())
         {
-            if (!args.Kerberos)
+            if (GetGitlabPat(args).IsNullOrWhiteSpace())
             {
-                if (GetGitlabPat(args).IsNullOrWhiteSpace())
-                {
-                    throw new OctoshiftCliException("BBS password must be either set as BBS_PAT environment variable or passed as --bbs-pat.");
-                }
+                throw new OctoshiftCliException("GitLab PAT must be either set as GITLAB_PAT environment variable or passed as --gitlab-pat.");
             }
         }
 
