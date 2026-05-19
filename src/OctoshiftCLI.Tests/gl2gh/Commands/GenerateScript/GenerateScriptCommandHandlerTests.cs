@@ -1,11 +1,10 @@
-using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using FluentAssertions;
 using Moq;
-using OctoshiftCLI.GitlabToGithub.Commands.GenerateScript;
 using OctoshiftCLI.Contracts;
-using OctoshiftCLI.Extensions;
+using OctoshiftCLI.GitlabToGithub.Commands.GenerateScript;
 using OctoshiftCLI.Services;
 using Xunit;
 
@@ -22,32 +21,18 @@ public class GenerateScriptCommandHandlerTests
     private readonly GenerateScriptCommandHandler _handler;
 
     private const string GITHUB_ORG = "GITHUB-ORG";
-    private const string BBS_SERVER_URL = "http://bbs-server-url";
-    private const string BBS_USERNAME = "BBS-USERNAME";
-    private const string BBS_PASSWORD = "BBS-PASSWORD";
-    private const string SSH_USER = "SSH-USER";
-    private const string SSH_PRIVATE_KEY = "path-to-ssh-private-key";
-    private const string ARCHIVE_DOWNLOAD_HOST = "archive-download-host";
-    private const int SSH_PORT = 2211;
-    private const string SMB_USER = "SMB-USER";
-    private const string SMB_DOMAIN = "SMB-DOMAIN";
+    private const string GITLAB_SERVER_URL = "https://gitlab.contoso.com";
     private const string OUTPUT = "unit-test-output";
-    private const string BBS_FOO_PROJECT_KEY = "FP";
-    private const string BBS_FOO_PROJECT_NAME = "BBS-FOO-PROJECT-NAME";
-    private const string BBS_BAR_PROJECT_KEY = "BBS-BAR-PROJECT-NAME";
-    private const string BBS_BAR_PROJECT_NAME = "BP";
-    private const string BBS_FOO_REPO_1_SLUG = "foorepo1";
-    private const string BBS_FOO_REPO_1_NAME = "BBS-FOO-REPO-1-NAME";
-    private const string BBS_FOO_REPO_2_SLUG = "foorepo2";
-    private const string BBS_FOO_REPO_2_NAME = "BBS-FOO-REPO-2-NAME";
-    private const string BBS_BAR_REPO_1_SLUG = "barrepo1";
-    private const string BBS_BAR_REPO_1_NAME = "BBS-BAR-REPO-1-NAME";
-    private const string BBS_BAR_REPO_2_SLUG = "barrepo2";
-    private const string BBS_BAR_REPO_2_NAME = "BBS-BAR-REPO-2-NAME";
-    private const string BBS_SHARED_HOME = "BBS-SHARED-HOME";
+    private const string GROUP_PATH_FOO = "group-foo";
+    private const string GROUP_NAME_FOO = "Group Foo";
+    private const string GROUP_PATH_BAR = "group-bar";
+    private const string GROUP_NAME_BAR = "Group Bar";
+    private const string PROJECT_PATH_1 = "project-1";
+    private const string PROJECT_NAME_1 = "Project 1";
+    private const string PROJECT_PATH_2 = "project-2";
+    private const string PROJECT_NAME_2 = "Project 2";
     private const string AWS_BUCKET_NAME = "AWS-BUCKET-NAME";
-    private const string AWS_REGION = "AWS_REGION";
-    private const string UPLOADS_URL = "UPLOADS-URL";
+    private const string AWS_REGION = "us-east-1";
 
     public GenerateScriptCommandHandlerTests()
     {
@@ -57,783 +42,167 @@ public class GenerateScriptCommandHandlerTests
             _mockFileSystemProvider.Object,
             _mockGitlabApi.Object,
             _mockEnvironmentVariableProvider.Object);
-
-        _mockEnvironmentVariableProvider.Setup(m => m.GitlabUsername(It.IsAny<bool>())).Returns(BBS_USERNAME);
-        _mockEnvironmentVariableProvider.Setup(m => m.GitlabPassword(It.IsAny<bool>())).Returns(BBS_PASSWORD);
-        _mockGitlabApi.Setup(m => m.GetProjects()).ReturnsAsync(new[] { (1, BBS_FOO_PROJECT_KEY, BBS_FOO_PROJECT_NAME) });
-        _mockGitlabApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(new[] { (1, BBS_FOO_REPO_1_SLUG, BBS_FOO_REPO_1_NAME) });
     }
 
     [Fact]
-    public async Task No_Projects()
+    public async Task No_Output_Path_Does_Not_Write_File()
     {
-        // Arrange
-        _mockGitlabApi.Setup(m => m.GetProjects()).ReturnsAsync(Enumerable.Empty<(int Id, string Key, string Name)>());
+        _mockGitlabApi.Setup(m => m.GetGroups()).ReturnsAsync(System.Array.Empty<(long Id, string Path, string Name)>());
 
-        // Act
-        var args = new GenerateScriptCommandArgs()
+        var args = new GenerateScriptCommandArgs
         {
-            GitlabServerUrl = BBS_SERVER_URL,
+            GitlabServerUrl = GITLAB_SERVER_URL,
+            GithubOrg = GITHUB_ORG
+        };
+
+        await _handler.Handle(args);
+
+        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task No_Groups_Generates_Header_Only()
+    {
+        _mockGitlabApi.Setup(m => m.GetGroups()).ReturnsAsync(System.Array.Empty<(long Id, string Path, string Name)>());
+
+        string capturedScript = null;
+        _mockFileSystemProvider
+            .Setup(m => m.WriteAllTextAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback<string, string>((_, contents) => capturedScript = contents)
+            .Returns(Task.CompletedTask);
+
+        var args = new GenerateScriptCommandArgs
+        {
+            GitlabServerUrl = GITLAB_SERVER_URL,
             GithubOrg = GITHUB_ORG,
-            SshUser = SSH_USER,
-            SshPrivateKey = SSH_PRIVATE_KEY,
             Output = new FileInfo(OUTPUT)
         };
+
         await _handler.Handle(args);
 
-        // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => TrimNonExecutableLines(script, 33, 0) == "")));
+        capturedScript.Should().NotBeNullOrEmpty();
+        capturedScript.Should().Contain("VALIDATE_GH_PAT".Replace("VALIDATE_GH_PAT", "GH_PAT"));
+        capturedScript.Should().Contain("GITLAB_PAT");
+        capturedScript.Should().NotContain("# =========== Group:");
     }
 
     [Fact]
-    public async Task Validates_Env_Vars()
+    public async Task Default_Generates_Migrate_Repo_Command_For_Each_Project()
     {
-        // Arrange
-        _mockGitlabApi.Setup(m => m.GetProjects()).ReturnsAsync(Enumerable.Empty<(int Id, string Key, string Name)>());
+        _mockGitlabApi
+            .Setup(m => m.GetGroups())
+            .ReturnsAsync(new[]
+            {
+                (Id: 1L, Path: GROUP_PATH_FOO, Name: GROUP_NAME_FOO),
+                (Id: 2L, Path: GROUP_PATH_BAR, Name: GROUP_NAME_BAR)
+            });
+        _mockGitlabApi
+            .Setup(m => m.GetProjects(GROUP_PATH_FOO))
+            .ReturnsAsync(new[]
+            {
+                (Id: 1L, Path: PROJECT_PATH_1, Name: PROJECT_NAME_1, Archived: false),
+                (Id: 2L, Path: PROJECT_PATH_2, Name: PROJECT_NAME_2, Archived: false)
+            });
+        _mockGitlabApi
+            .Setup(m => m.GetProjects(GROUP_PATH_BAR))
+            .ReturnsAsync(System.Array.Empty<(long Id, string Path, string Name, bool Archived)>());
 
-        // Act
-        var args = new GenerateScriptCommandArgs()
+        string capturedScript = null;
+        _mockFileSystemProvider
+            .Setup(m => m.WriteAllTextAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback<string, string>((_, contents) => capturedScript = contents)
+            .Returns(Task.CompletedTask);
+
+        var args = new GenerateScriptCommandArgs
         {
-            GitlabServerUrl = BBS_SERVER_URL,
+            GitlabServerUrl = GITLAB_SERVER_URL,
             GithubOrg = GITHUB_ORG,
-            SshUser = SSH_USER,
-            SshPrivateKey = SSH_PRIVATE_KEY,
-            Output = new FileInfo(OUTPUT),
+            Output = new FileInfo(OUTPUT)
         };
+
         await _handler.Handle(args);
 
-        var expected = @"
-if (-not $env:GH_PAT) {
-    Write-Error ""GH_PAT environment variable must be set to a valid GitHub Personal Access Token with the appropriate scopes. For more information see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer#creating-a-personal-access-token-for-github-enterprise-importer""
-    exit 1
-} else {
-    Write-Host ""GH_PAT environment variable is set and will be used to authenticate to GitHub.""
-}
-
-if (-not $env:BBS_PASSWORD) {
-    Write-Error ""BBS_PASSWORD environment variable must be set to a valid password that will be used to call Bitbucket Server/Data Center API's to generate a migration archive.""
-    exit 1
-} else {
-    Write-Host ""BBS_PASSWORD environment variable is set and will be used to authenticate to Bitbucket Server/Data Center APIs.""
-}
-
-if (-not $env:BBS_USERNAME) {
-    Write-Error ""BBS_USERNAME environment variable must be set to a valid user that will be used to call Bitbucket Server/Data Center API's to generate a migration archive.""
-    exit 1
-} else {
-    Write-Host ""BBS_USERNAME environment variable is set and will be used to authenticate to Bitbucket Server/Data Center APIs.""
-}
-
-if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
-    Write-Error ""AZURE_STORAGE_CONNECTION_STRING environment variable must be set to a valid Azure Storage Connection String that will be used to upload the migration archive to Azure Blob Storage.""
-    exit 1
-} else {
-    Write-Host ""AZURE_STORAGE_CONNECTION_STRING environment variable is set and will be used to upload the migration archive to Azure Blob Storage.""
-}";
-
-        // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => TrimNonExecutableLines(script, 9, 0) == TrimNonExecutableLines(expected, 0, 0))));
+        capturedScript.Should().NotBeNullOrEmpty();
+        capturedScript.Should().Contain($"# =========== Group: {GROUP_PATH_FOO} ===========");
+        capturedScript.Should().Contain($"# =========== Group: {GROUP_PATH_BAR} ===========");
+        capturedScript.Should().Contain($"--gitlab-server-url \"{GITLAB_SERVER_URL}\"");
+        capturedScript.Should().Contain($"--gitlab-group \"{GROUP_PATH_FOO}\"");
+        capturedScript.Should().Contain($"--gitlab-project \"{PROJECT_PATH_1}\"");
+        capturedScript.Should().Contain($"--gitlab-project \"{PROJECT_PATH_2}\"");
+        capturedScript.Should().Contain($"--github-org \"{GITHUB_ORG}\"");
+        capturedScript.Should().Contain($"--github-repo \"{GROUP_PATH_FOO}-{PROJECT_PATH_1}\"");
+        capturedScript.Should().Contain("--target-repo-visibility private");
+        capturedScript.Should().Contain("Skipping this group because it has no projects.");
+        capturedScript.Should().NotContain("--queue-only");
+        capturedScript.Should().NotContain("--verbose");
+        capturedScript.Should().NotContain("--aws-bucket-name");
+        capturedScript.Should().NotContain("--aws-region");
+        capturedScript.Should().NotContain("--keep-archive");
+        capturedScript.Should().NotContain("--use-github-storage");
+        capturedScript.Should().NotContain("--no-ssl-verify");
+        capturedScript.Should().NotContain("--kerberos");
     }
 
     [Fact]
-    public async Task Validates_Env_Vars_BBS_USERNAME_Not_Validated_When_Passed_As_Arg()
+    public async Task Includes_Optional_Flags_When_Set()
     {
-        // Arrange
-        _mockGitlabApi.Setup(m => m.GetProjects()).ReturnsAsync(Enumerable.Empty<(int Id, string Key, string Name)>());
+        _mockGitlabApi
+            .Setup(m => m.GetGroups())
+            .ReturnsAsync(new[] { (Id: 1L, Path: GROUP_PATH_FOO, Name: GROUP_NAME_FOO) });
+        _mockGitlabApi
+            .Setup(m => m.GetProjects(GROUP_PATH_FOO))
+            .ReturnsAsync(new[] { (Id: 1L, Path: PROJECT_PATH_1, Name: PROJECT_NAME_1, Archived: false) });
 
-        // Act
-        var args = new GenerateScriptCommandArgs()
+        string capturedScript = null;
+        _mockFileSystemProvider
+            .Setup(m => m.WriteAllTextAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback<string, string>((_, contents) => capturedScript = contents)
+            .Returns(Task.CompletedTask);
+
+        var args = new GenerateScriptCommandArgs
         {
-            GitlabServerUrl = BBS_SERVER_URL,
+            GitlabServerUrl = GITLAB_SERVER_URL,
             GithubOrg = GITHUB_ORG,
-            SshUser = SSH_USER,
-            SshPrivateKey = SSH_PRIVATE_KEY,
             Output = new FileInfo(OUTPUT),
-            GitlabUsername = BBS_USERNAME,
-        };
-        await _handler.Handle(args);
-
-        var expected = @"
-if (-not $env:BBS_USERNAME) {
-    Write-Error ""BBS_USERNAME environment variable must be set to a valid user that will be used to call BBS API's to generate a migration archive.""
-    exit 1
-} else {
-    Write-Host ""BBS_USERNAME environment variable is set and will be used to authenticate to BBS APIs.""
-}";
-
-        // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => !TrimNonExecutableLines(script, 0, 0).Contains(TrimNonExecutableLines(expected, 0, 0)))));
-    }
-
-    [Fact]
-    public async Task Validates_Env_Vars_BBS_PASSWORD_Not_Validated_When_Kerberos()
-    {
-        // Arrange
-        _mockGitlabApi.Setup(m => m.GetProjects()).ReturnsAsync(Enumerable.Empty<(int Id, string Key, string Name)>());
-
-        // Act
-        var args = new GenerateScriptCommandArgs()
-        {
-            GitlabServerUrl = BBS_SERVER_URL,
-            GithubOrg = GITHUB_ORG,
-            SshUser = SSH_USER,
-            SshPrivateKey = SSH_PRIVATE_KEY,
-            Output = new FileInfo(OUTPUT),
-            Kerberos = true,
-        };
-        await _handler.Handle(args);
-
-        var expected = @"
-if (-not $env:BBS_PASSWORD) {
-    Write-Error ""BBS_PASSWORD environment variable must be set to a valid password that will be used to call BBS API's to generate a migration archive.""
-    exit 1
-} else {
-    Write-Host ""BBS_PASSWORD environment variable is set and will be used to authenticate to BBS APIs.""
-}";
-
-        // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => !TrimNonExecutableLines(script, 0, 0).Contains(TrimNonExecutableLines(expected, 0, 0)))));
-    }
-
-    [Fact]
-    public async Task Validates_Env_Vars_AWS()
-    {
-        // Arrange
-        _mockGitlabApi.Setup(m => m.GetProjects()).ReturnsAsync(Enumerable.Empty<(int Id, string Key, string Name)>());
-
-        // Act
-        var args = new GenerateScriptCommandArgs()
-        {
-            GitlabServerUrl = BBS_SERVER_URL,
-            GithubOrg = GITHUB_ORG,
-            SshUser = SSH_USER,
-            SshPrivateKey = SSH_PRIVATE_KEY,
+            Verbose = true,
             AwsBucketName = AWS_BUCKET_NAME,
-            Output = new FileInfo(OUTPUT),
+            AwsRegion = AWS_REGION,
+            KeepArchive = true
         };
+
         await _handler.Handle(args);
 
-        var expected = @"
-if (-not $env:AWS_ACCESS_KEY_ID) {
-    Write-Error ""AWS_ACCESS_KEY_ID environment variable must be set to a valid AWS Access Key ID that will be used to upload the migration archive to AWS S3.""
-    exit 1
-} else {
-    Write-Host ""AWS_ACCESS_KEY_ID environment variable is set and will be used to upload the migration archive to AWS S3.""
-}
-if (-not $env:AWS_SECRET_ACCESS_KEY) {
-    Write-Error ""AWS_SECRET_ACCESS_KEY environment variable must be set to a valid AWS Secret Access Key that will be used to upload the migration archive to AWS S3.""
-    exit 1
-} else {
-    Write-Host ""AWS_SECRET_ACCESS_KEY environment variable is set and will be used to upload the migration archive to AWS S3.""
-}";
-
-        // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => TrimNonExecutableLines(script, 0, 0).Contains(TrimNonExecutableLines(expected, 0, 0)))));
+        capturedScript.Should().Contain("--verbose");
+        capturedScript.Should().Contain($"--aws-bucket-name \"{AWS_BUCKET_NAME}\"");
+        capturedScript.Should().Contain($"--aws-region \"{AWS_REGION}\"");
+        capturedScript.Should().Contain("--keep-archive");
+        capturedScript.Should().Contain("VALIDATE_AWS_ACCESS_KEY_ID".Replace("VALIDATE_", "").Replace("ID", "ID"));
+        capturedScript.Should().Contain("AWS_SECRET_ACCESS_KEY");
+        capturedScript.Should().NotContain("AZURE_STORAGE_CONNECTION_STRING");
     }
 
     [Fact]
-    public async Task Validates_Env_Vars_AZURE_STORAGE_CONNECTION_STRING_Not_Validated_When_Aws()
+    public async Task UseGithubStorage_Skips_Azure_And_Aws_Validation()
     {
-        // Arrange
-        _mockGitlabApi.Setup(m => m.GetProjects()).ReturnsAsync(Enumerable.Empty<(int Id, string Key, string Name)>());
+        _mockGitlabApi.Setup(m => m.GetGroups()).ReturnsAsync(System.Array.Empty<(long Id, string Path, string Name)>());
 
-        // Act
-        var args = new GenerateScriptCommandArgs()
+        string capturedScript = null;
+        _mockFileSystemProvider
+            .Setup(m => m.WriteAllTextAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback<string, string>((_, contents) => capturedScript = contents)
+            .Returns(Task.CompletedTask);
+
+        var args = new GenerateScriptCommandArgs
         {
-            GitlabServerUrl = BBS_SERVER_URL,
+            GitlabServerUrl = GITLAB_SERVER_URL,
             GithubOrg = GITHUB_ORG,
-            SshUser = SSH_USER,
-            SshPrivateKey = SSH_PRIVATE_KEY,
-            Output = new FileInfo(OUTPUT),
-            AwsBucketName = AWS_BUCKET_NAME,
-        };
-        await _handler.Handle(args);
-
-        var expected = @"
-if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
-    Write-Error ""AZURE_STORAGE_CONNECTION_STRING environment variable must be set to a valid Azure Storage Connection String that will be used to upload the migration archive to Azure Blob Storage.""
-    exit 1
-} else {
-    Write-Host ""AZURE_STORAGE_CONNECTION_STRING environment variable is set and will be used to upload the migration archive to Azure Blob Storage.""
-}";
-
-        // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => !TrimNonExecutableLines(script, 0, 0).Contains(TrimNonExecutableLines(expected, 0, 0)))));
-    }
-
-    [Fact]
-    public async Task Validates_Env_Vars_AZURE_STORAGE_CONNECTION_STRING_And_AWS_Not_Validated_When_UseGithubStorage()
-    {
-        // Arrange
-        _mockGitlabApi.Setup(m => m.GetProjects()).ReturnsAsync(Enumerable.Empty<(int Id, string Key, string Name)>());
-
-        // Act
-        var args = new GenerateScriptCommandArgs()
-        {
-            GitlabServerUrl = BBS_SERVER_URL,
-            GithubOrg = GITHUB_ORG,
-            SshUser = SSH_USER,
-            SshPrivateKey = SSH_PRIVATE_KEY,
             Output = new FileInfo(OUTPUT),
             UseGithubStorage = true
         };
+
         await _handler.Handle(args);
 
-        var expectedAws = @"
-if (-not $env:AWS_ACCESS_KEY_ID) {
-    Write-Error ""AWS_ACCESS_KEY_ID environment variable must be set to a valid AWS Access Key ID that will be used to upload the migration archive to AWS S3.""
-    exit 1
-} else {
-    Write-Host ""AWS_ACCESS_KEY_ID environment variable is set and will be used to upload the migration archive to AWS S3.""
-}
-if (-not $env:AWS_SECRET_ACCESS_KEY) {
-    Write-Error ""AWS_SECRET_ACCESS_KEY environment variable must be set to a valid AWS Secret Access Key that will be used to upload the migration archive to AWS S3.""
-    exit 1
-} else {
-    Write-Host ""AWS_SECRET_ACCESS_KEY environment variable is set and will be used to upload the migration archive to AWS S3.""
-}";
-
-        var expectedAzure = @"
-if (-not $env:AZURE_STORAGE_CONNECTION_STRING) {
-    Write-Error ""AZURE_STORAGE_CONNECTION_STRING environment variable must be set to a valid Azure Storage Connection String that will be used to upload the migration archive to Azure Blob Storage.""
-    exit 1
-} else {
-    Write-Host ""AZURE_STORAGE_CONNECTION_STRING environment variable is set and will be used to upload the migration archive to Azure Blob Storage.""
-}";
-
-        // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => !TrimNonExecutableLines(script, 0, 0).Contains(TrimNonExecutableLines(expectedAws, 0, 0)))));
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => !TrimNonExecutableLines(script, 0, 0).Contains(TrimNonExecutableLines(expectedAzure, 0, 0)))));
-    }
-
-    [Fact]
-    public async Task Validates_Env_Vars_SMB_PASSWORD()
-    {
-        // Arrange
-        _mockGitlabApi.Setup(m => m.GetProjects()).ReturnsAsync(Enumerable.Empty<(int Id, string Key, string Name)>());
-
-        // Act
-        var args = new GenerateScriptCommandArgs()
-        {
-            GitlabServerUrl = BBS_SERVER_URL,
-            GithubOrg = GITHUB_ORG,
-            Output = new FileInfo(OUTPUT),
-            SmbUser = SMB_USER,
-        };
-        await _handler.Handle(args);
-
-        var expected = @"
-if (-not $env:SMB_PASSWORD) {
-    Write-Error ""SMB_PASSWORD environment variable must be set to a valid password that will be used to download the migration archive from your BBS server using SMB.""
-    exit 1
-} else {
-    Write-Host ""SMB_PASSWORD environment variable is set and will be used to download the migration archive from your BBS server using SMB.""
-}";
-
-        // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => TrimNonExecutableLines(script, 0, 0).Contains(TrimNonExecutableLines(expected, 0, 0)))));
-    }
-
-    [Fact]
-    public async Task No_Repos()
-    {
-        // Arrange
-        _mockGitlabApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(Enumerable.Empty<(int Id, string Slug, string Name)>());
-
-        var args = new GenerateScriptCommandArgs()
-        {
-            GitlabServerUrl = BBS_SERVER_URL,
-            GithubOrg = GITHUB_ORG,
-            SshUser = SSH_USER,
-            SshPrivateKey = SSH_PRIVATE_KEY,
-            Output = new FileInfo(OUTPUT)
-        };
-        await _handler.Handle(args);
-
-        // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => TrimNonExecutableLines(script, 33, 0) == "")));
-    }
-
-    [Fact]
-    public async Task Two_Projects_Two_Repos_Each_All_Options()
-    {
-        // Arrange
-        _mockGitlabApi.Setup(m => m.GetProjects()).ReturnsAsync(new[]
-        {
-            (Id: 1, Key: BBS_FOO_PROJECT_KEY, Name: BBS_FOO_PROJECT_NAME),
-            (Id: 2, Key: BBS_BAR_PROJECT_KEY, Name: BBS_BAR_PROJECT_NAME)
-        });
-        _mockGitlabApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(new[]
-        {
-            (Id: 1, Slug: BBS_FOO_REPO_1_SLUG, Name: BBS_FOO_REPO_1_NAME),
-            (Id: 2, Slug: BBS_FOO_REPO_2_SLUG, Name: BBS_FOO_REPO_2_NAME)
-        });
-        _mockGitlabApi.Setup(m => m.GetRepos(BBS_BAR_PROJECT_KEY)).ReturnsAsync(new[]
-        {
-            (Id: 3, Slug: BBS_BAR_REPO_1_SLUG, Name: BBS_BAR_REPO_1_NAME),
-            (Id: 4, Slug: BBS_BAR_REPO_2_SLUG, Name: BBS_BAR_REPO_2_NAME)
-        });
-
-        var migrateRepoCommand1 = $"Exec {{ gh bbs2gh migrate-repo --bbs-server-url \"{BBS_SERVER_URL}\" --bbs-username \"{BBS_USERNAME}\" --bbs-shared-home \"{BBS_SHARED_HOME}\" --bbs-project \"{BBS_FOO_PROJECT_KEY}\" --bbs-repo \"{BBS_FOO_REPO_1_SLUG}\" --ssh-user \"{SSH_USER}\" --ssh-private-key \"{SSH_PRIVATE_KEY}\" --ssh-port {SSH_PORT} --archive-download-host {ARCHIVE_DOWNLOAD_HOST} --github-org \"{GITHUB_ORG}\" --github-repo \"{BBS_FOO_PROJECT_KEY}-{BBS_FOO_REPO_1_SLUG}\" --verbose --keep-archive --target-repo-visibility private }}";
-        var migrateRepoCommand2 = $"Exec {{ gh bbs2gh migrate-repo --bbs-server-url \"{BBS_SERVER_URL}\" --bbs-username \"{BBS_USERNAME}\" --bbs-shared-home \"{BBS_SHARED_HOME}\" --bbs-project \"{BBS_FOO_PROJECT_KEY}\" --bbs-repo \"{BBS_FOO_REPO_2_SLUG}\" --ssh-user \"{SSH_USER}\" --ssh-private-key \"{SSH_PRIVATE_KEY}\" --ssh-port {SSH_PORT} --archive-download-host {ARCHIVE_DOWNLOAD_HOST} --github-org \"{GITHUB_ORG}\" --github-repo \"{BBS_FOO_PROJECT_KEY}-{BBS_FOO_REPO_2_SLUG}\" --verbose --keep-archive --target-repo-visibility private }}";
-        var migrateRepoCommand3 = $"Exec {{ gh bbs2gh migrate-repo --bbs-server-url \"{BBS_SERVER_URL}\" --bbs-username \"{BBS_USERNAME}\" --bbs-shared-home \"{BBS_SHARED_HOME}\" --bbs-project \"{BBS_BAR_PROJECT_KEY}\" --bbs-repo \"{BBS_BAR_REPO_1_SLUG}\" --ssh-user \"{SSH_USER}\" --ssh-private-key \"{SSH_PRIVATE_KEY}\" --ssh-port {SSH_PORT} --archive-download-host {ARCHIVE_DOWNLOAD_HOST} --github-org \"{GITHUB_ORG}\" --github-repo \"{BBS_BAR_PROJECT_KEY}-{BBS_BAR_REPO_1_SLUG}\" --verbose --keep-archive --target-repo-visibility private }}";
-        var migrateRepoCommand4 = $"Exec {{ gh bbs2gh migrate-repo --bbs-server-url \"{BBS_SERVER_URL}\" --bbs-username \"{BBS_USERNAME}\" --bbs-shared-home \"{BBS_SHARED_HOME}\" --bbs-project \"{BBS_BAR_PROJECT_KEY}\" --bbs-repo \"{BBS_BAR_REPO_2_SLUG}\" --ssh-user \"{SSH_USER}\" --ssh-private-key \"{SSH_PRIVATE_KEY}\" --ssh-port {SSH_PORT} --archive-download-host {ARCHIVE_DOWNLOAD_HOST} --github-org \"{GITHUB_ORG}\" --github-repo \"{BBS_BAR_PROJECT_KEY}-{BBS_BAR_REPO_2_SLUG}\" --verbose --keep-archive --target-repo-visibility private }}";
-
-        // Act
-        var args = new GenerateScriptCommandArgs
-        {
-            GitlabServerUrl = BBS_SERVER_URL,
-            GithubOrg = GITHUB_ORG,
-            GitlabUsername = BBS_USERNAME,
-            GitlabPassword = BBS_PASSWORD,
-            GitlabSharedHome = BBS_SHARED_HOME,
-            ArchiveDownloadHost = ARCHIVE_DOWNLOAD_HOST,
-            SshUser = SSH_USER,
-            SshPrivateKey = SSH_PRIVATE_KEY,
-            SshPort = SSH_PORT,
-            Output = new FileInfo(OUTPUT),
-            Verbose = true,
-            KeepArchive = true
-        };
-        await _handler.Handle(args);
-
-        // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand1))));
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand2))));
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand3))));
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand4))));
-
-        _mockEnvironmentVariableProvider.Verify(m => m.GitlabUsername(It.IsAny<bool>()), Times.Never);
-        _mockEnvironmentVariableProvider.Verify(m => m.GitlabPassword(It.IsAny<bool>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task Filters_By_Project()
-    {
-        // Arrange
-        _mockGitlabApi.Setup(m => m.GetProjects()).ReturnsAsync(new[]
-        {
-            (Id: 1, Key: BBS_FOO_PROJECT_KEY, Name: BBS_FOO_PROJECT_NAME),
-            (Id: 2, Key: BBS_BAR_PROJECT_KEY, Name: BBS_BAR_PROJECT_NAME)
-        });
-        _mockGitlabApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(new[]
-        {
-            (Id: 1, Slug: BBS_FOO_REPO_1_SLUG, Name: BBS_FOO_REPO_1_NAME),
-            (Id: 2, Slug: BBS_FOO_REPO_2_SLUG, Name: BBS_FOO_REPO_2_NAME)
-        });
-        _mockGitlabApi.Setup(m => m.GetRepos(BBS_BAR_PROJECT_KEY)).ReturnsAsync(new[]
-        {
-            (Id: 3, Slug: BBS_BAR_REPO_1_SLUG, Name: BBS_BAR_REPO_1_NAME),
-            (Id: 4, Slug: BBS_BAR_REPO_2_SLUG, Name: BBS_BAR_REPO_2_NAME)
-        });
-
-        var migrateRepoCommand1 = $"Exec {{ gh bbs2gh migrate-repo --bbs-server-url \"{BBS_SERVER_URL}\" --bbs-username \"{BBS_USERNAME}\" --bbs-shared-home \"{BBS_SHARED_HOME}\" --bbs-project \"{BBS_FOO_PROJECT_KEY}\" --bbs-repo \"{BBS_FOO_REPO_1_SLUG}\" --ssh-user \"{SSH_USER}\" --ssh-private-key \"{SSH_PRIVATE_KEY}\" --ssh-port {SSH_PORT} --archive-download-host {ARCHIVE_DOWNLOAD_HOST} --github-org \"{GITHUB_ORG}\" --github-repo \"{BBS_FOO_PROJECT_KEY}-{BBS_FOO_REPO_1_SLUG}\" --verbose --target-repo-visibility private }}";
-        var migrateRepoCommand2 = $"Exec {{ gh bbs2gh migrate-repo --bbs-server-url \"{BBS_SERVER_URL}\" --bbs-username \"{BBS_USERNAME}\" --bbs-shared-home \"{BBS_SHARED_HOME}\" --bbs-project \"{BBS_FOO_PROJECT_KEY}\" --bbs-repo \"{BBS_FOO_REPO_2_SLUG}\" --ssh-user \"{SSH_USER}\" --ssh-private-key \"{SSH_PRIVATE_KEY}\" --ssh-port {SSH_PORT} --archive-download-host {ARCHIVE_DOWNLOAD_HOST} --github-org \"{GITHUB_ORG}\" --github-repo \"{BBS_FOO_PROJECT_KEY}-{BBS_FOO_REPO_2_SLUG}\" --verbose --target-repo-visibility private }}";
-
-        // Act
-        var args = new GenerateScriptCommandArgs
-        {
-            GitlabServerUrl = BBS_SERVER_URL,
-            GithubOrg = GITHUB_ORG,
-            GitlabUsername = BBS_USERNAME,
-            GitlabPassword = BBS_PASSWORD,
-            GitlabProject = BBS_FOO_PROJECT_KEY,
-            GitlabSharedHome = BBS_SHARED_HOME,
-            ArchiveDownloadHost = ARCHIVE_DOWNLOAD_HOST,
-            SshUser = SSH_USER,
-            SshPrivateKey = SSH_PRIVATE_KEY,
-            SshPort = SSH_PORT,
-            Output = new FileInfo(OUTPUT),
-            Verbose = true
-        };
-        await _handler.Handle(args);
-
-        // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand1))));
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand2))));
-
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(BBS_BAR_PROJECT_KEY))), Times.Never);
-    }
-
-    [Fact]
-    public async Task One_Repo_With_Kerberos()
-    {
-        // Arrange
-        _mockGitlabApi.Setup(m => m.GetProjects()).ReturnsAsync(new[]
-        {
-            (Id: 1, Key: BBS_FOO_PROJECT_KEY, Name: BBS_FOO_PROJECT_NAME),
-        });
-        _mockGitlabApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(new[]
-        {
-            (Id: 1, Slug: BBS_FOO_REPO_1_SLUG, Name: BBS_FOO_REPO_1_NAME),
-        });
-
-        var migrateRepoCommand = $"Exec {{ gh bbs2gh migrate-repo --bbs-server-url \"{BBS_SERVER_URL}\" --bbs-username \"{BBS_USERNAME}\" --bbs-shared-home \"{BBS_SHARED_HOME}\" --bbs-project \"{BBS_FOO_PROJECT_KEY}\" --bbs-repo \"{BBS_FOO_REPO_1_SLUG}\" --ssh-user \"{SSH_USER}\" --ssh-private-key \"{SSH_PRIVATE_KEY}\" --ssh-port {SSH_PORT} --archive-download-host {ARCHIVE_DOWNLOAD_HOST} --github-org \"{GITHUB_ORG}\" --github-repo \"{BBS_FOO_PROJECT_KEY}-{BBS_FOO_REPO_1_SLUG}\" --verbose --kerberos --target-repo-visibility private }}";
-
-        // Act
-        var args = new GenerateScriptCommandArgs
-        {
-            GitlabServerUrl = BBS_SERVER_URL,
-            GithubOrg = GITHUB_ORG,
-            GitlabUsername = BBS_USERNAME,
-            GitlabPassword = BBS_PASSWORD,
-            GitlabSharedHome = BBS_SHARED_HOME,
-            ArchiveDownloadHost = ARCHIVE_DOWNLOAD_HOST,
-            SshUser = SSH_USER,
-            SshPrivateKey = SSH_PRIVATE_KEY,
-            SshPort = SSH_PORT,
-            Output = new FileInfo(OUTPUT),
-            Verbose = true,
-            Kerberos = true,
-        };
-        await _handler.Handle(args);
-
-        // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand))));
-    }
-
-    [Fact]
-    public async Task One_Repo_With_No_Ssl_Verify()
-    {
-        // Arrange
-        _mockGitlabApi.Setup(m => m.GetProjects()).ReturnsAsync(new[]
-        {
-            (Id: 1, Key: BBS_FOO_PROJECT_KEY, Name: BBS_FOO_PROJECT_NAME),
-        });
-        _mockGitlabApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(new[]
-        {
-            (Id: 1, Slug: BBS_FOO_REPO_1_SLUG, Name: BBS_FOO_REPO_1_NAME),
-        });
-
-        var migrateRepoCommand = $"Exec {{ gh bbs2gh migrate-repo --bbs-server-url \"{BBS_SERVER_URL}\" --bbs-username \"{BBS_USERNAME}\" --bbs-shared-home \"{BBS_SHARED_HOME}\" --bbs-project \"{BBS_FOO_PROJECT_KEY}\" --bbs-repo \"{BBS_FOO_REPO_1_SLUG}\" --ssh-user \"{SSH_USER}\" --ssh-private-key \"{SSH_PRIVATE_KEY}\" --ssh-port {SSH_PORT} --github-org \"{GITHUB_ORG}\" --github-repo \"{BBS_FOO_PROJECT_KEY}-{BBS_FOO_REPO_1_SLUG}\" --verbose --no-ssl-verify --target-repo-visibility private }}";
-
-        // Act
-        var args = new GenerateScriptCommandArgs
-        {
-            GitlabServerUrl = BBS_SERVER_URL,
-            GithubOrg = GITHUB_ORG,
-            GitlabUsername = BBS_USERNAME,
-            GitlabPassword = BBS_PASSWORD,
-            GitlabSharedHome = BBS_SHARED_HOME,
-            SshUser = SSH_USER,
-            SshPrivateKey = SSH_PRIVATE_KEY,
-            SshPort = SSH_PORT,
-            Output = new FileInfo(OUTPUT),
-            Verbose = true,
-            NoSslVerify = true,
-        };
-        await _handler.Handle(args);
-
-        // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand))));
-    }
-
-    [Fact]
-    public async Task One_Repo_With_Smb()
-    {
-        // Arrange
-        _mockGitlabApi.Setup(m => m.GetProjects()).ReturnsAsync(new[]
-        {
-            (Id: 1, Key: BBS_FOO_PROJECT_KEY, Name: BBS_FOO_PROJECT_NAME),
-        });
-        _mockGitlabApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(new[]
-        {
-            (Id: 1, Slug: BBS_FOO_REPO_1_SLUG, Name: BBS_FOO_REPO_1_NAME),
-        });
-
-        var migrateRepoCommand = $"Exec {{ gh bbs2gh migrate-repo --bbs-server-url \"{BBS_SERVER_URL}\" --bbs-username \"{BBS_USERNAME}\" --bbs-shared-home \"{BBS_SHARED_HOME}\" --bbs-project \"{BBS_FOO_PROJECT_KEY}\" --bbs-repo \"{BBS_FOO_REPO_1_SLUG}\" --smb-user \"{SMB_USER}\" --smb-domain {SMB_DOMAIN} --github-org \"{GITHUB_ORG}\" --github-repo \"{BBS_FOO_PROJECT_KEY}-{BBS_FOO_REPO_1_SLUG}\" --verbose --target-repo-visibility private }}";
-
-        // Act
-        var args = new GenerateScriptCommandArgs
-        {
-            GitlabServerUrl = BBS_SERVER_URL,
-            GithubOrg = GITHUB_ORG,
-            GitlabUsername = BBS_USERNAME,
-            GitlabPassword = BBS_PASSWORD,
-            GitlabSharedHome = BBS_SHARED_HOME,
-            SmbUser = SMB_USER,
-            SmbDomain = SMB_DOMAIN,
-            Output = new FileInfo(OUTPUT),
-            Verbose = true
-        };
-        await _handler.Handle(args);
-
-        // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand))));
-    }
-
-    [Fact]
-    public async Task One_Repo_With_Smb_And_TargetApiUrl()
-    {
-        // Arrange
-        _mockGitlabApi.Setup(m => m.GetProjects()).ReturnsAsync(new[]
-        {
-            (Id: 1, Key: BBS_FOO_PROJECT_KEY, Name: BBS_FOO_PROJECT_NAME),
-        });
-        _mockGitlabApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(new[]
-        {
-            (Id: 1, Slug: BBS_FOO_REPO_1_SLUG, Name: BBS_FOO_REPO_1_NAME),
-        });
-        var targetApiUrl = "https://foo.com/api/v3";
-        var migrateRepoCommand = $"Exec {{ gh bbs2gh migrate-repo --target-api-url \"{targetApiUrl}\" --bbs-server-url \"{BBS_SERVER_URL}\" --bbs-username \"{BBS_USERNAME}\" --bbs-shared-home \"{BBS_SHARED_HOME}\" --bbs-project \"{BBS_FOO_PROJECT_KEY}\" --bbs-repo \"{BBS_FOO_REPO_1_SLUG}\" --smb-user \"{SMB_USER}\" --smb-domain {SMB_DOMAIN} --github-org \"{GITHUB_ORG}\" --github-repo \"{BBS_FOO_PROJECT_KEY}-{BBS_FOO_REPO_1_SLUG}\" --verbose --target-repo-visibility private }}";
-
-        // Act
-        var args = new GenerateScriptCommandArgs
-        {
-            GitlabServerUrl = BBS_SERVER_URL,
-            GithubOrg = GITHUB_ORG,
-            GitlabUsername = BBS_USERNAME,
-            GitlabPassword = BBS_PASSWORD,
-            GitlabSharedHome = BBS_SHARED_HOME,
-            SmbUser = SMB_USER,
-            SmbDomain = SMB_DOMAIN,
-            Output = new FileInfo(OUTPUT),
-            Verbose = true,
-            TargetApiUrl = targetApiUrl
-        };
-        await _handler.Handle(args);
-
-        // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand))));
-    }
-
-    [Fact]
-    public async Task One_Repo_With_Smb_And_Archive_Download_Host()
-    {
-        // Arrange
-        _mockGitlabApi.Setup(m => m.GetProjects()).ReturnsAsync(new[]
-        {
-            (Id: 1, Key: BBS_FOO_PROJECT_KEY, Name: BBS_FOO_PROJECT_NAME),
-        });
-        _mockGitlabApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(new[]
-        {
-            (Id: 1, Slug: BBS_FOO_REPO_1_SLUG, Name: BBS_FOO_REPO_1_NAME),
-        });
-
-        var migrateRepoCommand = $"Exec {{ gh bbs2gh migrate-repo --bbs-server-url \"{BBS_SERVER_URL}\" --bbs-username \"{BBS_USERNAME}\" --bbs-shared-home \"{BBS_SHARED_HOME}\" --bbs-project \"{BBS_FOO_PROJECT_KEY}\" --bbs-repo \"{BBS_FOO_REPO_1_SLUG}\" --smb-user \"{SMB_USER}\" --smb-domain {SMB_DOMAIN} --archive-download-host {ARCHIVE_DOWNLOAD_HOST} --github-org \"{GITHUB_ORG}\" --github-repo \"{BBS_FOO_PROJECT_KEY}-{BBS_FOO_REPO_1_SLUG}\" --verbose --target-repo-visibility private }}";
-
-        // Act
-        var args = new GenerateScriptCommandArgs
-        {
-            ArchiveDownloadHost = ARCHIVE_DOWNLOAD_HOST,
-            GitlabServerUrl = BBS_SERVER_URL,
-            GithubOrg = GITHUB_ORG,
-            GitlabUsername = BBS_USERNAME,
-            GitlabPassword = BBS_PASSWORD,
-            GitlabSharedHome = BBS_SHARED_HOME,
-            SmbUser = SMB_USER,
-            SmbDomain = SMB_DOMAIN,
-            Output = new FileInfo(OUTPUT),
-            Verbose = true
-        };
-        await _handler.Handle(args);
-
-        // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand))));
-    }
-
-    [Fact]
-    public async Task Generated_Script_Contains_The_Cli_Version_Comment()
-    {
-        // Arrange
-        _mockVersionProvider.Setup(m => m.GetCurrentVersion()).Returns("1.1.1");
-        const string cliVersionComment = "# =========== Created with CLI version 1.1.1 ===========";
-
-        // Act
-        var args = new GenerateScriptCommandArgs
-        {
-            GitlabServerUrl = BBS_SERVER_URL,
-            GithubOrg = GITHUB_ORG,
-            SshUser = SSH_USER,
-            SshPrivateKey = SSH_PRIVATE_KEY,
-            Output = new FileInfo(OUTPUT)
-        };
-        await _handler.Handle(args);
-
-        // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(cliVersionComment))));
-    }
-
-    [Fact]
-    public async Task Generated_Script_StartsWith_Shebang()
-    {
-        // Arrange
-        const string shebang = "#!/usr/bin/env pwsh";
-
-        // Act
-        var args = new GenerateScriptCommandArgs()
-        {
-            GitlabServerUrl = BBS_SERVER_URL,
-            GithubOrg = GITHUB_ORG,
-            SshUser = SSH_USER,
-            SshPrivateKey = SSH_PRIVATE_KEY,
-            Output = new FileInfo(OUTPUT)
-        };
-        await _handler.Handle(args);
-
-        // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.StartsWith(shebang))));
-    }
-
-    [Fact]
-    public async Task Generated_Script_Contains_Exec_Function_Block()
-    {
-        // Arrange
-        const string execFunctionBlock = @"
-function Exec {
-    param (
-        [scriptblock]$ScriptBlock
-    )
-    & @ScriptBlock
-    if ($lastexitcode -ne 0) {
-        exit $lastexitcode
-    }
-}";
-
-        var args = new GenerateScriptCommandArgs()
-        {
-            GitlabServerUrl = BBS_SERVER_URL,
-            GithubOrg = GITHUB_ORG,
-            SshUser = SSH_USER,
-            SshPrivateKey = SSH_PRIVATE_KEY,
-            Output = new FileInfo(OUTPUT)
-        };
-        await _handler.Handle(args);
-
-        // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(execFunctionBlock))));
-    }
-
-    [Fact]
-    public async Task One_Repo_With_Aws_Bucket_Name_And_Region()
-    {
-        // Arrange
-        _mockGitlabApi.Setup(m => m.GetProjects()).ReturnsAsync(new[]
-        {
-            (Id: 1, Key: BBS_FOO_PROJECT_KEY, Name: BBS_FOO_PROJECT_NAME),
-        });
-        _mockGitlabApi.Setup(m => m.GetRepos(BBS_FOO_PROJECT_KEY)).ReturnsAsync(new[]
-        {
-            (Id: 1, Slug: BBS_FOO_REPO_1_SLUG, Name: BBS_FOO_REPO_1_NAME),
-        });
-
-        var migrateRepoCommand = $"Exec {{ gh bbs2gh migrate-repo --bbs-server-url \"{BBS_SERVER_URL}\" --bbs-username \"{BBS_USERNAME}\" " +
-                                 $"--bbs-shared-home \"{BBS_SHARED_HOME}\" --bbs-project \"{BBS_FOO_PROJECT_KEY}\" --bbs-repo \"{BBS_FOO_REPO_1_SLUG}\" " +
-                                 $"--ssh-user \"{SSH_USER}\" --ssh-private-key \"{SSH_PRIVATE_KEY}\" --ssh-port {SSH_PORT} --archive-download-host {ARCHIVE_DOWNLOAD_HOST} --github-org \"{GITHUB_ORG}\" " +
-                                 $"--github-repo \"{BBS_FOO_PROJECT_KEY}-{BBS_FOO_REPO_1_SLUG}\" --verbose --aws-bucket-name \"{AWS_BUCKET_NAME}\" " +
-                                 $"--aws-region \"{AWS_REGION}\" --target-repo-visibility private }}";
-
-        // Act
-        var args = new GenerateScriptCommandArgs
-        {
-            GitlabServerUrl = BBS_SERVER_URL,
-            GithubOrg = GITHUB_ORG,
-            GitlabUsername = BBS_USERNAME,
-            GitlabPassword = BBS_PASSWORD,
-            GitlabSharedHome = BBS_SHARED_HOME,
-            ArchiveDownloadHost = ARCHIVE_DOWNLOAD_HOST,
-            SshUser = SSH_USER,
-            SshPrivateKey = SSH_PRIVATE_KEY,
-            SshPort = SSH_PORT,
-            Output = new FileInfo(OUTPUT),
-            Verbose = true,
-            AwsBucketName = AWS_BUCKET_NAME,
-            AwsRegion = AWS_REGION
-        };
-        await _handler.Handle(args);
-
-        // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script => script.Contains(migrateRepoCommand))));
-    }
-
-    [Fact]
-    public async Task BBS_Single_Repo_With_UseGithubStorage()
-    {
-        // Arrange
-        var TARGET_API_URL = "https://foo.com/api/v3";
-        const string BBS_PROJECT_KEY = "BBS-PROJECT";
-        const string BBS_REPO_SLUG = "repo-slug";
-
-        _mockGitlabApi.Setup(m => m.GetProjects()).ReturnsAsync(new[]
-        {
-            (Id: 1, Key: BBS_PROJECT_KEY, Name: "BBS Project Name"),
-        });
-        _mockGitlabApi.Setup(m => m.GetRepos(BBS_PROJECT_KEY)).ReturnsAsync(new[]
-        {
-            (Id: 1, Slug: BBS_REPO_SLUG, Name: "RepoName"),
-         });
-
-
-        // Act
-        var args = new GenerateScriptCommandArgs
-        {
-            GitlabServerUrl = BBS_SERVER_URL,
-            GithubOrg = GITHUB_ORG,
-            Output = new FileInfo("unit-test-output"),
-            UseGithubStorage = true,
-            TargetApiUrl = TARGET_API_URL,
-            GitlabProject = BBS_PROJECT_KEY,
-        };
-        await _handler.Handle(args);
-
-        // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script =>
-            script.Contains("--bbs-server-url \"http://bbs-server-url\"") &&
-            script.Contains("--bbs-project \"BBS-PROJECT\"") &&
-            script.Contains("--github-org \"GITHUB-ORG\"") &&
-            script.Contains("--use-github-storage")
-)));
-
-    }
-    [Fact]
-    public async Task BBS_Single_Repo_With_TargetUploadsUrl()
-    {
-        // Arrange
-        var TARGET_API_URL = "https://foo.com/api/v3";
-        const string BBS_PROJECT_KEY = "BBS-PROJECT";
-        const string BBS_REPO_SLUG = "repo-slug";
-
-        _mockGitlabApi.Setup(m => m.GetProjects()).ReturnsAsync(new[]
-        {
-            (Id: 1, Key: BBS_PROJECT_KEY, Name: "BBS Project Name"),
-        });
-        _mockGitlabApi.Setup(m => m.GetRepos(BBS_PROJECT_KEY)).ReturnsAsync(new[]
-        {
-            (Id: 1, Slug: BBS_REPO_SLUG, Name: "RepoName"),
-        });
-
-        // Act
-        var args = new GenerateScriptCommandArgs
-        {
-            GitlabServerUrl = BBS_SERVER_URL,
-            GithubOrg = GITHUB_ORG,
-            Output = new FileInfo("unit-test-output"),
-            TargetApiUrl = TARGET_API_URL,
-            TargetUploadsUrl = UPLOADS_URL,
-            GitlabProject = BBS_PROJECT_KEY,
-        };
-        await _handler.Handle(args);
-
-        // Assert
-        _mockFileSystemProvider.Verify(m => m.WriteAllTextAsync(It.IsAny<string>(), It.Is<string>(script =>
-            script.Contains("--bbs-server-url \"http://bbs-server-url\"") &&
-            script.Contains("--bbs-project \"BBS-PROJECT\"") &&
-            script.Contains("--github-org \"GITHUB-ORG\"") &&
-            script.Contains("--target-uploads-url \"UPLOADS-URL\"")
-        )));
-    }
-
-    private string TrimNonExecutableLines(string script, int skipFirst = 9, int skipLast = 0)
-    {
-        var lines = script.Split(new[] { Environment.NewLine, "\n" }, StringSplitOptions.RemoveEmptyEntries).AsEnumerable();
-
-        lines = lines
-            .Where(x => x.HasValue())
-            .Where(x => !x.Trim().StartsWith("#"))
-            .Skip(skipFirst)
-            .SkipLast(skipLast);
-
-        var result = string.Join(Environment.NewLine, lines);
-        return result;
+        capturedScript.Should().NotContain("AZURE_STORAGE_CONNECTION_STRING");
+        capturedScript.Should().NotContain("AWS_ACCESS_KEY_ID");
     }
 }

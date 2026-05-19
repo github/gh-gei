@@ -57,10 +57,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         content.AppendLine(EXEC_FUNCTION_BLOCK);
 
         content.AppendLine(VALIDATE_GH_PAT);
-        if (!args.Kerberos)
-        {
-            content.AppendLine(VALIDATE_GITLAB_PAT);
-        }
+        content.AppendLine(VALIDATE_GITLAB_PAT);
         if (args.AwsBucketName.HasValue() || args.AwsRegion.HasValue())
         {
             content.AppendLine(VALIDATE_AWS_ACCESS_KEY_ID);
@@ -72,7 +69,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         }
 
         var groups = args.GitlabGroup.HasValue()
-            ? [args.GitlabGroup]
+            ? new[] { args.GitlabGroup }
             : (await _gitlabApi.GetGroups()).Select(x => x.Path);
 
         foreach (var groupPath in groups)
@@ -83,6 +80,11 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
             content.AppendLine($"# =========== Group: {groupPath} ===========");
 
             var projects = await _gitlabApi.GetProjects(groupPath);
+
+            if (args.GitlabProject.HasValue())
+            {
+                projects = projects.Where(p => p.Path == args.GitlabProject).ToArray();
+            }
 
             if (!projects.Any())
             {
@@ -111,19 +113,18 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
         var githubOrgOption = $" --github-org \"{args.GithubOrg}\"";
         var githubRepoOption = $" --github-repo \"{GetGithubRepoName(gitlabGroup, gitlabProject)}\"";
         var waitOption = wait ? "" : " --queue-only";
-        var kerberosOption = args.Kerberos ? " --kerberos" : "";
         var verboseOption = args.Verbose ? " --verbose" : "";
         var awsBucketNameOption = args.AwsBucketName.HasValue() ? $" --aws-bucket-name \"{args.AwsBucketName}\"" : "";
         var awsRegionOption = args.AwsRegion.HasValue() ? $" --aws-region \"{args.AwsRegion}\"" : "";
         var keepArchive = args.KeepArchive ? " --keep-archive" : "";
-        var noSslVerify = args.NoSslVerify ? " --no-ssl-verify" : "";
+        var noSslVerifyOption = args.NoSslVerify ? " --no-ssl-verify" : "";
         var targetRepoVisibility = " --target-repo-visibility private";
         var targetApiUrlOption = args.TargetApiUrl.HasValue() ? $" --target-api-url \"{args.TargetApiUrl}\"" : "";
         var targetUploadsUrlOption = args.TargetUploadsUrl.HasValue() ? $" --target-uploads-url \"{args.TargetUploadsUrl}\"" : "";
         var githubStorageOption = args.UseGithubStorage ? " --use-github-storage" : "";
 
         return $"gh gl2gh migrate-repo{targetApiUrlOption}{targetUploadsUrlOption}{gitlabServerUrlOption}{gitlabGroupOption}{gitlabProjectOption}" +
-               $"{githubOrgOption}{githubRepoOption}{verboseOption}{waitOption}{kerberosOption}{awsBucketNameOption}{awsRegionOption}{keepArchive}{noSslVerify}{targetRepoVisibility}{githubStorageOption}";
+               $"{githubOrgOption}{githubRepoOption}{verboseOption}{waitOption}{awsBucketNameOption}{awsRegionOption}{keepArchive}{noSslVerifyOption}{targetRepoVisibility}{githubStorageOption}";
     }
 
     private string Exec(string script) => Wrap(script, "Exec");

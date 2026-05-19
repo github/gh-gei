@@ -18,11 +18,11 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         AddOption(GitlabServerUrl);
         AddOption(GithubOrg);
         AddOption(TargetApiUrl);
+        AddOption(TargetUploadsUrl);
         AddOption(GitlabPat);
+        AddOption(GitlabGroup);
         AddOption(GitlabProject);
-        AddOption(ArchiveDownloadHost);
         AddOption(Output);
-        AddOption(Kerberos);
         AddOption(Verbose);
         AddOption(AwsBucketName);
         AddOption(AwsRegion);
@@ -32,23 +32,23 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
     }
 
     public Option<string> GitlabServerUrl { get; } = new(
-        name: "--bbs-server-url",
-        description: "The full URL of the Bitbucket Server/Data Center to migrate from.")
+        name: "--gitlab-server-url",
+        description: "The full URL of the GitLab server to migrate from, e.g. https://gitlab.mycompany.com")
     { IsRequired = true };
 
     public Option<string> GitlabPat { get; } = new(
-        name: "--bbs-pat",
-        description: "The Bitbucket PAT of a user with site admin privileges to get the list of all projects and their repos. If not set will be read from BBS_PASSWORD environment variable." +
+        name: "--gitlab-pat",
+        description: "The GitLab PAT of a user with admin privileges to get the list of all groups and their projects. If not set will be read from GITLAB_PAT environment variable." +
                       $"{Environment.NewLine}" +
                       "Note: The PAT will not get included in the generated script and it has to be set as an env variable before running the script.");
 
-    public Option<string> GitlabProject { get; } = new(
-        name: "--bbs-project",
-        description: "The Bitbucket project to migrate. If not set will migrate all projects.");
+    public Option<string> GitlabGroup { get; } = new(
+        name: "--gitlab-group",
+        description: "The GitLab group to migrate. If not set will migrate all groups the user has access to.");
 
-    public Option<string> ArchiveDownloadHost { get; } = new(
-        name: "--archive-download-host",
-        description: "The host to use to connect to the Bitbucket Server/Data Center instance via SSH or SMB. Defaults to the host from the Bitbucket Server URL (--bbs-server-url).");
+    public Option<string> GitlabProject { get; } = new(
+        name: "--gitlab-project",
+        description: "The GitLab project to migrate. Requires --gitlab-group. If not set will migrate all projects in the group.");
 
     public Option<string> GithubOrg { get; } = new("--github-org")
     { IsRequired = true };
@@ -57,14 +57,9 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         name: "--output",
         getDefaultValue: () => new FileInfo("./migrate.ps1"));
 
-    public Option<bool> Kerberos { get; } = new(
-        name: "--kerberos",
-        description: "Use Kerberos authentication for Bitbucket Server.")
-    { IsHidden = true };
-
     public Option<string> AwsBucketName { get; } = new(
         name: "--aws-bucket-name",
-        description: "If using AWS, the name of the S3 bucket to upload the BBS archive to.");
+        description: "If using AWS, the name of the S3 bucket to upload the GitLab archive to.");
 
     public Option<string> AwsRegion { get; } = new(
         name: "--aws-region",
@@ -77,14 +72,20 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         name: "--keep-archive",
         description: "Keeps the downloaded export archive after successfully uploading it. By default, it will be automatically deleted.");
 
-    public Option<bool> NoSslVerify { get; } = new(
-        name: "--no-ssl-verify",
-        description: "Disables SSL verification when communicating with your Bitbucket Server/Data Center instance. All other migration steps will continue to verify SSL. " +
-                     "If your Bitbucket instance has a self-signed SSL certificate then setting this flag will allow the migration archive to be exported.");
     public Option<string> TargetApiUrl { get; } = new("--target-api-url")
     {
         Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
     };
+
+    public Option<string> TargetUploadsUrl { get; } = new(
+        name: "--target-uploads-url",
+        description: "The URL of the target uploads API, if not migrating to github.com. Defaults to https://uploads.github.com")
+    { IsHidden = true };
+
+    public Option<bool> NoSslVerify { get; } = new(
+        name: "--no-ssl-verify",
+        description: "Disables SSL verification when communicating with your GitLab instance. All other migration steps will continue to verify SSL. " +
+                     "If your GitLab instance has a self-signed SSL certificate, this flag will allow the migration archive to be exported.");
 
     public Option<bool> UseGithubStorage { get; } = new("--use-github-storage")
     {

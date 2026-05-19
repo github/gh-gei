@@ -11,7 +11,8 @@ namespace OctoshiftCLI.Tests.GitlabToGithub.Commands.GenerateScript;
 
 public class GenerateScriptCommandTests
 {
-    private const string BBS_SERVER_URL = "http://bbs.contoso.com:7990";
+    private const string GITLAB_SERVER_URL = "https://gitlab.contoso.com";
+    private const string GITLAB_PAT = "gitlab-pat";
 
     private readonly Mock<IServiceProvider> _mockServiceProvider = new();
     private readonly Mock<GitlabApiFactory> _mockGitlabApiFactory = TestHelpers.CreateMock<GitlabApiFactory>();
@@ -36,94 +37,35 @@ public class GenerateScriptCommandTests
     {
         _command.Should().NotBeNull();
         _command.Name.Should().Be("generate-script");
-        _command.Options.Count.Should().Be(21);
+        _command.Options.Count.Should().Be(14);
 
-        TestHelpers.VerifyCommandOption(_command.Options, "bbs-server-url", true);
+        TestHelpers.VerifyCommandOption(_command.Options, "gitlab-server-url", true);
         TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
-        TestHelpers.VerifyCommandOption(_command.Options, "bbs-username", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "bbs-password", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "bbs-project", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "bbs-shared-home", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "archive-download-host", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "ssh-user", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "ssh-private-key", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "ssh-port", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "smb-user", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "smb-domain", false);
+        TestHelpers.VerifyCommandOption(_command.Options, "target-api-url", false);
+        TestHelpers.VerifyCommandOption(_command.Options, "target-uploads-url", false, true);
+        TestHelpers.VerifyCommandOption(_command.Options, "gitlab-pat", false);
+        TestHelpers.VerifyCommandOption(_command.Options, "gitlab-group", false);
+        TestHelpers.VerifyCommandOption(_command.Options, "gitlab-project", false);
         TestHelpers.VerifyCommandOption(_command.Options, "output", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "kerberos", false, true);
         TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
         TestHelpers.VerifyCommandOption(_command.Options, "aws-bucket-name", false);
         TestHelpers.VerifyCommandOption(_command.Options, "aws-region", false);
         TestHelpers.VerifyCommandOption(_command.Options, "keep-archive", false);
         TestHelpers.VerifyCommandOption(_command.Options, "no-ssl-verify", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "target-api-url", false);
         TestHelpers.VerifyCommandOption(_command.Options, "use-github-storage", false, true);
     }
 
     [Fact]
-    public void It_Gets_A_Kerberos_HttpClient_When_Kerberos_Is_True()
+    public void It_Creates_The_GitlabApi_With_The_Provided_Server_Url_And_Pat()
     {
         var args = new GenerateScriptCommandArgs
         {
-            GitlabServerUrl = BBS_SERVER_URL,
-            Kerberos = true
+            GitlabServerUrl = GITLAB_SERVER_URL,
+            GitlabPat = GITLAB_PAT
         };
 
         _command.BuildHandler(args, _mockServiceProvider.Object);
 
-        _mockGitlabApiFactory.Verify(m => m.CreateKerberos(BBS_SERVER_URL, false));
-    }
-
-    [Fact]
-    public void It_Gets_A_Kerberos_With_No_Ssl_Verify_HttpClient_When_Kerberos_And_No_Ssl_Verify_Are_True()
-    {
-        var args = new GenerateScriptCommandArgs
-        {
-            GitlabServerUrl = BBS_SERVER_URL,
-            Kerberos = true,
-            NoSslVerify = true
-        };
-
-        _command.BuildHandler(args, _mockServiceProvider.Object);
-
-        _mockGitlabApiFactory.Verify(m => m.CreateKerberos(BBS_SERVER_URL, true));
-    }
-
-    [Fact]
-    public void It_Gets_A_Default_HttpClient_When_Kerberos_And_No_Ssl_Verify_Are_Not_Set()
-    {
-        var bbsTestUser = "user";
-        var bbsTestPassword = "password";
-
-        var args = new GenerateScriptCommandArgs
-        {
-            GitlabServerUrl = BBS_SERVER_URL,
-            GitlabUsername = bbsTestUser,
-            GitlabPassword = bbsTestPassword
-        };
-
-        _command.BuildHandler(args, _mockServiceProvider.Object);
-
-        _mockGitlabApiFactory.Verify(m => m.Create(BBS_SERVER_URL, bbsTestUser, bbsTestPassword, false));
-    }
-
-    [Fact]
-    public void It_Gets_A_No_Ssl_Verify_HttpClient_When_No_Ssl_Verify_Is_Set()
-    {
-        var bbsTestUser = "user";
-        var bbsTestPassword = "password";
-
-        var args = new GenerateScriptCommandArgs
-        {
-            GitlabServerUrl = BBS_SERVER_URL,
-            GitlabUsername = bbsTestUser,
-            GitlabPassword = bbsTestPassword,
-            NoSslVerify = true
-        };
-
-        _command.BuildHandler(args, _mockServiceProvider.Object);
-
-        _mockGitlabApiFactory.Verify(m => m.Create(BBS_SERVER_URL, bbsTestUser, bbsTestPassword, true));
+        _mockGitlabApiFactory.Verify(m => m.Create(GITLAB_SERVER_URL, GITLAB_PAT, false));
     }
 }
