@@ -180,9 +180,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         {
             var gitlabApiFactory = sp.GetRequiredService<GitlabApiFactory>();
 
-            gitlabApi = args.Kerberos
-                ? gitlabApiFactory.CreateKerberos(args.GitlabServerUrl, args.NoSslVerify)
-                : gitlabApiFactory.Create(args.GitlabServerUrl, args.GitlabPat, args.NoSslVerify);
+            gitlabApi = gitlabApiFactory.Create(args.GitlabServerUrl, args.GitlabPat, args.NoSslVerify);
         }
 
         var azureStorageConnectionString = args.AzureStorageConnectionString ?? environmentVariableProvider.AzureStorageConnectionString(false);

@@ -111,9 +111,7 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
 
         var gitlabApiFactory = sp.GetRequiredService<GitlabApiFactory>();
-        var gitlabApi = args.Kerberos
-            ? gitlabApiFactory.CreateKerberos(args.GitlabServerUrl, args.NoSslVerify)
-            : gitlabApiFactory.Create(args.GitlabServerUrl, args.GitlabPat, args.NoSslVerify);
+        var gitlabApi = gitlabApiFactory.Create(args.GitlabServerUrl, args.GitlabPat, args.NoSslVerify);
 
         return new GenerateScriptCommandHandler(log, versionProvider, fileSystemProvider, gitlabApi, environmentVariableProvider);
     }

@@ -39,13 +39,4 @@ public class GitlabApiFactory
         var gitlabClient = new GitlabClient(_octoLogger, httpClient, _versionProvider, clientRetryPolicy, gitlabPat, _fileSystemProvider);
         return new GitlabApi(gitlabClient, gitlabServerUrl, _octoLogger);
     }
-
-    public virtual GitlabApi CreateKerberos(string gitlabServerUrl, bool noSsl = false)
-    {
-        var httpClient = noSsl ? _clientFactory.CreateClient("KerberosNoSSL") : _clientFactory.CreateClient("Kerberos");
-
-        var clientRetryPolicy = (_retryPolicy ?? new RetryPolicy(_octoLogger)).WithServiceName("GitLab");
-        var gitlabClient = new GitlabClient(_octoLogger, httpClient, _versionProvider, clientRetryPolicy, _fileSystemProvider);
-        return new GitlabApi(gitlabClient, gitlabServerUrl, _octoLogger);
-    }
 }

@@ -50,9 +50,7 @@ namespace OctoshiftCLI.GitlabToGithub
                 .AddSingleton<WarningsCountLogger>()
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
                 .AddSingleton<ConfirmationService>()
-                .AddHttpClient("Kerberos", kerberos: true, noSsl: false)
-                .AddHttpClient("NoSSL", kerberos: false, noSsl: true)
-                .AddHttpClient("KerberosNoSSL", kerberos: true, noSsl: true)
+                .AddHttpClient("NoSSL", noSsl: true)
                 .AddHttpClient("Default");
 
             var serviceProvider = serviceCollection.BuildServiceProvider();
@@ -141,11 +139,10 @@ namespace OctoshiftCLI.GitlabToGithub
             }
         }
 
-        private static IServiceCollection AddHttpClient(this IServiceCollection serviceCollection, string name, bool kerberos, bool noSsl) => serviceCollection
-            .AddHttpClient(name)
+        private static IServiceCollection AddHttpClient(this IServiceCollection serviceCollection, string name, bool noSsl = false) => serviceCollection
+            .AddHttpClient(name, _ => { })
             .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {
-                UseDefaultCredentials = kerberos,
                 ServerCertificateCustomValidationCallback = noSsl ? delegate { return true; } : null
             })
             .Services;
