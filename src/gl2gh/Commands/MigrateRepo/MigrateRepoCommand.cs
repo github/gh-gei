@@ -52,7 +52,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<string> GitlabGroup { get; } = new(
         name: "--gitlab-group",
-        description: "The GitLab group to migrate.")
+        description: "The GitLab group (full namespace path) that contains the project to migrate. For nested subgroups, use the full path, e.g. parent-group/subgroup.")
     {
         IsRequired = true
     };
@@ -75,7 +75,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<string> ArchivePath { get; } = new(
         name: "--archive-path",
-        description: "Path to the GitLab migration archive on disk.");
+        description: "Path to the GitLab migration archive on disk. When --gitlab-server-url is provided, the generated archive will be written to this path (overwriting any existing file).");
 
     public Option<string> AzureStorageConnectionString { get; } = new(
         name: "--azure-storage-connection-string",

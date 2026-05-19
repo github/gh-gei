@@ -86,7 +86,7 @@ public class MigrateRepoCommandArgs : CommandArgs
         }
     }
 
-    public bool ShouldGenerateArchive() => GitlabServerUrl.HasValue() && !ArchivePath.HasValue() && !ArchiveUrl.HasValue();
+    public bool ShouldGenerateArchive() => GitlabServerUrl.HasValue() && !ArchiveUrl.HasValue();
 
     public bool ShouldUploadArchive() => ArchiveUrl.IsNullOrWhiteSpace() && GithubOrg.HasValue();
 

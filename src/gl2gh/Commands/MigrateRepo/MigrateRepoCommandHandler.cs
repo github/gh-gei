@@ -280,7 +280,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private string GetGitlabProjectUrl(MigrateRepoCommandArgs args)
     {
         return args.GitlabServerUrl.HasValue() && args.GitlabGroup.HasValue() && args.GitlabProject.HasValue()
-            ? $"{args.GitlabServerUrl.TrimEnd('/')}/projects/{args.GitlabGroup}/repos/{args.GitlabProject}/browse"
+            ? $"{args.GitlabServerUrl.TrimEnd('/')}/{args.GitlabGroup}/{args.GitlabProject}"
             : "https://not-used";
     }
 
@@ -294,8 +294,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             }
         }
 
-        // Validate --archive-path if provided
-        if (args.ArchivePath.HasValue() && !_fileSystemProvider.FileExists(args.ArchivePath))
+        // Validate --archive-path if provided as an input (i.e. not generating a new archive)
+        if (!args.ShouldGenerateArchive() && args.ArchivePath.HasValue() && !_fileSystemProvider.FileExists(args.ArchivePath))
         {
             throw new OctoshiftCliException($"The archive file provided with --archive-path does not exist or is not accessible: {args.ArchivePath}");
         }
