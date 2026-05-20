@@ -568,7 +568,7 @@ public class GithubApi
             "not-used",  // source access token
             targetToken,
             archiveUrl,
-            "https://not-used",  // metadata archive URL
+            null,  // GitLab archive contains both git and metadata — GitHub falls back to gitArchiveUrl
             false,  // skip releases
             targetRepoVisibility,
             false  // lock source

@@ -1,3 +1,4 @@
+using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OctoshiftCLI.GitlabToGithub;
@@ -10,11 +11,11 @@ namespace OctoshiftCLI.Tests.GitlabToGithub.Commands.InventoryReport
 {
     public class InventoryReportCommandTests
     {
-        private readonly Mock<GitlabApi> _mockGitlabApi = TestHelpers.CreateMock<GitlabApi>();
+        private readonly Mock<GitlabApiFactory> _mockGitlabApiFactory = TestHelpers.CreateMock<GitlabApiFactory>();
         private readonly Mock<GitlabInspectorServiceFactory> _mockGitlabInspectorServiceFactory = TestHelpers.CreateMock<GitlabInspectorServiceFactory>();
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
+        private readonly Mock<GroupsCsvGeneratorService> _mockGroupsCsvGeneratorService = TestHelpers.CreateMock<GroupsCsvGeneratorService>();
         private readonly Mock<ProjectsCsvGeneratorService> _mockProjectsCsvGeneratorService = TestHelpers.CreateMock<ProjectsCsvGeneratorService>();
-        private readonly Mock<ReposCsvGeneratorService> _mockReposCsvGeneratorService = TestHelpers.CreateMock<ReposCsvGeneratorService>();
 
         private readonly ServiceProvider _serviceProvider;
         private readonly InventoryReportCommand _command = [];
@@ -24,10 +25,10 @@ namespace OctoshiftCLI.Tests.GitlabToGithub.Commands.InventoryReport
             var serviceCollection = new ServiceCollection();
             serviceCollection
                 .AddSingleton(_mockOctoLogger.Object)
-                .AddSingleton(_mockGitlabApi.Object)
+                .AddSingleton(_mockGitlabApiFactory.Object)
                 .AddSingleton(_mockGitlabInspectorServiceFactory.Object)
-                .AddSingleton(_mockProjectsCsvGeneratorService.Object)
-                .AddSingleton(_mockReposCsvGeneratorService.Object);
+                .AddSingleton(_mockGroupsCsvGeneratorService.Object)
+                .AddSingleton(_mockProjectsCsvGeneratorService.Object);
 
             _serviceProvider = serviceCollection.BuildServiceProvider();
         }
@@ -35,17 +36,32 @@ namespace OctoshiftCLI.Tests.GitlabToGithub.Commands.InventoryReport
         [Fact]
         public void Should_Have_Options()
         {
-            Assert.NotNull(_command);
-            Assert.Equal("inventory-report", _command.Name);
-            Assert.Equal(7, _command.Options.Count);
+            _command.Should().NotBeNull();
+            _command.Name.Should().Be("inventory-report");
+            _command.Options.Count.Should().Be(6);
 
-            TestHelpers.VerifyCommandOption(_command.Options, "bbs-server-url", true);
-            TestHelpers.VerifyCommandOption(_command.Options, "bbs-project", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "bbs-username", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "bbs-password", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "gitlab-server-url", true);
+            TestHelpers.VerifyCommandOption(_command.Options, "gitlab-group", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "gitlab-pat", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "no-ssl-verify", false);
             TestHelpers.VerifyCommandOption(_command.Options, "minimal", false);
             TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);
-            TestHelpers.VerifyCommandOption(_command.Options, "no-ssl-verify", false);
+        }
+
+        [Fact]
+        public void BuildHandler_Creates_The_Handler()
+        {
+            var args = new InventoryReportCommandArgs
+            {
+                GitlabServerUrl = "https://gitlab.contoso.com",
+                GitlabPat = "gitlab-pat"
+            };
+
+            var handler = _command.BuildHandler(args, _serviceProvider);
+
+            handler.Should().NotBeNull();
+            _mockGitlabApiFactory.Verify(m => m.Create(args.GitlabServerUrl, args.GitlabPat, args.NoSslVerify));
+            _mockGitlabInspectorServiceFactory.Verify(m => m.Create(It.IsAny<GitlabApi>()));
         }
     }
 }

@@ -1203,6 +1203,115 @@ public class GithubApiTests
     }
 
     [Fact]
+    public async Task StartGitlabMigration_Sends_Null_Metadata_Url()
+    {
+        // Arrange
+        const string migrationSourceId = "MIGRATION_SOURCE_ID";
+        const string sourceRepoUrl = "https://gitlab.com/my-group/my-project";
+        const string orgId = "ORG_ID";
+        const string url = "https://api.github.com/graphql";
+        const string gitArchiveUrl = "GIT_ARCHIVE_URL";
+        const string targetToken = "TARGET_TOKEN";
+
+        const string unusedSourceToken = "not-used";
+
+        const string query = @"
+                mutation startRepositoryMigration(
+                    $sourceId: ID!,
+                    $ownerId: ID!,
+                    $sourceRepositoryUrl: URI!,
+                    $repositoryName: String!,
+                    $continueOnError: Boolean!,
+                    $gitArchiveUrl: String,
+                    $metadataArchiveUrl: String,
+                    $accessToken: String!,
+                    $githubPat: String,
+                    $skipReleases: Boolean,
+                    $targetRepoVisibility: String,
+                    $lockSource: Boolean)";
+        const string gql = @"
+                startRepositoryMigration(
+                    input: { 
+                        sourceId: $sourceId,
+                        ownerId: $ownerId,
+                        sourceRepositoryUrl: $sourceRepositoryUrl,
+                        repositoryName: $repositoryName,
+                        continueOnError: $continueOnError,
+                        gitArchiveUrl: $gitArchiveUrl,
+                        metadataArchiveUrl: $metadataArchiveUrl,
+                        accessToken: $accessToken,
+                        githubPat: $githubPat,
+                        skipReleases: $skipReleases,
+                        targetRepoVisibility: $targetRepoVisibility,
+                        lockSource: $lockSource
+                    }
+                ) {
+                    repositoryMigration {
+                        id,
+                        databaseId,
+                        migrationSource {
+                            id,
+                            name,
+                            type
+                        },
+                        sourceUrl,
+                        state,
+                        failureReason
+                    }
+                  }";
+        var payload = new
+        {
+            query = $"{query} {{ {gql} }}",
+            variables = new
+            {
+                sourceId = migrationSourceId,
+                ownerId = orgId,
+                sourceRepositoryUrl = sourceRepoUrl,
+                repositoryName = GITHUB_REPO,
+                continueOnError = true,
+                gitArchiveUrl,
+                metadataArchiveUrl = (string)null,
+                accessToken = unusedSourceToken,
+                githubPat = targetToken,
+                skipReleases = false,
+                targetRepoVisibility = (string)null,
+                lockSource = false
+            },
+            operationName = "startRepositoryMigration"
+        };
+        const string actualRepositoryMigrationId = "RM_kgC4NjFhNmE2NGU2ZWE1YTQwMDA5ODliZjhi";
+        var response = JObject.Parse($@"
+            {{
+                ""data"": {{
+                    ""startRepositoryMigration"": {{
+                        ""repositoryMigration"": {{
+                            ""id"": ""{actualRepositoryMigrationId}"",
+                            ""databaseId"": ""3ba25b34-b23d-43fb-a819-f44414be8dc0"",
+                            ""migrationSource"": {{
+                                ""id"": ""MS_kgC4NjFhNmE2NDViNWZmOTEwMDA5MTZiMGQw"",
+                                ""name"": ""GitLab Source"",
+                                ""type"": ""GITLAB""
+                            }},
+                        ""sourceUrl"": ""{sourceRepoUrl}"",
+                        ""state"": ""QUEUED"",
+                        ""failureReason"": """"
+                        }}
+                    }}
+                }}
+            }}");
+
+        _githubClientMock
+            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+            .ReturnsAsync(response);
+
+        // Act
+        var expectedRepositoryMigrationId = await _githubApi.StartGitlabMigration(migrationSourceId, sourceRepoUrl, orgId, GITHUB_REPO, targetToken, gitArchiveUrl);
+
+        // Assert
+        expectedRepositoryMigrationId.Should().Be(actualRepositoryMigrationId);
+    }
+
+    [Fact]
     public async Task StartMigration_Does_Not_Throw_When_Errors_Is_Empty()
     {
         // Arrange

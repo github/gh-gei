@@ -48,7 +48,7 @@ namespace OctoshiftCLI.GitlabToGithub
             if (!_repos.TryGetValue(groupPath, out var repos))
             {
                 repos = (await _gitlabApi.GetProjects(groupPath))
-                    .Select(repo => new GitlabProject() { Name = repo.Name, Path = repo.Path })
+                    .Select(repo => new GitlabProject() { Name = repo.Name, Path = repo.Path, Archived = repo.Archived })
                     .ToList();
                 _repos.Add(groupPath, repos);
             }
@@ -75,7 +75,7 @@ namespace OctoshiftCLI.GitlabToGithub
         public virtual async Task<int> GetMergeRequestCount(string groupPath)
         {
             var repos = await GetProjects(groupPath);
-            return await repos.Sum(async repo => await GetProjectMergeRequestCount(groupPath, repo.Name));
+            return await repos.Sum(async repo => await GetProjectMergeRequestCount(groupPath, repo.Path));
         }
 
         public virtual async Task<int> GetProjectMergeRequestCount(string groupPath, string repo)

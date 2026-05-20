@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -55,20 +56,22 @@ public class GitlabClient
 
     public virtual async IAsyncEnumerable<JToken> GetAllAsync(string url)
     {
-        var hasNextPage = true;
-        var nextPageStart = 0;
-        while (hasNextPage)
+        var nextPage = 1;
+        while (nextPage > 0)
         {
-            var response = await GetWithPagination(url, nextPageStart);
-            var jResponse = JObject.Parse(response);
+            using var response = await _retryPolicy.Retry(async () => await SendAsync(HttpMethod.Get, AddPageParam(url, nextPage)));
+            var content = await response.Content.ReadAsStringAsync();
+            var jArray = JArray.Parse(content);
 
-            foreach (var jToken in jResponse["values"]!)
+            foreach (var jToken in jArray)
             {
                 yield return jToken;
             }
 
-            hasNextPage = !jResponse["isLastPage"]?.ToObject<bool>() ?? false;
-            nextPageStart = jResponse["nextPageStart"]?.ToObject<int>() ?? 0;
+            nextPage = response.Headers.TryGetValues("X-Next-Page", out var values)
+                && int.TryParse(values.FirstOrDefault(), out var parsed)
+                ? parsed
+                : 0;
         }
     }
 
@@ -88,8 +91,6 @@ public class GitlabClient
         using var response = await _retryPolicy.Retry(async () => await SendAsync(HttpMethod.Delete, url));
         return await response.Content.ReadAsStringAsync();
     }
-
-    private async Task<string> GetWithPagination(string url, int start = 0, int limit = DEFAULT_PAGE_SIZE) => await GetAsync(AddPaginationParams(url, start, limit));
 
     private async Task<HttpResponseMessage> SendAsync(HttpMethod httpMethod, string url, object body = null)
     {
@@ -118,14 +119,17 @@ public class GitlabClient
         return response;
     }
 
-    private string AddPaginationParams(string url, int start, int limit)
+    private static string AddPageParam(string url, int page)
     {
         var uri = new Uri(url);
         var path = uri.GetLeftPart(UriPartial.Path);
         var queryParams = HttpUtility.ParseQueryString(uri.Query);
 
-        queryParams["start"] = start.ToString();
-        queryParams["limit"] = limit.ToString();
+        queryParams["page"] = page.ToString();
+        if (string.IsNullOrEmpty(queryParams["per_page"]))
+        {
+            queryParams["per_page"] = DEFAULT_PAGE_SIZE.ToString();
+        }
 
         return $"{path}?{queryParams}";
     }

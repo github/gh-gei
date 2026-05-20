@@ -58,7 +58,7 @@ public class ProjectsCsvGeneratorServiceTests
 
         var expected =
             $"{FULL_CSV_HEADER}{Environment.NewLine}" +
-            $"\"{GROUP_PATH}\",\"{GROUP_NAME}\",\"{PROJECT_NAME}\",\"{GITLAB_SERVER_URL}/{GROUP_PATH}/{PROJECT_PATH}\",\"{lastCommitDate:yyyy-MM-dd hh:mm tt}\",\"{repoSize:D}\",\"{attachmentsSize:D}\",\"\",{mrCount}{Environment.NewLine}";
+            $"\"{GROUP_PATH}\",\"{GROUP_NAME}\",\"{PROJECT_NAME}\",\"{GITLAB_SERVER_URL}/{GROUP_PATH}/{PROJECT_PATH}\",\"{lastCommitDate:yyyy-MM-dd hh:mm tt}\",\"{repoSize:D}\",\"{attachmentsSize:D}\",\"False\",{mrCount}{Environment.NewLine}";
 
         result.Should().Be(expected);
     }
@@ -81,7 +81,7 @@ public class ProjectsCsvGeneratorServiceTests
 
         var expected =
             $"{MINIMAL_CSV_HEADER}{Environment.NewLine}" +
-            $"\"{GROUP_PATH}\",\"{GROUP_NAME}\",\"{PROJECT_NAME}\",\"{GITLAB_SERVER_URL}/{GROUP_PATH}/{PROJECT_PATH}\",\"{lastCommitDate:yyyy-MM-dd hh:mm tt}\",\"{repoSize:D}\",\"{attachmentsSize:D}\",\"\"{Environment.NewLine}";
+            $"\"{GROUP_PATH}\",\"{GROUP_NAME}\",\"{PROJECT_NAME}\",\"{GITLAB_SERVER_URL}/{GROUP_PATH}/{PROJECT_PATH}\",\"{lastCommitDate:yyyy-MM-dd hh:mm tt}\",\"{repoSize:D}\",\"{attachmentsSize:D}\",\"False\"{Environment.NewLine}";
 
         result.Should().Be(expected);
         _mockGitlabInspectorService.Verify(m => m.GetProjectMergeRequestCount(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
