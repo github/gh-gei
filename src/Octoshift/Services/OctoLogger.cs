@@ -146,7 +146,18 @@ public class OctoLogger
         lock (_mutex)
         {
             var verboseMessage = ex is HttpRequestException httpEx ? $"[HTTP ERROR {(int?)httpEx.StatusCode}] {ex}" : ex.ToString();
-            var logMessage = Verbose ? verboseMessage : ex is OctoshiftCliException ? ex.Message : GENERIC_ERROR_MESSAGE;
+            var responseBody = ex.Data["ResponseBody"] as string;
+            if (responseBody is not null)
+            {
+                verboseMessage = $"{verboseMessage}{Environment.NewLine}Response: {responseBody}";
+            }
+            var logMessage = Verbose
+                ? verboseMessage
+                : ex is OctoshiftCliException
+                    ? ex.Message
+                    : responseBody is not null
+                        ? $"{GENERIC_ERROR_MESSAGE}{Environment.NewLine}Response: {responseBody}"
+                        : GENERIC_ERROR_MESSAGE;
 
             var output = Redact(FormatMessage(logMessage, LogLevel.ERROR));
 

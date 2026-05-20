@@ -467,6 +467,34 @@ public sealed class BbsClientTests : IDisposable
     }
 
     [Fact]
+    public async Task SendAsync_Includes_Response_Body_In_Exception_Data_On_5xx()
+    {
+        // Arrange
+        const string url = "http://example.com/resource";
+        const string responseBody = "{\"errors\":[{\"message\":\"Could not start migration job\"}]}";
+
+        using var response = new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
+        {
+            Content = new StringContent(responseBody)
+        };
+
+        var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Post, response);
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var bbsClient = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy);
+
+        // Act
+        var thrown = await bbsClient
+            .Invoking(async x => await x.PostAsync(url, _rawRequestBody))
+            .Should()
+            .ThrowExactlyAsync<HttpRequestException>();
+
+        // Assert
+        thrown.Which.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+        thrown.Which.Data["ResponseBody"].Should().Be(responseBody);
+    }
+
+    [Fact]
     public async Task GetAllAsync_Overrides_Pagination_Query_Params_In_Request_Url()
     {
         // Arrange
