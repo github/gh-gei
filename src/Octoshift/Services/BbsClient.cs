@@ -85,7 +85,7 @@ public class BbsClient
         }
 
         using var payload = body?.ToJson().ToStringContent();
-        var response = httpMethod.ToString() switch
+        using var response = httpMethod.ToString() switch
         {
             "GET" => await _httpClient.GetAsync(url),
             "DELETE" => await _httpClient.DeleteAsync(url),
