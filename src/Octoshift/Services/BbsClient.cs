@@ -97,6 +97,16 @@ public class BbsClient
         var content = await response.Content.ReadAsStringAsync();
         _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
 
+        if (!response.IsSuccessStatusCode && (int)response.StatusCode >= 500)
+        {
+            var serverErrorException = new HttpRequestException(
+                $"Response status code does not indicate success: {(int)response.StatusCode} ({response.ReasonPhrase}).",
+                null,
+                response.StatusCode);
+            serverErrorException.Data["ResponseBody"] = content;
+            throw serverErrorException;
+        }
+
         response.EnsureSuccessStatusCode();
 
         return content;
