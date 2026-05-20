@@ -40,6 +40,8 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
         _log.LogInformation("Generating Script...");
 
+        await _gitlabApi.LogServerVersion();
+
         var script = await GenerateScript(args);
 
         if (script.HasValue() && args.Output.HasValue())

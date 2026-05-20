@@ -20,13 +20,24 @@ public class GitlabApi
         _log = log;
     }
 
-    public virtual async Task<string> GetServerVersion()
+    public virtual async Task<(string Version, bool Enterprise)> GetServerVersion()
     {
         var url = $"{_gitlabBaseUrl}/api/v4/version";
 
         var content = await _client.GetAsync(url);
+        var data = JObject.Parse(content);
 
-        return (string)JObject.Parse(content)["version"];
+        return ((string)data["version"], (bool?)data["enterprise"] ?? false);
+    }
+
+    public virtual async Task LogServerVersion()
+    {
+        var (version, enterprise) = await GetServerVersion();
+        if (!string.IsNullOrWhiteSpace(version))
+        {
+            var edition = enterprise ? "Enterprise" : "Community";
+            _log?.LogInformation($"GitLab version: {version} ({edition} Edition)");
+        }
     }
 
     public virtual async Task<string> StartExport(string groupPath, string projectPath)
@@ -112,7 +123,13 @@ public class GitlabApi
         var encodedProjectPath = GetEncodedProjectPath(groupPath, projectPath);
         var url = $"{_gitlabBaseUrl}/api/v4/projects/{encodedProjectPath}/repository/commits?per_page=1";
 
-        var commitsResponse = await _client.GetAsync(url);
+        // Empty projects (no Git repo yet) return 404 here; treat as no commits.
+        var commitsResponse = await _client.GetOrNullForNotFoundAsync(url);
+        if (commitsResponse is null)
+        {
+            return null;
+        }
+
         var commitsData = JArray.Parse(commitsResponse);
         var lastCommittedDate = (string)commitsData.First?["committed_date"];
 

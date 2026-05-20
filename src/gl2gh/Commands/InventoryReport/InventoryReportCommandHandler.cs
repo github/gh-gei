@@ -40,6 +40,8 @@ public class InventoryReportCommandHandler : ICommandHandler<InventoryReportComm
 
         _log.LogInformation("Creating inventory report...");
 
+        await _gitlabApi.LogServerVersion();
+
         var groupPaths = Array.Empty<string>();
         if (string.IsNullOrWhiteSpace(args.GitlabGroup))
         {

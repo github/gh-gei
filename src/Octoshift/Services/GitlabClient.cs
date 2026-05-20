@@ -2,6 +2,7 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -52,6 +53,25 @@ public class GitlabClient
     {
         using var response = await _retryPolicy.Retry(async () => await SendAsync(HttpMethod.Get, url));
         return await response.Content.ReadAsStringAsync();
+    }
+
+    /// <summary>
+    /// Like <see cref="GetAsync(string)"/>, but returns <c>null</c> when the server responds with 404 Not Found
+    /// instead of throwing. Other HTTP errors are still retried and bubble up as exceptions.
+    /// </summary>
+    public virtual async Task<string> GetOrNullForNotFoundAsync(string url)
+    {
+        try
+        {
+            using var response = await _retryPolicy.HttpRetry(
+                async () => await SendAsync(HttpMethod.Get, url),
+                ex => ex.StatusCode != HttpStatusCode.NotFound);
+            return await response.Content.ReadAsStringAsync();
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
     }
 
     public virtual async IAsyncEnumerable<JToken> GetAllAsync(string url)

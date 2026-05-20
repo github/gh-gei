@@ -52,6 +52,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         ValidateOptions(args);
 
+        await _gitlabApi.LogServerVersion();
+
         var migrationSourceId = "";
 
         if (args.ShouldImportArchive())
