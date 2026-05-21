@@ -241,6 +241,30 @@ public class OctoLoggerTests
     }
 
     [Fact]
+    public void LogError_For_Exception_With_ResponseBody_Should_Include_Response_Body_In_Non_Verbose_Mode()
+    {
+        // Arrange
+        const string genericErrorMessage = "An unexpected error happened. Please see the logs for details.";
+        const string responseBody = "{\"errors\":[{\"message\":\"Could not start migration job\"}]}";
+        var httpException = new HttpRequestException("Response status code does not indicate success: 503 (Service Unavailable).", null, HttpStatusCode.ServiceUnavailable);
+        httpException.Data["ResponseBody"] = responseBody;
+
+        // Act
+        _octoLogger.LogError(httpException);
+
+        // Assert
+        _consoleOutput.Should().BeNull();
+
+        _consoleError.Should().Contain(genericErrorMessage);
+        _consoleError.Should().Contain($"Response: {responseBody}");
+
+        _logOutput.Should().Contain(genericErrorMessage);
+        _logOutput.Should().Contain($"Response: {responseBody}");
+
+        _verboseLogOutput.Should().Contain(responseBody);
+    }
+
+    [Fact]
     public void LogInformation_Should_Write_To_Console_Out()
     {
         // Act
