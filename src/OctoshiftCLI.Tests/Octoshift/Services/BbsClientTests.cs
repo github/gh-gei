@@ -442,19 +442,28 @@ public sealed class BbsClientTests : IDisposable
         const string url = "http://example.com/resource";
 
         var firstResponseContent = new { isLastPage = false, nextPageStart = 2, values = Array.Empty<object>() }.ToJson();
-        using var firstResponse = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(firstResponseContent) };
-
-        using var secondResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError);
 
         var handlerMock = new Mock<HttpMessageHandler>();
 
         // first request
         const string firstRequestUrl = $"{url}?start=0&limit=100";
-        MockHttpHandler(req => req.Method == HttpMethod.Get && req.RequestUri!.ToString() == firstRequestUrl, firstResponse, handlerMock);
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get && req.RequestUri!.ToString() == firstRequestUrl),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(firstResponseContent) });
 
-        // second request
+        // second request - return a fresh response each time so retries don't reuse a disposed instance
         const string secondRequestUrl = $"{url}?start=2&limit=100";
-        MockHttpHandler(req => req.Method == HttpMethod.Get && req.RequestUri!.ToString() == secondRequestUrl, secondResponse, handlerMock);
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get && req.RequestUri!.ToString() == secondRequestUrl),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() => new HttpResponseMessage(HttpStatusCode.InternalServerError));
 
         using var httpClient = new HttpClient(handlerMock.Object);
         var bbsClient = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy);
