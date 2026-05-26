@@ -11,6 +11,7 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.InventoryReport;
 public class InventoryReportCommandHandlerTests
 {
     private const string ADO_ORG = "foo-org";
+    private const string ADO_TEAM_PROJECT = "foo-team-project";
     private readonly Mock<AdoInspectorService> _mockAdoInspectorService = TestHelpers.CreateMock<AdoInspectorService>();
     private readonly Mock<OrgsCsvGeneratorService> _mockOrgsCsvGenerator = TestHelpers.CreateMock<OrgsCsvGeneratorService>();
     private readonly Mock<TeamProjectsCsvGeneratorService> _mockTeamProjectsCsvGenerator = TestHelpers.CreateMock<TeamProjectsCsvGeneratorService>();
@@ -108,6 +109,36 @@ public class InventoryReportCommandHandlerTests
         _pipelinesCsvOutput.Should().Be(expectedPipelinesCsv);
 
         _mockAdoInspectorService.Object.OrgFilter.Should().Be(ADO_ORG);
+        _mockAdoInspectorService.Object.TeamProjectFilter.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Scoped_To_Single_Org_And_Single_Team_Project()
+    {
+        var expectedOrgsCsv = "csv stuff";
+        var expectedTeamProjectsCsv = "more csv stuff";
+        var expectedReposCsv = "repo csv stuff";
+        var expectedPipelinesCsv = "pipelines csv stuff";
+
+        _mockOrgsCsvGenerator.Setup(m => m.Generate(null, false)).ReturnsAsync(expectedOrgsCsv);
+        _mockTeamProjectsCsvGenerator.Setup(m => m.Generate(null, false)).ReturnsAsync(expectedTeamProjectsCsv);
+        _mockReposCsvGenerator.Setup(m => m.Generate(null, false)).ReturnsAsync(expectedReposCsv);
+        _mockPipelinesCsvGenerator.Setup(m => m.Generate(null)).ReturnsAsync(expectedPipelinesCsv);
+
+        var args = new InventoryReportCommandArgs
+        {
+            AdoOrg = ADO_ORG,
+            AdoTeamProject = ADO_TEAM_PROJECT,
+        };
+        await _handler.Handle(args);
+
+        _orgsCsvOutput.Should().Be(expectedOrgsCsv);
+        _teamProjectsCsvOutput.Should().Be(expectedTeamProjectsCsv);
+        _reposCsvOutput.Should().Be(expectedReposCsv);
+        _pipelinesCsvOutput.Should().Be(expectedPipelinesCsv);
+
+        _mockAdoInspectorService.Object.OrgFilter.Should().Be(ADO_ORG);
+        _mockAdoInspectorService.Object.TeamProjectFilter.Should().Be(ADO_TEAM_PROJECT);
     }
 
     [Fact]

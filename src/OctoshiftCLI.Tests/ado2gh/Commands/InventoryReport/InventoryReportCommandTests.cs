@@ -41,9 +41,10 @@ namespace OctoshiftCLI.Tests.AdoToGithub.Commands.InventoryReport
         {
             Assert.NotNull(_command);
             Assert.Equal("inventory-report", _command.Name);
-            Assert.Equal(4, _command.Options.Count);
+            Assert.Equal(5, _command.Options.Count);
 
             TestHelpers.VerifyCommandOption(_command.Options, "ado-org", false);
+            TestHelpers.VerifyCommandOption(_command.Options, "ado-team-project", false);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-pat", false);
             TestHelpers.VerifyCommandOption(_command.Options, "minimal", false);
             TestHelpers.VerifyCommandOption(_command.Options, "verbose", false);

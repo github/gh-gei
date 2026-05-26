@@ -1,0 +1,1 @@
+- **ado2gh**: Add ADO team project filter option to inventory report command

@@ -44,6 +44,7 @@ public class InventoryReportCommandHandler : ICommandHandler<InventoryReportComm
         _log.LogInformation("Creating inventory report...");
 
         _adoInspectorService.OrgFilter = args.AdoOrg;
+        _adoInspectorService.TeamProjectFilter = args.AdoTeamProject;
 
         _log.LogInformation("Finding Orgs...");
         var orgs = await _adoInspectorService.GetOrgs();
