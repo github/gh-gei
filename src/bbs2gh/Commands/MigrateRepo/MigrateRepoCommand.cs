@@ -193,8 +193,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
     };
     public Option<string> TargetUploadsUrl { get; } = new(
         name: "--target-uploads-url",
-        description: "The URL of the target uploads API, if not migrating to github.com. Defaults to https://uploads.github.com")
-    { IsHidden = true };
+        description: "The URL of the target uploads API, if not migrating to github.com. Defaults to https://uploads.github.com");
     public Option<bool> NoSslVerify { get; } = new(
         name: "--no-ssl-verify",
         description: "Disables SSL verification when communicating with your Bitbucket Server/Data Center instance. All other migration steps will continue to verify SSL. " +
