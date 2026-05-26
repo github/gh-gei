@@ -36,10 +36,10 @@ public class GitlabApiTests
 
         _mockGitlabClient.Setup(x => x.GetAsync(endpoint)).ReturnsAsync(responsePayload.ToJson());
 
-        var result = await _sut.GetServerVersion();
+        var (actualVersion, enterprise) = await _sut.GetServerVersion();
 
-        result.Version.Should().Be(version);
-        result.Enterprise.Should().BeTrue();
+        actualVersion.Should().Be(version);
+        enterprise.Should().BeTrue();
     }
 
     [Fact]

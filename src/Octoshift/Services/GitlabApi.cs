@@ -133,12 +133,7 @@ public class GitlabApi
         var commitsData = JArray.Parse(commitsResponse);
         var lastCommittedDate = (string)commitsData.First?["committed_date"];
 
-        if (string.IsNullOrWhiteSpace(lastCommittedDate))
-        {
-            return null;
-        }
-
-        return DateTimeOffset.Parse(lastCommittedDate);
+        return string.IsNullOrWhiteSpace(lastCommittedDate) ? null : DateTimeOffset.Parse(lastCommittedDate);
     }
 
     public virtual async Task<(long RepositorySize, long AttachmentsSize)> GetRepositoryAndAttachmentsSize(string groupPath, string projectPath)
