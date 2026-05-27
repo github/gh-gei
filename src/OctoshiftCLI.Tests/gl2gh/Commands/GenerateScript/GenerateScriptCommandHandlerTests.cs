@@ -14,7 +14,6 @@ public class GenerateScriptCommandHandlerTests
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<IVersionProvider> _mockVersionProvider = new();
     private readonly Mock<FileSystemProvider> _mockFileSystemProvider = TestHelpers.CreateMock<FileSystemProvider>();
-    private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
     private readonly Mock<GitlabApi> _mockGitlabApi = TestHelpers.CreateMock<GitlabApi>();
 
     private readonly GenerateScriptCommandHandler _handler;
@@ -39,8 +38,7 @@ public class GenerateScriptCommandHandlerTests
             _mockOctoLogger.Object,
             _mockVersionProvider.Object,
             _mockFileSystemProvider.Object,
-            _mockGitlabApi.Object,
-            _mockEnvironmentVariableProvider.Object);
+            _mockGitlabApi.Object);
     }
 
     [Fact]

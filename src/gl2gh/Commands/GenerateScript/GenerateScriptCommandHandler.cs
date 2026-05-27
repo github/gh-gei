@@ -15,20 +15,17 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
     private readonly IVersionProvider _versionProvider;
     private readonly FileSystemProvider _fileSystemProvider;
     private readonly GitlabApi _gitlabApi;
-    private readonly EnvironmentVariableProvider _environmentVariableProvider;
 
     public GenerateScriptCommandHandler(
         OctoLogger log,
         IVersionProvider versionProvider,
         FileSystemProvider fileSystemProvider,
-        GitlabApi gitlabApi,
-        EnvironmentVariableProvider environmentVariableProvider)
+        GitlabApi gitlabApi)
     {
         _log = log;
         _versionProvider = versionProvider;
         _fileSystemProvider = fileSystemProvider;
         _gitlabApi = gitlabApi;
-        _environmentVariableProvider = environmentVariableProvider;
     }
 
     public async Task Handle(GenerateScriptCommandArgs args)

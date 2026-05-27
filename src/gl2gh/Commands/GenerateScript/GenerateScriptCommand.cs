@@ -109,11 +109,10 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         var log = sp.GetRequiredService<OctoLogger>();
         var versionProvider = sp.GetRequiredService<IVersionProvider>();
         var fileSystemProvider = sp.GetRequiredService<FileSystemProvider>();
-        var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
 
         var gitlabApiFactory = sp.GetRequiredService<GitlabApiFactory>();
         var gitlabApi = gitlabApiFactory.Create(args.GitlabServerUrl, args.GitlabPat, args.NoSslVerify);
 
-        return new GenerateScriptCommandHandler(log, versionProvider, fileSystemProvider, gitlabApi, environmentVariableProvider);
+        return new GenerateScriptCommandHandler(log, versionProvider, fileSystemProvider, gitlabApi);
     }
 }

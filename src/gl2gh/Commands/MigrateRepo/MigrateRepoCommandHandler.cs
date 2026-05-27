@@ -14,7 +14,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
     private readonly AzureApi _azureApi;
     private readonly AwsApi _awsApi;
     private readonly EnvironmentVariableProvider _environmentVariableProvider;
-    private readonly HttpDownloadService _httpDownloadService;
     private readonly FileSystemProvider _fileSystemProvider;
     private readonly WarningsCountLogger _warningsCountLogger;
     private const int CHECK_EXPORT_STATUS_DELAY_IN_MILLISECONDS = 10000;
@@ -27,7 +26,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         EnvironmentVariableProvider environmentVariableProvider,
         AzureApi azureApi,
         AwsApi awsApi,
-        HttpDownloadService httpDownloadService,
         FileSystemProvider fileSystemProvider,
         WarningsCountLogger warningsCountLogger)
     {
@@ -36,7 +34,6 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _gitlabApi = gitlabApi;
         _azureApi = azureApi;
         _awsApi = awsApi;
-        _httpDownloadService = httpDownloadService;
         _environmentVariableProvider = environmentVariableProvider;
         _fileSystemProvider = fileSystemProvider;
         _warningsCountLogger = warningsCountLogger;

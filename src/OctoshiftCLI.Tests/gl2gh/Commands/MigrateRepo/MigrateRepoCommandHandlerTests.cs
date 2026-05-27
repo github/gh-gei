@@ -17,7 +17,6 @@ public class MigrateRepoCommandHandlerTests
     private readonly Mock<AwsApi> _mockAwsApi = TestHelpers.CreateMock<AwsApi>();
     private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
     private readonly Mock<EnvironmentVariableProvider> _mockEnvironmentVariableProvider = TestHelpers.CreateMock<EnvironmentVariableProvider>();
-    private readonly Mock<HttpDownloadService> _mockHttpDownloadService = TestHelpers.CreateMock<HttpDownloadService>();
     private readonly Mock<FileSystemProvider> _mockFileSystemProvider = TestHelpers.CreateMock<FileSystemProvider>();
 
     private readonly WarningsCountLogger _warningsCountLogger;
@@ -55,7 +54,6 @@ public class MigrateRepoCommandHandlerTests
             _mockEnvironmentVariableProvider.Object,
             _mockAzureApi.Object,
             _mockAwsApi.Object,
-            _mockHttpDownloadService.Object,
             _mockFileSystemProvider.Object,
             _warningsCountLogger
         );

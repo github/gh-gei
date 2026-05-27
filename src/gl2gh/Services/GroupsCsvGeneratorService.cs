@@ -24,20 +24,20 @@ namespace OctoshiftCLI.GitlabToGithub
             var inspector = _gitlabInspectorServiceFactory.Create(gitlabApi);
             var result = new StringBuilder();
 
-            result.Append("project-key,project-name,url,repo-count");
+            result.Append("group-path,group-name,url,project-count");
             result.AppendLine(!minimal ? ",mr-count" : null);
 
-            var projects = string.IsNullOrWhiteSpace(gitlabGroup) ? await inspector.GetGroups() : new[] { await inspector.GetGroup(gitlabGroup) };
+            var groups = string.IsNullOrWhiteSpace(gitlabGroup) ? await inspector.GetGroups() : new[] { await inspector.GetGroup(gitlabGroup) };
 
-            foreach (var (Key, Name) in projects)
+            foreach (var (groupPath, groupName) in groups)
             {
-                var url = $"{gitlabServerUrl.TrimEnd('/')}/projects/{Uri.EscapeDataString(Key)}";
-                var repoCount = await inspector.GetProjectCount(Key);
-                var mrCount = !minimal ? await inspector.GetMergeRequestCount(Key) : 0;
+                var url = $"{gitlabServerUrl.TrimEnd('/')}/{groupPath}";
+                var projectCount = await inspector.GetProjectCount(groupPath);
+                var mrCount = !minimal ? await inspector.GetMergeRequestCount(groupPath) : 0;
 
-                var projectName = Name.Replace(",", Uri.EscapeDataString(","));
+                var name = groupName.Replace(",", Uri.EscapeDataString(","));
 
-                result.Append($"\"{Key}\",\"{projectName}\",\"{url}\",{repoCount}");
+                result.Append($"\"{groupPath}\",\"{name}\",\"{url}\",{projectCount}");
                 result.AppendLine(!minimal ? $",{mrCount}" : null);
             }
 

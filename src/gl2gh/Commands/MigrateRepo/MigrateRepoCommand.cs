@@ -45,24 +45,15 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
     public Option<string> GitlabServerUrl { get; } = new(
         name: "--gitlab-server-url",
-        description: "The full URL of the GitLab server, e.g. https://gitlab.mycompany.com")
-    {
-        IsRequired = true
-    };
+        description: "The full URL of the GitLab server, e.g. https://gitlab.mycompany.com");
 
     public Option<string> GitlabGroup { get; } = new(
         name: "--gitlab-group",
-        description: "The GitLab group (full namespace path) that contains the project to migrate. For nested subgroups, use the full path, e.g. parent-group/subgroup.")
-    {
-        IsRequired = true
-    };
+        description: "The GitLab group (full namespace path) that contains the project to migrate. For nested subgroups, use the full path, e.g. parent-group/subgroup.");
 
     public Option<string> GitlabProject { get; } = new(
         name: "--gitlab-project",
-        description: "The GitLab project to migrate.")
-    {
-        IsRequired = true
-    };
+        description: "The GitLab project to migrate.");
 
     public Option<string> GitlabPat { get; } = new(
         name: "--gitlab-pat",
@@ -156,8 +147,6 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         var log = sp.GetRequiredService<OctoLogger>();
         var environmentVariableProvider = sp.GetRequiredService<EnvironmentVariableProvider>();
         var fileSystemProvider = sp.GetRequiredService<FileSystemProvider>();
-        var httpDownloadServiceFactory = sp.GetRequiredService<HttpDownloadServiceFactory>();
-        var httpDownloadService = args.NoSslVerify ? httpDownloadServiceFactory.CreateClientNoSsl() : httpDownloadServiceFactory.CreateDefault();
 
         GithubApi githubApi = null;
         GitlabApi gitlabApi = null;
@@ -192,6 +181,6 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
 
         var warningsCountLogger = sp.GetRequiredService<WarningsCountLogger>();
 
-        return new MigrateRepoCommandHandler(log, githubApi, gitlabApi, environmentVariableProvider, azureApi, awsApi, httpDownloadService, fileSystemProvider, warningsCountLogger);
+        return new MigrateRepoCommandHandler(log, githubApi, gitlabApi, environmentVariableProvider, azureApi, awsApi, fileSystemProvider, warningsCountLogger);
     }
 }

@@ -156,7 +156,7 @@ public class GitlabApi
         var encodedProjectPath = GetEncodedProjectPath(groupPath, projectPath);
         var url = $"{_gitlabBaseUrl}/api/v4/projects/{encodedProjectPath}/merge_requests?state=all&per_page=1&page=1";
 
-        var mrResponse = await _client.GetAsyncHttpResponseMessage(url);
+        using var mrResponse = await _client.GetAsyncHttpResponseMessage(url);
         var mrTotal = mrResponse.Headers.GetValues("X-Total").Single();
 
         return int.Parse(mrTotal);
