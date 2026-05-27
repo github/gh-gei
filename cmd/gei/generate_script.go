@@ -100,7 +100,7 @@ func runGenerateScript(ctx context.Context, opts *generateScriptOptions, log *lo
 	// Create GitHub client for source
 	sourceAPIURL := opts.ghesAPIURL
 	if sourceAPIURL == "" {
-		sourceAPIURL = "https://api.github.com"
+		sourceAPIURL = defaultGitHubAPIURL
 	}
 
 	clientOpts := []github.Option{
