@@ -85,7 +85,7 @@ public class BbsClient
         }
 
         using var payload = body?.ToJson().ToStringContent();
-        var response = httpMethod.ToString() switch
+        using var response = httpMethod.ToString() switch
         {
             "GET" => await _httpClient.GetAsync(url),
             "DELETE" => await _httpClient.DeleteAsync(url),
@@ -96,6 +96,16 @@ public class BbsClient
         };
         var content = await response.Content.ReadAsStringAsync();
         _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
+
+        if (!response.IsSuccessStatusCode && (int)response.StatusCode >= 500)
+        {
+            var serverErrorException = new HttpRequestException(
+                $"Response status code does not indicate success: {(int)response.StatusCode} ({response.ReasonPhrase}).",
+                null,
+                response.StatusCode);
+            serverErrorException.Data["ResponseBody"] = content;
+            throw serverErrorException;
+        }
 
         response.EnsureSuccessStatusCode();
 
