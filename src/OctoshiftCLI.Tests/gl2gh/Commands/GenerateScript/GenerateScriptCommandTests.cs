@@ -1,9 +1,9 @@
 using System;
 using FluentAssertions;
 using Moq;
+using OctoshiftCLI.Contracts;
 using OctoshiftCLI.GitlabToGithub.Commands.GenerateScript;
 using OctoshiftCLI.GitlabToGithub.Factories;
-using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Services;
 using Xunit;
 
