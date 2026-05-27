@@ -1,0 +1,13 @@
+{
+  "values": [
+    {
+      "id": 102,
+      "slug": "repo-two",
+      "name": "Repository Two"
+    }
+  ],
+  "size": 1,
+  "isLastPage": true,
+  "start": 1,
+  "limit": 1
+}
