@@ -157,15 +157,32 @@ public class GitlabClient
     {
         _log.LogVerbose($"HTTP GET: {url}");
 
-        using var response = await _retryPolicy.Retry(async () =>
-            await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead));
+        await _retryPolicy.Retry(async () =>
+        {
+            using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
 
-        _log.LogVerbose($"RESPONSE ({response.StatusCode}): <truncated>");
+            _log.LogVerbose($"RESPONSE ({response.StatusCode}): <truncated>");
 
-        response.EnsureSuccessStatusCode();
+            if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            {
+                var retryAfter = response.Headers.RetryAfter?.Delta?.TotalSeconds
+                                 ?? (response.Headers.RetryAfter?.Date.HasValue == true
+                                     ? (response.Headers.RetryAfter.Date.Value - DateTimeOffset.UtcNow).TotalSeconds
+                                     : (double?)null);
+                var retryAfterMessage = retryAfter.HasValue ? $" GitLab requested a retry after {Math.Max(0, (int)retryAfter.Value)} seconds." : "";
+                _log.LogWarning($"GitLab rate limit hit (HTTP 429) downloading the export archive.{retryAfterMessage} Retrying...");
 
-        await using var streamToReadFrom = await response.Content.ReadAsStreamAsync();
-        await using var streamToWriteTo = _fileSystemProvider.Open(file, FileMode.Create);
-        await _fileSystemProvider.CopySourceToTargetStreamAsync(streamToReadFrom, streamToWriteTo);
+                if (retryAfter is > 0)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(Math.Min(retryAfter.Value, 60)));
+                }
+            }
+
+            response.EnsureSuccessStatusCode();
+
+            await using var streamToReadFrom = await response.Content.ReadAsStreamAsync();
+            await using var streamToWriteTo = _fileSystemProvider.Open(file, FileMode.Create);
+            await _fileSystemProvider.CopySourceToTargetStreamAsync(streamToReadFrom, streamToWriteTo);
+        });
     }
 }
