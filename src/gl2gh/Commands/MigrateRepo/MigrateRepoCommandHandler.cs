@@ -287,12 +287,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private void ValidateOptions(MigrateRepoCommandArgs args)
     {
-        if (args.ShouldGenerateArchive())
+        if (args.ShouldGenerateArchive() && GetGitlabPat(args).IsNullOrWhiteSpace())
         {
-            if (GetGitlabPat(args).IsNullOrWhiteSpace())
-            {
-                throw new OctoshiftCliException("GitLab PAT must be either set as GITLAB_PAT environment variable or passed as --gitlab-pat.");
-            }
+            throw new OctoshiftCliException("GitLab PAT must be either set as GITLAB_PAT environment variable or passed as --gitlab-pat.");
         }
 
         // Validate --archive-path if provided as an input (i.e. not generating a new archive)

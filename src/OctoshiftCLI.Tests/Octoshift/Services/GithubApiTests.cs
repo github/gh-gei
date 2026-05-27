@@ -1214,6 +1214,8 @@ public class GithubApiTests
         const string targetToken = "TARGET_TOKEN";
 
         const string unusedSourceToken = "not-used";
+        string nullMetadataArchiveUrl = null;
+        string nullTargetRepoVisibility = null;
 
         const string query = @"
                 mutation startRepositoryMigration(
@@ -1270,11 +1272,11 @@ public class GithubApiTests
                 repositoryName = GITHUB_REPO,
                 continueOnError = true,
                 gitArchiveUrl,
-                metadataArchiveUrl = (string)null,
+                metadataArchiveUrl = nullMetadataArchiveUrl,
                 accessToken = unusedSourceToken,
                 githubPat = targetToken,
                 skipReleases = false,
-                targetRepoVisibility = (string)null,
+                targetRepoVisibility = nullTargetRepoVisibility,
                 lockSource = false
             },
             operationName = "startRepositoryMigration"

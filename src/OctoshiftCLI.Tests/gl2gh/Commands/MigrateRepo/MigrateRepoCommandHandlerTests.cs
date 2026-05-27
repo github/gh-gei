@@ -154,7 +154,8 @@ public class MigrateRepoCommandHandlerTests
             .ReturnsAsync(MIGRATION_ID);
         _mockGitlabApi.Setup(x => x.GetExport(GITLAB_GROUP, GITLAB_PROJECT)).ReturnsAsync(("finished", ARCHIVE_URL));
         _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<Stream>())).ReturnsAsync(new Uri(ARCHIVE_URL));
-        _mockFileSystemProvider.Setup(m => m.OpenRead(ARCHIVE_PATH)).Returns(new MemoryStream(new byte[] { 1, 2, 3 }));
+        using var archiveStream = new MemoryStream(new byte[] { 1, 2, 3 });
+        _mockFileSystemProvider.Setup(m => m.OpenRead(ARCHIVE_PATH)).Returns(archiveStream);
 
         var args = new MigrateRepoCommandArgs
         {
@@ -224,7 +225,8 @@ public class MigrateRepoCommandHandlerTests
         _mockGithubApi.Setup(x => x.StartGitlabMigration(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(MIGRATION_ID);
         _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<Stream>())).ReturnsAsync(new Uri(ARCHIVE_URL));
-        _mockFileSystemProvider.Setup(m => m.OpenRead(ARCHIVE_PATH)).Returns(new MemoryStream(new byte[] { 1, 2, 3 }));
+        using var archiveStream = new MemoryStream(new byte[] { 1, 2, 3 });
+        _mockFileSystemProvider.Setup(m => m.OpenRead(ARCHIVE_PATH)).Returns(archiveStream);
 
         var args = new MigrateRepoCommandArgs
         {
@@ -251,7 +253,8 @@ public class MigrateRepoCommandHandlerTests
         _mockGithubApi.Setup(x => x.StartGitlabMigration(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(MIGRATION_ID);
         _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<Stream>())).ReturnsAsync(new Uri(ARCHIVE_URL));
-        _mockFileSystemProvider.Setup(m => m.OpenRead(ARCHIVE_PATH)).Returns(new MemoryStream(new byte[] { 1, 2, 3 }));
+        using var archiveStream = new MemoryStream(new byte[] { 1, 2, 3 });
+        _mockFileSystemProvider.Setup(m => m.OpenRead(ARCHIVE_PATH)).Returns(archiveStream);
 
         var args = new MigrateRepoCommandArgs
         {
@@ -272,7 +275,8 @@ public class MigrateRepoCommandHandlerTests
     [Fact]
     public async Task Throws_When_Gitlab_Pat_Not_Provided_For_Generate()
     {
-        _mockEnvironmentVariableProvider.Setup(m => m.GitlabPat(It.IsAny<bool>())).Returns((string)null);
+        string nullGitlabPat = null;
+        _mockEnvironmentVariableProvider.Setup(m => m.GitlabPat(It.IsAny<bool>())).Returns(nullGitlabPat);
 
         var args = new MigrateRepoCommandArgs
         {
