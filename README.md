@@ -8,10 +8,11 @@ The [GitHub Enterprise Importer](https://docs.github.com/en/migrations/using-git
 > GEI is generally available for repository migrations originating from Azure DevOps or GitHub that target GitHub Enterprise Cloud. It is in public beta for repository migrations from BitBucket Server and Data Center to GitHub Enterprise Cloud.
 
 ## Using the GEI CLI
-There are 3 separate CLIs that we ship as extensions for the official [GitHub CLI](https://github.com/cli/cli#installation):
+There are 4 separate CLIs that we ship as extensions for the official [GitHub CLI](https://github.com/cli/cli#installation):
 - `gh gei` - Run migrations between GitHub products
 - `gh ado2gh` - Run migrations from Azure DevOps to GitHub
 - `gh bbs2gh` - Run migrations from BitBucket Server or Data Center to GitHub
+- `gh gl2gh` - Run migrations from GitLab to GitHub _(not yet generally available)_
 
 To use `gh gei` first install the latest [GitHub CLI](https://github.com/cli/cli#installation), then run the command
 >`gh extension install github/gh-gei`
@@ -21,6 +22,11 @@ To use `gh ado2gh` first install the latest [GitHub CLI](https://github.com/cli/
 
 To use `gh bbs2gh` first install the latest [GitHub CLI](https://github.com/cli/cli#installation), then run the command
 >`gh extension install github/gh-bbs2gh`
+
+To use `gh gl2gh` first install the latest [GitHub CLI](https://github.com/cli/cli#installation), then run the command
+>`gh extension install github/gh-gl2gh`
+
+> **Note:** `gh gl2gh` is not yet generally available. The extension repo and releases may not be published yet.
 
 We update the extensions frequently, so make sure you update them on a regular basis:
 >`gh extension upgrade github/gh-gei`
@@ -32,6 +38,8 @@ To see the available commands and options run:
 >`gh ado2gh --help`
 
 >`gh bbs2gh --help`
+
+>`gh gl2gh --help`
 
 ### GitHub to GitHub Usage (GitHub.com -> GitHub.com)
 1. Create Personal Access Tokens with access to the source GitHub org, and the target GitHub org (for more details on scopes needed refer to our [official documentation](https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer)).
@@ -86,6 +94,24 @@ Refer to the [official documentation](https://docs.github.com/en/migrations/usin
 6. The `migrate.ps1` script requires PowerShell to run. If not already installed see the [install instructions](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.2) to install PowerShell on Windows, Linux, or Mac. Then run the script.
 
 Refer to the [official documentation](https://docs.github.com/en/migrations/using-github-enterprise-importer/migrating-repositories-with-github-enterprise-importer/migrating-repositories-from-bitbucket-server-to-github-enterprise-cloud) for more details.
+
+### GitLab to GitHub Usage
+1. Create a Personal Access Token for the source GitLab instance (with `api` and `read_repository` scopes) and one for the target GitHub org (for more details on scopes needed refer to our [official documentation](https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer)).
+
+2. Set the `GITLAB_PAT` and `GH_PAT` environment variables.
+
+3. Run the `generate-script` command to generate a migration script.
+```
+> gh gl2gh generate-script --gitlab-server-url GITLAB-SERVER-URL \
+  --github-org DESTINATION \
+  --output FILENAME
+```
+
+The `--gitlab-server-url` flag accepts both GitLab.com (`https://gitlab.com`) and self-hosted GitLab instances.
+
+4. The previous command will have created a `migrate.ps1` PowerShell script. Review the steps in the generated script and tweak if necessary.
+
+5. The `migrate.ps1` script requires PowerShell to run. If not already installed see the [install instructions](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.2) to install PowerShell on Windows, Linux, or Mac. Then run the script.
 
 ### Skipping version checks
 
