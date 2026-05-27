@@ -1,11 +1,11 @@
 using System;
 using System.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
-using OctoshiftCLI.GitlabToGithub.Factories;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Factories;
+using OctoshiftCLI.GitlabToGithub.Factories;
 using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.GitlabToGithub.Commands.MigrateRepo;

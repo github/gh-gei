@@ -1,6 +1,6 @@
 ﻿using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -168,7 +168,7 @@ public class GitlabClient
                 var retryAfter = response.Headers.RetryAfter?.Delta?.TotalSeconds
                                  ?? (response.Headers.RetryAfter?.Date.HasValue == true
                                      ? (response.Headers.RetryAfter.Date.Value - DateTimeOffset.UtcNow).TotalSeconds
-                                     : (double?)null);
+                                     : null);
                 var retryAfterMessage = retryAfter.HasValue ? $" GitLab requested a retry after {Math.Max(0, (int)retryAfter.Value)} seconds." : "";
                 _log.LogWarning($"GitLab rate limit hit (HTTP 429) downloading the export archive.{retryAfterMessage} Retrying...");
 

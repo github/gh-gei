@@ -2,9 +2,9 @@ using System;
 using System.CommandLine;
 using System.IO;
 using Microsoft.Extensions.DependencyInjection;
-using OctoshiftCLI.GitlabToGithub.Factories;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Contracts;
+using OctoshiftCLI.GitlabToGithub.Factories;
 using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.GitlabToGithub.Commands.GenerateScript;
