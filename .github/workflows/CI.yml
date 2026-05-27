@@ -24,7 +24,7 @@ jobs:
       fail-fast: false
       matrix:
         runner-os: [windows-latest, ubuntu-latest, macos-latest]
-        language: [csharp, actions]
+        language: [csharp, go, actions]
 
     runs-on: ${{ matrix.runner-os }}
 
@@ -42,21 +42,27 @@ jobs:
           queries: +security-and-quality
           config-file: ./.github/codeql/codeql-config.yml
 
+      # --- C# steps ---
       - name: Setup .NET
+        if: matrix.language == 'csharp'
         uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
 
       - name: dotnet format
+        if: matrix.language == 'csharp'
         run: just format-check
 
       - name: Restore dependencies
+        if: matrix.language == 'csharp'
         run: just restore
 
       - name: Build
+        if: matrix.language == 'csharp'
         run: just build
 
       - name: Unit Test
+        if: matrix.language == 'csharp'
         run: just test-coverage
 
       - name: Copy Coverage To Predictable Location
@@ -88,6 +94,27 @@ jobs:
         with:
           name: Code Coverage Report
           path: code-coverage-results.md
+
+      # --- Go steps ---
+      - name: Setup Go
+        if: matrix.language == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Go Build
+        if: matrix.language == 'go'
+        run: just go-build
+
+      - name: Go Test
+        if: matrix.language == 'go'
+        run: just go-test
+
+      - name: Go Lint
+        if: matrix.language == 'go'
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.11.3
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
@@ -123,22 +150,22 @@ jobs:
       # e33e0265a09d6d736e2ee1e0eb685ef1de4669ff is tag v3, pinned to avoid supply chain attacks
       - uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          global-json-file: global.json
+          go-version-file: go.mod
 
       - name: Build Artifacts (Linux)
         if: matrix.target-os == 'ubuntu-latest'
-        run: just publish-linux
+        run: just go-publish-linux
 
       - name: Build Artifacts (Windows)
         if: matrix.target-os == 'windows-latest'
-        run: just publish-windows
+        run: just go-publish-windows
 
       - name: Build Artifacts (MacOS)
         if: matrix.target-os == 'macos-latest'
-        run: just publish-macos
+        run: just go-publish-macos
 
       - name: Upload Binaries
         uses: actions/upload-artifact@v6
@@ -326,14 +353,16 @@ jobs:
             exit 1
           }
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          global-json-file: global.json
+          go-version-file: go.mod
+
+      # e33e0265a09d6d736e2ee1e0eb685ef1de4669ff is tag v3, pinned to avoid supply chain attacks
+      - uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
 
       - name: Build Artifacts
-        run: ./publish.ps1
-        shell: pwsh
+        run: just go-publish-all
         env:
           CLI_VERSION: ${{ github.ref }}
 
@@ -343,18 +372,24 @@ jobs:
         with:
           body_path: ./RELEASENOTES.md
           files: |
-            ./dist/ado2gh.*.win-x64.zip
-            ./dist/ado2gh.*.win-x86.zip
-            ./dist/ado2gh.*.linux-x64.tar.gz
-            ./dist/ado2gh.*.linux-arm64.tar.gz
-            ./dist/ado2gh.*.osx-x64.tar.gz
-            ./dist/ado2gh.*.osx-arm64.tar.gz
             ./dist/win-x64/gei-windows-amd64.exe
             ./dist/win-x86/gei-windows-386.exe
             ./dist/linux-x64/gei-linux-amd64
             ./dist/linux-arm64/gei-linux-arm64
             ./dist/osx-x64/gei-darwin-amd64
             ./dist/osx-arm64/gei-darwin-arm64
+            ./dist/win-x64/ado2gh-windows-amd64.exe
+            ./dist/win-x86/ado2gh-windows-386.exe
+            ./dist/linux-x64/ado2gh-linux-amd64
+            ./dist/linux-arm64/ado2gh-linux-arm64
+            ./dist/osx-x64/ado2gh-darwin-amd64
+            ./dist/osx-arm64/ado2gh-darwin-arm64
+            ./dist/win-x64/bbs2gh-windows-amd64.exe
+            ./dist/win-x86/bbs2gh-windows-386.exe
+            ./dist/linux-x64/bbs2gh-linux-amd64
+            ./dist/linux-arm64/bbs2gh-linux-arm64
+            ./dist/osx-x64/bbs2gh-darwin-amd64
+            ./dist/osx-arm64/bbs2gh-darwin-arm64
 
       - name: Create gh-ado2gh Release
         # a06a81a03ee405af7f2048a818ed3f03bbf83c7b is tag v2, pinned to avoid supply chain attacks
