@@ -18,8 +18,7 @@
 	"features": {
 		"ghcr.io/devcontainers/features/github-cli:1": {},
 		"ghcr.io/devcontainers/features/dotnet:2": {
-			"version": "8.0",
-			"additionalVersions": "none"
+			"version": "8.0"
 		}
 	},
 
