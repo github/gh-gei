@@ -1,0 +1,1 @@
+- BBS2GH: When a Bitbucket Server API request fails with a 5xx response, the response body is now included in the standard log output (alongside the generic error message) to make troubleshooting easier without needing to inspect the verbose log.

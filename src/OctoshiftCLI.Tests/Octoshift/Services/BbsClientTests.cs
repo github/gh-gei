@@ -442,19 +442,28 @@ public sealed class BbsClientTests : IDisposable
         const string url = "http://example.com/resource";
 
         var firstResponseContent = new { isLastPage = false, nextPageStart = 2, values = Array.Empty<object>() }.ToJson();
-        using var firstResponse = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(firstResponseContent) };
-
-        using var secondResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError);
 
         var handlerMock = new Mock<HttpMessageHandler>();
 
         // first request
         const string firstRequestUrl = $"{url}?start=0&limit=100";
-        MockHttpHandler(req => req.Method == HttpMethod.Get && req.RequestUri!.ToString() == firstRequestUrl, firstResponse, handlerMock);
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get && req.RequestUri!.ToString() == firstRequestUrl),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(firstResponseContent) });
 
-        // second request
+        // second request - return a fresh response each time so retries don't reuse a disposed instance
         const string secondRequestUrl = $"{url}?start=2&limit=100";
-        MockHttpHandler(req => req.Method == HttpMethod.Get && req.RequestUri!.ToString() == secondRequestUrl, secondResponse, handlerMock);
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get && req.RequestUri!.ToString() == secondRequestUrl),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() => new HttpResponseMessage(HttpStatusCode.InternalServerError));
 
         using var httpClient = new HttpClient(handlerMock.Object);
         var bbsClient = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy);
@@ -464,6 +473,34 @@ public sealed class BbsClientTests : IDisposable
             .Invoking(async x => await x.GetAllAsync(url).ToListAsync())
             .Should()
             .ThrowExactlyAsync<HttpRequestException>();
+    }
+
+    [Fact]
+    public async Task SendAsync_Includes_Response_Body_In_Exception_Data_On_5xx()
+    {
+        // Arrange
+        const string url = "http://example.com/resource";
+        const string responseBody = "{\"errors\":[{\"message\":\"Could not start migration job\"}]}";
+
+        using var response = new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
+        {
+            Content = new StringContent(responseBody)
+        };
+
+        var handlerMock = MockHttpHandler(req => req.Method == HttpMethod.Post, response);
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var bbsClient = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy);
+
+        // Act
+        var thrown = await bbsClient
+            .Invoking(async x => await x.PostAsync(url, _rawRequestBody))
+            .Should()
+            .ThrowExactlyAsync<HttpRequestException>();
+
+        // Assert
+        thrown.Which.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+        thrown.Which.Data["ResponseBody"].Should().Be(responseBody);
     }
 
     [Fact]
