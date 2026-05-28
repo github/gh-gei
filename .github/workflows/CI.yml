@@ -404,6 +404,21 @@ jobs:
             ./dist/osx-x64/bbs2gh-darwin-amd64
             ./dist/osx-arm64/bbs2gh-darwin-arm64
 
+      - name: Create gh-gl2gh Release
+        # a06a81a03ee405af7f2048a818ed3f03bbf83c7b is tag v2, pinned to avoid supply chain attacks
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b
+        with:
+          body_path: ./RELEASENOTES.md
+          repository: github/gh-gl2gh
+          token: ${{ secrets.RELEASE_NOTES_PAT }}
+          files: |
+            ./dist/win-x86/gl2gh-windows-386.exe
+            ./dist/win-x64/gl2gh-windows-amd64.exe
+            ./dist/linux-x64/gl2gh-linux-amd64
+            ./dist/linux-arm64/gl2gh-linux-arm64
+            ./dist/osx-x64/gl2gh-darwin-amd64
+            ./dist/osx-arm64/gl2gh-darwin-arm64
+
       - name: Archive Release Notes
         shell: pwsh
         run: |
