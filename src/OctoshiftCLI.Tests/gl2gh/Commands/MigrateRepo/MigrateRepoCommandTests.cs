@@ -55,9 +55,9 @@ public class MigrateRepoCommandTests
         command.Name.Should().Be("migrate-repo");
         command.Options.Count.Should().Be(23);
 
-        TestHelpers.VerifyCommandOption(command.Options, "gitlab-server-url", true);
-        TestHelpers.VerifyCommandOption(command.Options, "gitlab-group", true);
-        TestHelpers.VerifyCommandOption(command.Options, "gitlab-project", true);
+        TestHelpers.VerifyCommandOption(command.Options, "gitlab-server-url", false);
+        TestHelpers.VerifyCommandOption(command.Options, "gitlab-group", false);
+        TestHelpers.VerifyCommandOption(command.Options, "gitlab-project", false);
         TestHelpers.VerifyCommandOption(command.Options, "gitlab-pat", false);
         TestHelpers.VerifyCommandOption(command.Options, "archive-url", false);
         TestHelpers.VerifyCommandOption(command.Options, "archive-path", false);
