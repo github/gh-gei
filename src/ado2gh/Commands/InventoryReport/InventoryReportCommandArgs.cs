@@ -1,4 +1,5 @@
 ﻿using OctoshiftCLI.Commands;
+using OctoshiftCLI.Services;
 
 namespace OctoshiftCLI.AdoToGithub.Commands.InventoryReport
 {
@@ -9,5 +10,13 @@ namespace OctoshiftCLI.AdoToGithub.Commands.InventoryReport
         [Secret]
         public string AdoPat { get; set; }
         public bool Minimal { get; set; }
+
+        public override void Validate(OctoLogger log)
+        {
+            if (string.IsNullOrEmpty(AdoOrg) && !string.IsNullOrEmpty(AdoTeamProject))
+            {
+                throw new OctoshiftCliException("The --ado-team-project option requires the --ado-org option to also be provided.");
+            }
+        }
     }
 }
