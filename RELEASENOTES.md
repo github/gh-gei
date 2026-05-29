@@ -1,1 +1,2 @@
+- Added new `gl2gh` CLI (not yet generally available) for migrating GitLab repositories (GitLab.com and self-hosted) to GitHub. Includes `migrate-repo`, `generate-script`, and `inventory-report` along with the standard supporting commands (e.g. `download-logs`, `wait-for-migration`, `abort-migration`, `grant-migrator-role`, `revoke-migrator-role`, `create-team`, `generate-mannequin-csv`, `reclaim-mannequin`). Archives can be uploaded via Azure Blob Storage, AWS S3, or GitHub-owned storage.
 - **ado2gh**: Add ADO team project filter option to inventory report command

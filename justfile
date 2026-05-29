@@ -60,6 +60,10 @@ run-ado2gh *args: build
 run-bbs2gh *args: build
     dotnet run --project src/bbs2gh/bbs2gh.csproj {{args}}
 
+# Build and run the gl2gh CLI locally
+run-gl2gh *args: build
+    dotnet run --project src/gl2gh/gl2gh.csproj {{args}}
+
 # Watch and auto-rebuild gei on changes
 watch-gei:
     dotnet watch build --project src/gei/gei.csproj
@@ -71,6 +75,10 @@ watch-ado2gh:
 # Watch and auto-rebuild bbs2gh on changes
 watch-bbs2gh:
     dotnet watch build --project src/bbs2gh/bbs2gh.csproj
+
+# Watch and auto-rebuild gl2gh on changes
+watch-gl2gh:
+    dotnet watch build --project src/gl2gh/gl2gh.csproj
 
 # Build self-contained binaries for all platforms (requires PowerShell)
 publish:
@@ -115,19 +123,21 @@ install-extensions: publish-linux
     set -euo pipefail
     
     # Create extension directories
-    mkdir -p gh-gei gh-ado2gh gh-bbs2gh
+    mkdir -p gh-gei gh-ado2gh gh-bbs2gh gh-gl2gh
     
     # Copy binaries
     cp ./dist/linux-x64/gei-linux-amd64 ./gh-gei/gh-gei
     cp ./dist/linux-x64/ado2gh-linux-amd64 ./gh-ado2gh/gh-ado2gh
     cp ./dist/linux-x64/bbs2gh-linux-amd64 ./gh-bbs2gh/gh-bbs2gh
+    cp ./dist/linux-x64/gl2gh-linux-amd64 ./gh-gl2gh/gh-gl2gh
     
     # Set execute permissions
-    chmod +x ./gh-gei/gh-gei ./gh-ado2gh/gh-ado2gh ./gh-bbs2gh/gh-bbs2gh
+    chmod +x ./gh-gei/gh-gei ./gh-ado2gh/gh-ado2gh ./gh-bbs2gh/gh-bbs2gh ./gh-gl2gh/gh-gl2gh
     
     # Install extensions
     cd gh-gei && gh extension install . && cd ..
     cd gh-ado2gh && gh extension install . && cd ..
     cd gh-bbs2gh && gh extension install . && cd ..
+    cd gh-gl2gh && gh extension install . && cd ..
     
     echo "Extensions installed successfully!"
