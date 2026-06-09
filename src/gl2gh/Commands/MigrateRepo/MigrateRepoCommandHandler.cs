@@ -67,7 +67,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             migrationSourceId = await CreateMigrationSource(args);
         }
 
-        if (args.ShouldGenerateArchive())
+        if (_gitlabApi is not null && args.ShouldGenerateArchive())
         {
             await GenerateArchive(args);
 
