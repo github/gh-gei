@@ -1,1 +1,0 @@
-- Fix `gl2gh migrate-repo` NullReferenceException when importing a pre-existing archive via `--archive-path` or `--archive-url` without `--gitlab-server-url`.
