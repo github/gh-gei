@@ -309,4 +309,95 @@ public class MigrateRepoCommandHandlerTests
             .ThrowExactlyAsync<OctoshiftCliException>()
             .WithMessage("*archive*--archive-path*");
     }
+
+    [Fact]
+    public async Task Does_Not_Call_Gitlab_Api_When_Importing_Archive_Path_Without_Gitlab_Server_Url()
+    {
+        _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(GITHUB_PAT);
+        _mockGithubApi.Setup(x => x.DoesRepoExist(GITHUB_ORG, GITHUB_REPO)).ReturnsAsync(false);
+        _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG)).ReturnsAsync(GITHUB_ORG_ID);
+        _mockGithubApi.Setup(x => x.CreateGitlabMigrationSource(GITHUB_ORG_ID)).ReturnsAsync(MIGRATION_SOURCE_ID);
+        _mockGithubApi.Setup(x => x.StartGitlabMigration(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(MIGRATION_ID);
+        _mockAzureApi.Setup(x => x.UploadToBlob(It.IsAny<string>(), It.IsAny<Stream>())).ReturnsAsync(new Uri(ARCHIVE_URL));
+        using var archiveStream = new MemoryStream(new byte[] { 1, 2, 3 });
+        _mockFileSystemProvider.Setup(m => m.OpenRead(ARCHIVE_PATH)).Returns(archiveStream);
+
+        var handler = new MigrateRepoCommandHandler(
+            _mockOctoLogger.Object,
+            _mockGithubApi.Object,
+            gitlabApi: null,
+            _mockEnvironmentVariableProvider.Object,
+            _mockAzureApi.Object,
+            _mockAwsApi.Object,
+            _mockFileSystemProvider.Object,
+            _warningsCountLogger
+        );
+
+        var args = new MigrateRepoCommandArgs
+        {
+            ArchivePath = ARCHIVE_PATH,
+            AzureStorageConnectionString = AZURE_STORAGE_CONNECTION_STRING,
+            GithubOrg = GITHUB_ORG,
+            GithubRepo = GITHUB_REPO,
+            GithubPat = GITHUB_PAT,
+            QueueOnly = true,
+        };
+
+        await handler.Handle(args);
+
+        _mockAzureApi.Verify(m => m.UploadToBlob(It.IsAny<string>(), It.IsAny<Stream>()));
+        _mockGithubApi.Verify(m => m.StartGitlabMigration(
+            MIGRATION_SOURCE_ID,
+            UNUSED_REPO_URL,
+            GITHUB_ORG_ID,
+            GITHUB_REPO,
+            GITHUB_PAT,
+            ARCHIVE_URL,
+            null));
+    }
+
+    [Fact]
+    public async Task Does_Not_Call_Gitlab_Api_When_Importing_Archive_Url_Without_Gitlab_Server_Url()
+    {
+        _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(GITHUB_PAT);
+        _mockGithubApi.Setup(x => x.DoesRepoExist(GITHUB_ORG, GITHUB_REPO)).ReturnsAsync(false);
+        _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG)).ReturnsAsync(GITHUB_ORG_ID);
+        _mockGithubApi.Setup(x => x.CreateGitlabMigrationSource(GITHUB_ORG_ID)).ReturnsAsync(MIGRATION_SOURCE_ID);
+        _mockGithubApi.Setup(x => x.StartGitlabMigration(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(MIGRATION_ID);
+
+        var handler = new MigrateRepoCommandHandler(
+            _mockOctoLogger.Object,
+            _mockGithubApi.Object,
+            gitlabApi: null,
+            _mockEnvironmentVariableProvider.Object,
+            _mockAzureApi.Object,
+            _mockAwsApi.Object,
+            _mockFileSystemProvider.Object,
+            _warningsCountLogger
+        );
+
+        var args = new MigrateRepoCommandArgs
+        {
+            ArchiveUrl = ARCHIVE_URL,
+            GithubOrg = GITHUB_ORG,
+            GithubRepo = GITHUB_REPO,
+            GithubPat = GITHUB_PAT,
+            QueueOnly = true,
+        };
+
+        await handler.Handle(args);
+
+        _mockAzureApi.Verify(m => m.UploadToBlob(It.IsAny<string>(), It.IsAny<Stream>()), Times.Never);
+        _mockAwsApi.Verify(m => m.UploadToBucket(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockGithubApi.Verify(m => m.StartGitlabMigration(
+            MIGRATION_SOURCE_ID,
+            UNUSED_REPO_URL,
+            GITHUB_ORG_ID,
+            GITHUB_REPO,
+            GITHUB_PAT,
+            ARCHIVE_URL,
+            null));
+    }
 }

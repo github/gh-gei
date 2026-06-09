@@ -48,7 +48,10 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         ValidateOptions(args);
 
-        await _gitlabApi.LogServerVersion();
+        if (_gitlabApi is not null)
+        {
+            await _gitlabApi.LogServerVersion();
+        }
 
         var migrationSourceId = "";
 
