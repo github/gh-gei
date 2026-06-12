@@ -1,0 +1,1 @@
+- Fixed a bug where `bbs2gh migrate-repo` would return a 401 Unauthorized error when the Bitbucket Server password contained special (non-ASCII) characters. Basic Auth credentials are now encoded with UTF-8 instead of ASCII.
