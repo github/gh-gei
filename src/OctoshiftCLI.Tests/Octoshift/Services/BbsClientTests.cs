@@ -47,10 +47,28 @@ public sealed class BbsClientTests : IDisposable
     {
         // Arrange
         using var httpClient = new HttpClient(MockHttpHandlerForGet().Object);
-        var expectedAuthToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{USERNAME}:{PASSWORD}"));
+        var expectedAuthToken = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{USERNAME}:{PASSWORD}"));
 
         // Act
         _ = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, USERNAME, PASSWORD);
+
+        // Assert
+        httpClient.DefaultRequestHeaders.Authorization.Should().NotBeNull();
+        httpClient.DefaultRequestHeaders.Authorization.Parameter.Should().Be(expectedAuthToken);
+        httpClient.DefaultRequestHeaders.Authorization.Scheme.Should().Be("Basic");
+    }
+
+    [Fact]
+    public void It_Adds_The_Authorization_Header_When_Password_Contains_Non_Ascii_Unicode_Characters()
+    {
+        // Arrange - these characters are outside the ASCII range (> 127) and are silently
+        // corrupted to '?' by Encoding.ASCII, causing a 401 from Bitbucket Server
+        const string unicodePassword = "password€₹éñü中文😊";
+        using var httpClient = new HttpClient(MockHttpHandlerForGet().Object);
+        var expectedAuthToken = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{USERNAME}:{unicodePassword}"));
+
+        // Act
+        _ = new BbsClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, USERNAME, unicodePassword);
 
         // Assert
         httpClient.DefaultRequestHeaders.Authorization.Should().NotBeNull();
