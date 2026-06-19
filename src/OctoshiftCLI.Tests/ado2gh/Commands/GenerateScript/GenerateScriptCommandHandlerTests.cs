@@ -365,6 +365,39 @@ public class GenerateScriptCommandHandlerTests
     }
 
     [Fact]
+    public async Task SequentialScript_Rewire_Pipeline_With_TargetApiUrl_Includes_TargetApiUrl()
+    {
+        // Arrange
+        var targetApiUrl = "https://api.tenant.ghe.com";
+
+        _mockAdoApi.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
+        _mockAdoApi.Setup(m => m.GetGithubAppId(ADO_ORG, GITHUB_ORG, ADO_TEAM_PROJECTS)).ReturnsAsync(APP_ID);
+
+        _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
+        _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
+        _mockAdoInspector.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
+        _mockAdoInspector.Setup(m => m.GetRepos(ADO_ORG, ADO_TEAM_PROJECT)).ReturnsAsync(ADO_REPOS);
+        _mockAdoInspector.Setup(m => m.GetPipelines(ADO_ORG, ADO_TEAM_PROJECT, FOO_REPO)).ReturnsAsync(ADO_PIPELINES);
+
+        var expectedRewire = $"Exec {{ gh ado2gh rewire-pipeline --target-api-url \"{targetApiUrl}\" --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-pipeline \"{FOO_PIPELINE}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --service-connection-id \"{APP_ID}\" }}";
+
+        // Act
+        var args = new GenerateScriptCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            AdoOrg = ADO_ORG,
+            Sequential = true,
+            Output = new FileInfo("unit-test-output"),
+            RewirePipelines = true,
+            TargetApiUrl = targetApiUrl
+        };
+        await _handler.Handle(args);
+
+        // Assert
+        _scriptOutput.Should().Contain(expectedRewire);
+    }
+
+    [Fact]
     public async Task SequentialScript_Single_Repo_Two_Pipelines_No_Service_Connection_All_Options()
     {
         // Arrange
@@ -1329,6 +1362,38 @@ if ($Failed -ne 0) {
 
         // Assert
         _scriptOutput.Should().Be(expected.ToString());
+    }
+
+    [Fact]
+    public async Task ParallelScript_Rewire_Pipeline_With_TargetApiUrl_Includes_TargetApiUrl()
+    {
+        // Arrange
+        var targetApiUrl = "https://api.tenant.ghe.com";
+
+        _mockAdoApi.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
+        _mockAdoApi.Setup(m => m.GetGithubAppId(ADO_ORG, GITHUB_ORG, new[] { ADO_TEAM_PROJECT })).ReturnsAsync(APP_ID);
+
+        _mockAdoInspector.Setup(m => m.GetRepoCount()).ReturnsAsync(1);
+        _mockAdoInspector.Setup(m => m.GetOrgs()).ReturnsAsync(ADO_ORGS);
+        _mockAdoInspector.Setup(m => m.GetTeamProjects(ADO_ORG)).ReturnsAsync(ADO_TEAM_PROJECTS);
+        _mockAdoInspector.Setup(m => m.GetRepos(ADO_ORG, ADO_TEAM_PROJECT)).ReturnsAsync(ADO_REPOS);
+        _mockAdoInspector.Setup(m => m.GetPipelines(ADO_ORG, ADO_TEAM_PROJECT, FOO_REPO)).ReturnsAsync(ADO_PIPELINES);
+
+        var expectedRewireWithUrl = $"{{ gh ado2gh rewire-pipeline --target-api-url \"{targetApiUrl}\" --ado-org \"{ADO_ORG}\" --ado-team-project \"{ADO_TEAM_PROJECT}\" --ado-pipeline \"{FOO_PIPELINE}\" --github-org \"{GITHUB_ORG}\" --github-repo \"{ADO_TEAM_PROJECT}-{FOO_REPO}\" --service-connection-id \"{APP_ID}\" }}";
+
+        // Act
+        var args = new GenerateScriptCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            AdoOrg = ADO_ORG,
+            Output = new FileInfo("unit-test-output"),
+            RewirePipelines = true,
+            TargetApiUrl = targetApiUrl
+        };
+        await _handler.Handle(args);
+
+        // Assert
+        _scriptOutput.Should().Contain(expectedRewireWithUrl);
     }
 
     [Fact]
