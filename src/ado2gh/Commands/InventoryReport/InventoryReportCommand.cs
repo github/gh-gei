@@ -16,6 +16,7 @@ namespace OctoshiftCLI.AdoToGithub.Commands.InventoryReport
                              "Note: Expects ADO_PAT env variable or --ado-pat option to be set.")
         {
             AddOption(AdoOrg);
+            AddOption(AdoTeamProject);
             AddOption(AdoPat);
             AddOption(Minimal);
             AddOption(Verbose);
@@ -24,6 +25,10 @@ namespace OctoshiftCLI.AdoToGithub.Commands.InventoryReport
         public Option<string> AdoOrg { get; } = new("--ado-org")
         {
             Description = "If not provided will iterate over all orgs that ADO_PAT has access to."
+        };
+        public Option<string> AdoTeamProject { get; } = new("--ado-team-project")
+        {
+            Description = "If provided, will only generate CSV files for the specified team project. Requires --ado-org to also be provided."
         };
         public Option<string> AdoPat { get; } = new("--ado-pat");
         public Option<bool> Minimal { get; } = new("--minimal")

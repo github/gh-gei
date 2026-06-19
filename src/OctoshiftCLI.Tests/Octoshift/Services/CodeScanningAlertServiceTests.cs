@@ -316,6 +316,44 @@ public class CodeScanningAlertServiceTests
     }
 
     [Fact]
+    public async Task MigrateAnalyses_Skips_Analyses_With_Error_And_Logs_Warning()
+    {
+        var validAnalysis = new CodeScanningAnalysis
+        {
+            Id = 111,
+            CreatedAt = "2022-03-30T00:00:00Z",
+            CommitSha = "valid_sha",
+            Ref = "refs/heads/main"
+        };
+        var errorAnalysis = new CodeScanningAnalysis
+        {
+            Id = 222,
+            CreatedAt = "2022-03-29T00:00:00Z",
+            CommitSha = "error_sha",
+            Ref = "refs/heads/main",
+            Error = "something went wrong"
+        };
+        var processingStatus = new SarifProcessingStatus
+        {
+            Status = SarifProcessingStatus.Complete,
+            Errors = Enumerable.Empty<string>()
+        };
+
+        _mockSourceGithubApi.Setup(x => x.GetCodeScanningAnalysisForRepository(SOURCE_ORG, SOURCE_REPO, "main")).ReturnsAsync(new[] { errorAnalysis, validAnalysis });
+        _mockTargetGithubApi.Setup(x => x.GetCodeScanningAnalysisForRepository(TARGET_ORG, TARGET_REPO, "main")).ReturnsAsync(Enumerable.Empty<CodeScanningAnalysis>());
+        _mockSourceGithubApi.Setup(x => x.GetSarifReport(SOURCE_ORG, SOURCE_REPO, validAnalysis.Id)).ReturnsAsync("SARIF");
+        _mockTargetGithubApi.Setup(x => x.UploadSarifReport(TARGET_ORG, TARGET_REPO, "SARIF", validAnalysis.CommitSha, validAnalysis.Ref)).ReturnsAsync("sarif-id");
+        _mockTargetGithubApi.Setup(x => x.GetSarifProcessingStatus(TARGET_ORG, TARGET_REPO, "sarif-id")).ReturnsAsync(processingStatus);
+
+        await _alertService.MigrateAnalyses(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, "main", false);
+
+        _mockOctoLogger.Verify(log => log.LogWarning($"Skipping analysis with Id {errorAnalysis.Id} which failed to process in the source repository: something went wrong"));
+        _mockOctoLogger.Verify(log => log.LogWarning("    This error is non-fatal and will not affect your migrated code-scanning alerts."));
+        _mockSourceGithubApi.Verify(x => x.GetSarifReport(SOURCE_ORG, SOURCE_REPO, errorAnalysis.Id), Times.Never);
+        _mockTargetGithubApi.Verify(x => x.UploadSarifReport(TARGET_ORG, TARGET_REPO, "SARIF", validAnalysis.CommitSha, validAnalysis.Ref), Times.Once);
+    }
+
+    [Fact]
     public async Task MigrateAlerts_Matches_Dismissed_Alert_By_Last_Instance_And_Updates_Target()
     {
         var CommitSha = "SHA_1";

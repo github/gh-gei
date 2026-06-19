@@ -1203,6 +1203,117 @@ public class GithubApiTests
     }
 
     [Fact]
+    public async Task StartGitlabMigration_Sends_Null_Metadata_Url()
+    {
+        // Arrange
+        const string migrationSourceId = "MIGRATION_SOURCE_ID";
+        const string sourceRepoUrl = "https://gitlab.com/my-group/my-project";
+        const string orgId = "ORG_ID";
+        const string url = "https://api.github.com/graphql";
+        const string gitArchiveUrl = "GIT_ARCHIVE_URL";
+        const string targetToken = "TARGET_TOKEN";
+
+        const string unusedSourceToken = "not-used";
+        string nullMetadataArchiveUrl = null;
+        string nullTargetRepoVisibility = null;
+
+        const string query = @"
+                mutation startRepositoryMigration(
+                    $sourceId: ID!,
+                    $ownerId: ID!,
+                    $sourceRepositoryUrl: URI!,
+                    $repositoryName: String!,
+                    $continueOnError: Boolean!,
+                    $gitArchiveUrl: String,
+                    $metadataArchiveUrl: String,
+                    $accessToken: String!,
+                    $githubPat: String,
+                    $skipReleases: Boolean,
+                    $targetRepoVisibility: String,
+                    $lockSource: Boolean)";
+        const string gql = @"
+                startRepositoryMigration(
+                    input: { 
+                        sourceId: $sourceId,
+                        ownerId: $ownerId,
+                        sourceRepositoryUrl: $sourceRepositoryUrl,
+                        repositoryName: $repositoryName,
+                        continueOnError: $continueOnError,
+                        gitArchiveUrl: $gitArchiveUrl,
+                        metadataArchiveUrl: $metadataArchiveUrl,
+                        accessToken: $accessToken,
+                        githubPat: $githubPat,
+                        skipReleases: $skipReleases,
+                        targetRepoVisibility: $targetRepoVisibility,
+                        lockSource: $lockSource
+                    }
+                ) {
+                    repositoryMigration {
+                        id,
+                        databaseId,
+                        migrationSource {
+                            id,
+                            name,
+                            type
+                        },
+                        sourceUrl,
+                        state,
+                        failureReason
+                    }
+                  }";
+        var payload = new
+        {
+            query = $"{query} {{ {gql} }}",
+            variables = new
+            {
+                sourceId = migrationSourceId,
+                ownerId = orgId,
+                sourceRepositoryUrl = sourceRepoUrl,
+                repositoryName = GITHUB_REPO,
+                continueOnError = true,
+                gitArchiveUrl,
+                metadataArchiveUrl = nullMetadataArchiveUrl,
+                accessToken = unusedSourceToken,
+                githubPat = targetToken,
+                skipReleases = false,
+                targetRepoVisibility = nullTargetRepoVisibility,
+                lockSource = false
+            },
+            operationName = "startRepositoryMigration"
+        };
+        const string actualRepositoryMigrationId = "RM_kgC4NjFhNmE2NGU2ZWE1YTQwMDA5ODliZjhi";
+        var response = JObject.Parse($@"
+            {{
+                ""data"": {{
+                    ""startRepositoryMigration"": {{
+                        ""repositoryMigration"": {{
+                            ""id"": ""{actualRepositoryMigrationId}"",
+                            ""databaseId"": ""3ba25b34-b23d-43fb-a819-f44414be8dc0"",
+                            ""migrationSource"": {{
+                                ""id"": ""MS_kgC4NjFhNmE2NDViNWZmOTEwMDA5MTZiMGQw"",
+                                ""name"": ""GitLab Source"",
+                                ""type"": ""GITLAB""
+                            }},
+                        ""sourceUrl"": ""{sourceRepoUrl}"",
+                        ""state"": ""QUEUED"",
+                        ""failureReason"": """"
+                        }}
+                    }}
+                }}
+            }}");
+
+        _githubClientMock
+            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+            .ReturnsAsync(response);
+
+        // Act
+        var expectedRepositoryMigrationId = await _githubApi.StartGitlabMigration(migrationSourceId, sourceRepoUrl, orgId, GITHUB_REPO, targetToken, gitArchiveUrl);
+
+        // Assert
+        expectedRepositoryMigrationId.Should().Be(actualRepositoryMigrationId);
+    }
+
+    [Fact]
     public async Task StartMigration_Does_Not_Throw_When_Errors_Is_Empty()
     {
         // Arrange
@@ -1282,7 +1393,7 @@ public class GithubApiTests
             }}");
 
         _githubClientMock
-            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+            .Setup(m => m.PostGraphQLWithRetryAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null, 0))
             .ReturnsAsync(response);
 
         // Act
@@ -1341,7 +1452,7 @@ public class GithubApiTests
             }}");
 
         _githubClientMock
-            .SetupSequence(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+            .SetupSequence(m => m.PostGraphQLWithRetryAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null, 0))
             .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
             .Throws(new HttpRequestException(null, null, statusCode: HttpStatusCode.BadGateway))
             .ReturnsAsync(response);
@@ -1399,7 +1510,7 @@ public class GithubApiTests
             }}");
 
         _githubClientMock
-            .SetupSequence(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+            .SetupSequence(m => m.PostGraphQLWithRetryAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null, 0))
             .ReturnsAsync(GQL_ERROR_RESPONSE)
             .ReturnsAsync(GQL_ERROR_RESPONSE)
             .ReturnsAsync(response);
@@ -1457,7 +1568,7 @@ public class GithubApiTests
             }}");
 
         _githubClientMock
-            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null))
+            .Setup(m => m.PostGraphQLWithRetryAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null, 0))
             .ReturnsAsync(response);
 
         // Act
@@ -3066,6 +3177,49 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         scanResults.ElementAt(2).Ref.Should().Be((string)expectedData["ref"]);
         scanResults.ElementAt(2).CommitSha.Should().Be((string)expectedData["commit_sha"]);
         scanResults.ElementAt(2).CreatedAt.Should().Be((string)expectedData["created_at"]);
+    }
+
+    [Fact]
+    public async Task GetCodeScanningAnalysisForRepository_Includes_Analyses_With_Error()
+    {
+        // Arrange
+        const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses?per_page=100&sort=created&direction=asc";
+
+        var validAnalysis = $@"
+                {{
+                    ""ref"": ""refs/heads/main"",
+                    ""commit_sha"": ""25cb837876685f98756d0c934ffe6cd09da570f8"",
+                    ""created_at"": ""2022-08-08T19:00:18Z"",
+                    ""id"": 38200197,
+                    ""error"": """"
+                }}
+            ";
+
+        var errorAnalysis = $@"
+                {{
+                    ""ref"": ""refs/heads/main"",
+                    ""commit_sha"": ""67f8626e1f3ca40e9678e1dcfc4f840009ffc260"",
+                    ""created_at"": ""2022-08-06T19:40:39Z"",
+                    ""id"": 38026365,
+                    ""error"": ""something went wrong""
+                }}
+            ";
+
+        var analyses = new List<JToken> { JToken.Parse(validAnalysis), JToken.Parse(errorAnalysis) };
+
+        _githubClientMock
+            .Setup(m => m.GetAllAsync(url, null))
+            .Returns(analyses.ToAsyncEnumerable());
+
+        // Act
+        var scanResults = await _githubApi.GetCodeScanningAnalysisForRepository(GITHUB_ORG, GITHUB_REPO);
+
+        // Assert
+        scanResults.Count().Should().Be(2);
+        scanResults.First().Id.Should().Be(38200197);
+        scanResults.First().Error.Should().BeEmpty();
+        scanResults.Last().Id.Should().Be(38026365);
+        scanResults.Last().Error.Should().Be("something went wrong");
     }
 
     [Fact]

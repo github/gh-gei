@@ -65,6 +65,13 @@ public class CodeScanningAlertService
         {
             analysisNumber++;
 
+            if (!string.IsNullOrEmpty(analysis.Error))
+            {
+                _log.LogWarning($"Skipping analysis with Id {analysis.Id} which failed to process in the source repository: {analysis.Error}");
+                _log.LogWarning("    This error is non-fatal and will not affect your migrated code-scanning alerts.");
+                continue;
+            }
+
             string sarifReport;
             try
             {
