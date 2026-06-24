@@ -172,7 +172,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
                     foreach (var adoPipeline in await _adoInspectorService.GetPipelines(adoOrg, adoTeamProject, adoRepo.Name))
                     {
-                        AppendLine(content, Exec(RewireAzurePipelineScript(adoOrg, adoTeamProject, adoPipeline, githubOrg, githubRepo, appId)));
+                        AppendLine(content, Exec(RewireAzurePipelineScript(adoOrg, adoTeamProject, adoPipeline, githubOrg, githubRepo, appId, targetApiUrl)));
                     }
                 }
             }
@@ -282,7 +282,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
                         appIds.TryGetValue(adoOrg, out var appId);
                         foreach (var adoPipeline in await _adoInspectorService.GetPipelines(adoOrg, adoTeamProject, adoRepo.Name))
                         {
-                            AppendLine(content, "        " + Wrap(RewireAzurePipelineScript(adoOrg, adoTeamProject, adoPipeline, githubOrg, githubRepo, appId)));
+                            AppendLine(content, "        " + Wrap(RewireAzurePipelineScript(adoOrg, adoTeamProject, adoPipeline, githubOrg, githubRepo, appId, targetApiUrl)));
                         }
 
                         AppendLine(content, "    )");
@@ -370,9 +370,9 @@ if ($Failed -ne 0) {
             ? $"gh ado2gh add-team-to-repo{(targetApiUrl.HasValue() ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --team \"{adoTeamProject.ReplaceInvalidCharactersWithDash()}-Admins\" --role \"admin\"{(_log.Verbose ? " --verbose" : string.Empty)}"
             : null;
 
-    private string RewireAzurePipelineScript(string adoOrg, string adoTeamProject, string adoPipeline, string githubOrg, string githubRepo, string appId) =>
+    private string RewireAzurePipelineScript(string adoOrg, string adoTeamProject, string adoPipeline, string githubOrg, string githubRepo, string appId, string targetApiUrl) =>
         _generateScriptOptions.RewirePipelines && appId.HasValue()
-            ? $"gh ado2gh rewire-pipeline --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-pipeline \"{adoPipeline}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --service-connection-id \"{appId}\"{(_log.Verbose ? " --verbose" : string.Empty)}"
+            ? $"gh ado2gh rewire-pipeline{(targetApiUrl.HasValue() ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --ado-org \"{adoOrg}\" --ado-team-project \"{adoTeamProject}\" --ado-pipeline \"{adoPipeline}\" --github-org \"{githubOrg}\" --github-repo \"{githubRepo}\" --service-connection-id \"{appId}\"{(_log.Verbose ? " --verbose" : string.Empty)}"
             : null;
 
     private string WaitForMigrationScript(string repoMigrationKey, string targetApiUrl) => $"gh ado2gh wait-for-migration{(targetApiUrl.HasValue() ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";
