@@ -1,0 +1,19 @@
+{
+  "value": [
+    {
+      "id": "endpoint-111",
+      "type": "GitHub",
+      "name": "test-github-org"
+    },
+    {
+      "id": "endpoint-222",
+      "type": "GitHubProximaPipelines",
+      "name": "TestProject1"
+    },
+    {
+      "id": "endpoint-333",
+      "type": "SomeOtherType",
+      "name": "OtherEndpoint"
+    }
+  ]
+}
