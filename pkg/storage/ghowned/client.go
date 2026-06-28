@@ -102,6 +102,7 @@ func (c *Client) uploadSingle(ctx context.Context, orgDatabaseID, archiveName st
 		return "", cmdutil.WrapUserError("failed to create upload request", err)
 	}
 	req.ContentLength = size
+	req.Header.Set("Content-Type", "application/octet-stream")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -110,7 +111,8 @@ func (c *Client) uploadSingle(ctx context.Context, orgDatabaseID, archiveName st
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return "", cmdutil.NewUserErrorf("upload failed with status %d", resp.StatusCode)
+		respBody, _ := io.ReadAll(resp.Body)
+		return "", cmdutil.NewUserErrorf("upload failed with status %d: %s", resp.StatusCode, string(respBody))
 	}
 
 	return c.parseURIResponse(resp.Body)
@@ -179,7 +181,8 @@ func (c *Client) multipartStart(ctx context.Context, orgDatabaseID, archiveName 
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return "", cmdutil.NewUserErrorf("multipart start failed with status %d", resp.StatusCode)
+		respBody, _ := io.ReadAll(resp.Body)
+		return "", cmdutil.NewUserErrorf("multipart start failed with status %d: %s", resp.StatusCode, string(respBody))
 	}
 
 	return c.getNextURL(resp)
@@ -201,7 +204,8 @@ func (c *Client) multipartPart(ctx context.Context, patchURL string, data []byte
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return "", cmdutil.NewUserErrorf("part upload failed with status %d", resp.StatusCode)
+		respBody, _ := io.ReadAll(resp.Body)
+		return "", cmdutil.NewUserErrorf("part upload failed with status %d: %s", resp.StatusCode, string(respBody))
 	}
 
 	return c.getNextURL(resp)
@@ -221,7 +225,8 @@ func (c *Client) multipartComplete(ctx context.Context, putURL string) (string, 
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return "", cmdutil.NewUserErrorf("multipart complete failed with status %d", resp.StatusCode)
+		respBody, _ := io.ReadAll(resp.Body)
+		return "", cmdutil.NewUserErrorf("multipart complete failed with status %d: %s", resp.StatusCode, string(respBody))
 	}
 
 	return c.parseURIResponse(resp.Body)
@@ -249,7 +254,7 @@ func (c *Client) getNextURL(resp *http.Response) (string, error) {
 
 // parseURIResponse reads a JSON response body and extracts the "uri" field.
 func (c *Client) parseURIResponse(body io.Reader) (string, error) {
-	var result map[string]string
+	var result map[string]interface{}
 	if err := json.NewDecoder(body).Decode(&result); err != nil {
 		return "", cmdutil.WrapUserError("failed to parse upload response", err)
 	}
@@ -257,7 +262,11 @@ func (c *Client) parseURIResponse(body io.Reader) (string, error) {
 	if !ok {
 		return "", cmdutil.NewUserError("upload response missing 'uri' field")
 	}
-	return uri, nil
+	uriStr, ok := uri.(string)
+	if !ok {
+		return "", cmdutil.NewUserError("upload response 'uri' field is not a string")
+	}
+	return uriStr, nil
 }
 
 // logInfo logs an informational message if a logger is configured.

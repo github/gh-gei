@@ -27,3 +27,11 @@ jobs:
 
       - name: Restore dependencies
         run: dotnet restore src/OctoshiftCLI.sln
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Download Go dependencies
+        run: go mod download
