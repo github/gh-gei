@@ -42,7 +42,7 @@ public class GenerateScriptCommandTests
         TestHelpers.VerifyCommandOption(_command.Options, "gitlab-server-url", true);
         TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
         TestHelpers.VerifyCommandOption(_command.Options, "target-api-url", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "target-uploads-url", false);
+        TestHelpers.VerifyCommandOption(_command.Options, "target-uploads-url", false, true);
         TestHelpers.VerifyCommandOption(_command.Options, "gitlab-pat", false);
         TestHelpers.VerifyCommandOption(_command.Options, "gitlab-group", false);
         TestHelpers.VerifyCommandOption(_command.Options, "gitlab-project", false);
@@ -52,7 +52,7 @@ public class GenerateScriptCommandTests
         TestHelpers.VerifyCommandOption(_command.Options, "aws-region", false);
         TestHelpers.VerifyCommandOption(_command.Options, "keep-archive", false);
         TestHelpers.VerifyCommandOption(_command.Options, "no-ssl-verify", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "use-github-storage", false);
+        TestHelpers.VerifyCommandOption(_command.Options, "use-github-storage", false, true);
     }
 
     [Fact]

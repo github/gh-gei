@@ -120,7 +120,8 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
     };
     public Option<string> TargetUploadsUrl { get; } = new(
         name: "--target-uploads-url",
-        description: "The URL of the target uploads API, if not migrating to github.com. Defaults to https://uploads.github.com");
+        description: "The URL of the target uploads API, if not migrating to github.com. Defaults to https://uploads.github.com")
+    { IsHidden = true };
     public Option<bool> NoSslVerify { get; } = new(
         name: "--no-ssl-verify",
         description: "Disables SSL verification when communicating with your GitLab instance. All other migration steps will continue to verify SSL. " +
@@ -128,7 +129,8 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
     public Option<bool> UseGithubStorage { get; } = new(
         name: "--use-github-storage",
         description: "Enables multipart uploads to a GitHub owned storage for use during migration. " +
-                     "Configure chunk size with the GITHUB_OWNED_STORAGE_MULTIPART_MEBIBYTES environment variable (default: 100 MiB, minimum: 5 MiB).");
+                     "Configure chunk size with the GITHUB_OWNED_STORAGE_MULTIPART_MEBIBYTES environment variable (default: 100 MiB, minimum: 5 MiB).")
+    { IsHidden = true };
 
     public override MigrateRepoCommandHandler BuildHandler(MigrateRepoCommandArgs args, IServiceProvider sp)
     {

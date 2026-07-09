@@ -48,7 +48,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateOrg
         };
         public Option<string> TargetUploadsUrl { get; } = new(
             name: "--target-uploads-url",
-            description: "The URL of the target uploads API, if not migrating to github.com. Defaults to https://uploads.github.com");
+            description: "The URL of the target uploads API, if not migrating to github.com. Defaults to https://uploads.github.com")
+        { IsHidden = true };
         public Option<bool> QueueOnly { get; } = new("--queue-only")
         {
             Description = "Only queues the migration, does not wait for it to finish. Use the wait-for-migration command to subsequently wait for it to finish and view the status."
