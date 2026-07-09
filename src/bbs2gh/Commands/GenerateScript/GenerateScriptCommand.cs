@@ -18,6 +18,7 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         AddOption(BbsServerUrl);
         AddOption(GithubOrg);
         AddOption(TargetApiUrl);
+        AddOption(TargetUploadsUrl);
         AddOption(BbsUsername);
         AddOption(BbsPassword);
         AddOption(BbsProject);
@@ -125,9 +126,12 @@ public class GenerateScriptCommand : CommandBase<GenerateScriptCommandArgs, Gene
         Description = "The URL of the target API, if not migrating to github.com. Defaults to https://api.github.com"
     };
 
+    public Option<string> TargetUploadsUrl { get; } = new(
+        name: "--target-uploads-url",
+        description: "The URL of the target uploads API, if not migrating to github.com. Defaults to https://uploads.github.com");
+
     public Option<bool> UseGithubStorage { get; } = new("--use-github-storage")
     {
-        IsHidden = true,
         Description = "Enables multipart uploads to a GitHub owned storage for use during migration. " +
                       "Configure chunk size with the GITHUB_OWNED_STORAGE_MULTIPART_MEBIBYTES environment variable (default: 100 MiB, minimum: 5 MiB).",
     };

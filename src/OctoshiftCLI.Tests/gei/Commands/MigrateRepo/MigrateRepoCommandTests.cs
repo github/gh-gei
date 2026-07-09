@@ -20,7 +20,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "target-repo", false);
             TestHelpers.VerifyCommandOption(command.Options, "target-api-url", false);
-            TestHelpers.VerifyCommandOption(command.Options, "target-uploads-url", false, true);
+            TestHelpers.VerifyCommandOption(command.Options, "target-uploads-url", false);
             TestHelpers.VerifyCommandOption(command.Options, "ghes-api-url", false);
             TestHelpers.VerifyCommandOption(command.Options, "azure-storage-connection-string", false);
             TestHelpers.VerifyCommandOption(command.Options, "aws-bucket-name", false);
@@ -40,7 +40,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             TestHelpers.VerifyCommandOption(command.Options, "github-target-pat", false);
             TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
             TestHelpers.VerifyCommandOption(command.Options, "keep-archive", false);
-            TestHelpers.VerifyCommandOption(command.Options, "use-github-storage", false, true);
+            TestHelpers.VerifyCommandOption(command.Options, "use-github-storage", false);
         }
     }
 }

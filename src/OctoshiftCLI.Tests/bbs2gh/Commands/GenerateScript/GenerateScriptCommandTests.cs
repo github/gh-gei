@@ -36,7 +36,7 @@ public class GenerateScriptCommandTests
     {
         _command.Should().NotBeNull();
         _command.Name.Should().Be("generate-script");
-        _command.Options.Count.Should().Be(21);
+        _command.Options.Count.Should().Be(22);
 
         TestHelpers.VerifyCommandOption(_command.Options, "bbs-server-url", true);
         TestHelpers.VerifyCommandOption(_command.Options, "github-org", true);
@@ -58,7 +58,8 @@ public class GenerateScriptCommandTests
         TestHelpers.VerifyCommandOption(_command.Options, "keep-archive", false);
         TestHelpers.VerifyCommandOption(_command.Options, "no-ssl-verify", false);
         TestHelpers.VerifyCommandOption(_command.Options, "target-api-url", false);
-        TestHelpers.VerifyCommandOption(_command.Options, "use-github-storage", false, true);
+        TestHelpers.VerifyCommandOption(_command.Options, "target-uploads-url", false);
+        TestHelpers.VerifyCommandOption(_command.Options, "use-github-storage", false);
     }
 
     [Fact]
