@@ -228,3 +228,14 @@ func (s *SarifProcessingStatus) IsPending() bool {
 func (s *SarifProcessingStatus) IsFailed() bool {
 	return strings.EqualFold(strings.TrimSpace(s.Status), "failed")
 }
+
+// ---------------------------------------------------------------------------
+// AutoLink models
+// ---------------------------------------------------------------------------
+
+// AutoLink represents an autolink reference configured on a repository.
+type AutoLink struct {
+	ID          int    `json:"id"`
+	KeyPrefix   string `json:"key_prefix"`
+	URLTemplate string `json:"url_template"`
+}
