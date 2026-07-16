@@ -44,7 +44,7 @@ This is a C# based repository that produces several CLIs that are used by custom
 
 ## Go Port Sync Requirements
 
-**Current state:** All three CLIs (`gei`, `ado2gh`, `bbs2gh`) are fully ported to Go. Every command has behavioral parity with the C# version. Any C# behavioral change must be reflected in the Go port.
+**Current state:** All three CLIs (`gei`, `ado2gh`, `bbs2gh`) are fully ported to Go. Every command has behavioral parity with the C# version. Any C# behavioral change must be reflected in the Go port. **CI runs e2e tests against the Go binaries** — the Go port is the primary build artifact.
 
 **When making C# changes, you MUST make the corresponding Go change:**
 

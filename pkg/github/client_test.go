@@ -892,6 +892,8 @@ func TestClient_GetIdpGroupId(t *testing.T) {
 	t.Run("found", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Contains(t, r.URL.Path, "external-groups")
+			assert.Equal(t, "100", r.URL.Query().Get("per_page"))
+			assert.Equal(t, "1", r.URL.Query().Get("page"))
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			fmt.Fprint(w, `{"groups":[{"group_id":42,"group_name":"Test Group"}]}`)
@@ -918,6 +920,34 @@ func TestClient_GetIdpGroupId(t *testing.T) {
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "not found")
+	})
+
+	t.Run("pagination", func(t *testing.T) {
+		callCount := 0
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			callCount++
+			w.Header().Set("Content-Type", "application/json")
+			if callCount == 1 {
+				assert.Equal(t, "1", r.URL.Query().Get("page"))
+				// First page: include Link header pointing to next page
+				w.Header().Set("Link", `<`+r.URL.Path+`?per_page=100&page=2>; rel="next"`)
+				w.WriteHeader(http.StatusOK)
+				fmt.Fprint(w, `{"groups":[{"group_id":1,"group_name":"Other Group"}]}`)
+			} else {
+				assert.Equal(t, "2", r.URL.Query().Get("page"))
+				// Second page: target group present, no next link
+				w.WriteHeader(http.StatusOK)
+				fmt.Fprint(w, `{"groups":[{"group_id":99,"group_name":"Target Group"}]}`)
+			}
+		}))
+		defer server.Close()
+
+		client := newTestClient(t, server)
+		groupID, err := client.GetIdpGroupId(context.Background(), "test-org", "Target Group")
+
+		require.NoError(t, err)
+		assert.Equal(t, 99, groupID)
+		assert.Equal(t, 2, callCount)
 	})
 }
 

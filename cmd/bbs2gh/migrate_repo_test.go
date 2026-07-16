@@ -900,6 +900,89 @@ func TestBbsMigrateRepo_ThrowsIfExportFails(t *testing.T) {
 	assert.Contains(t, err.Error(), "BBS export failed")
 }
 
+func TestBbsMigrateRepo_ThrowsIfExportAborted(t *testing.T) {
+	var buf bytes.Buffer
+	log := logger.New(false, &buf)
+
+	bbsAPI := &mockBbsAPI{
+		startExportResult: bbsExportID,
+		getExportStates: []struct {
+			state      string
+			message    string
+			percentage int
+			err        error
+		}{
+			{"ABORTED", "The export was aborted", 0, nil},
+		},
+	}
+	fs := &mockBbsFileSystem{fileExistsVal: true, dirExistsVal: true}
+
+	cmd := newBbsMigrateRepoCmd(&mockBbsGitHub{}, bbsAPI, &mockBbsDownloader{}, &mockBbsUploader{}, fs, &mockBbsEnvProvider{}, log, defaultBbsOpts())
+	cmd.SetOut(&buf)
+	cmd.SetErr(&buf)
+	cmd.SetArgs([]string{
+		"--bbs-server-url", bbsServerURL,
+		"--bbs-username", bbsUsername,
+		"--bbs-password", bbsPassword,
+		"--bbs-project", bbsProject,
+		"--bbs-repo", bbsRepo,
+	})
+
+	err := cmd.Execute()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "BBS export failed")
+}
+
+func TestBbsMigrateRepo_RunningStateIsInProgress(t *testing.T) {
+	var buf bytes.Buffer
+	log := logger.New(false, &buf)
+
+	gh := &mockBbsGitHub{
+		doesRepoExistResult:         false,
+		getOrgIDResult:              bbsGithubOrgID,
+		createMigrationSourceResult: bbsMigSourceID,
+		startBbsMigrationResult:     bbsMigrationID,
+		getMigrationResults: []*github.Migration{
+			{State: "SUCCEEDED", MigrationLogURL: "https://example.com/log"},
+		},
+	}
+	bbsAPI := &mockBbsAPI{
+		startExportResult: bbsExportID,
+		getExportStates: []struct {
+			state      string
+			message    string
+			percentage int
+			err        error
+		}{
+			{"RUNNING", "Export is running", 50, nil},
+			{"COMPLETED", "The export is complete", 100, nil},
+		},
+	}
+	downloader := &mockBbsDownloader{downloadResult: bbsArchivePath}
+	uploader := &mockBbsUploader{uploadResult: bbsArchiveURL}
+	envProv := &mockBbsEnvProvider{targetPAT: bbsGithubPAT}
+	fs := &mockBbsFileSystem{fileExistsVal: true, dirExistsVal: true, openReadContent: []byte("archive-data")}
+
+	cmd := newBbsMigrateRepoCmd(gh, bbsAPI, downloader, uploader, fs, envProv, log, defaultBbsOpts())
+	cmd.SetOut(&buf)
+	cmd.SetErr(&buf)
+	cmd.SetArgs([]string{
+		"--bbs-server-url", bbsServerURL,
+		"--bbs-username", bbsUsername,
+		"--bbs-password", bbsPassword,
+		"--bbs-project", bbsProject,
+		"--bbs-repo", bbsRepo,
+		"--github-org", bbsGithubOrg,
+		"--github-repo", bbsGithubRepo,
+		"--azure-storage-connection-string", bbsAzureConnStr,
+	})
+
+	err := cmd.Execute()
+	require.NoError(t, err)
+	// RUNNING should have been polled through (2 GetExport calls: RUNNING then COMPLETED)
+	assert.Equal(t, 2, bbsAPI.getExportCallCount)
+}
+
 // ---------------------------------------------------------------------------
 // Tests: Archive Path Usage
 // ---------------------------------------------------------------------------

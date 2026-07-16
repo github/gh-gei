@@ -866,29 +866,38 @@ func (c *Client) AddTeamToRepo(ctx context.Context, org, teamSlug, repo, role st
 }
 
 // GetIdpGroupId looks up the external group ID for a given group name (case-insensitive).
+// It paginates through all pages of external groups to find the match.
 func (c *Client) GetIdpGroupId(ctx context.Context, org, groupName string) (int, error) {
-	u := fmt.Sprintf("orgs/%s/external-groups", org)
+	page := 1
+	for {
+		u := fmt.Sprintf("orgs/%s/external-groups?per_page=100&page=%d", org, page)
 
-	req, err := c.rest.NewRequest("GET", u, nil)
-	if err != nil {
-		return 0, fmt.Errorf("failed to create external groups request: %w", err)
-	}
-
-	var result struct {
-		Groups []struct {
-			GroupID   int    `json:"group_id"`
-			GroupName string `json:"group_name"`
-		} `json:"groups"`
-	}
-	_, err = c.rest.Do(ctx, req, &result)
-	if err != nil {
-		return 0, fmt.Errorf("failed to get external groups for %q: %w", org, err)
-	}
-
-	for _, g := range result.Groups {
-		if strings.EqualFold(g.GroupName, groupName) {
-			return g.GroupID, nil
+		req, err := c.rest.NewRequest("GET", u, nil)
+		if err != nil {
+			return 0, fmt.Errorf("failed to create external groups request: %w", err)
 		}
+
+		var result struct {
+			Groups []struct {
+				GroupID   int    `json:"group_id"`
+				GroupName string `json:"group_name"`
+			} `json:"groups"`
+		}
+		resp, err := c.rest.Do(ctx, req, &result)
+		if err != nil {
+			return 0, fmt.Errorf("failed to get external groups for %q: %w", org, err)
+		}
+
+		for _, g := range result.Groups {
+			if strings.EqualFold(g.GroupName, groupName) {
+				return g.GroupID, nil
+			}
+		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+		page = resp.NextPage
 	}
 
 	return 0, fmt.Errorf("external group %q not found in organization %q", groupName, org)
