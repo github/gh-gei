@@ -1,9 +1,9 @@
-# GitHub Enterprise Importer CLI
+# GitHub Enterprise Importer (GEI) CLI
 
 [![Actions Status: CI](https://github.com/github/gh-gei/workflows/CI/badge.svg)](https://github.com/github/gh-gei/actions?query=workflow%3ACI)
 
 
-The [GitHub Enterprise Importer](https://docs.github.com/en/migrations/using-github-enterprise-importer) (GEI, formerly Octoshift) is a highly customizable API-first migration offering designed to help you move your enterprise to GitHub Enterprise Cloud. The GEI-CLI wraps the GEI APIs as a cross-platform console application to simplify customizing your migration experience.
+The [GitHub Enterprise Importer (GEI)](https://docs.github.com/en/migrations/using-github-enterprise-importer) (GEI, formerly Octoshift) is a highly customizable API-first migration offering designed to help you move your enterprise to GitHub Enterprise Cloud. The GEI-CLI wraps the GEI APIs as a cross-platform console application to simplify customizing your migration experience.
 
 > GEI is generally available for repository migrations originating from Azure DevOps or GitHub that target GitHub Enterprise Cloud. It is in public beta for repository migrations from BitBucket Server and Data Center to GitHub Enterprise Cloud.
 
