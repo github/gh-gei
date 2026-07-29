@@ -951,12 +951,44 @@ public class GithubApi
         }
     }
 
+
     public virtual async Task<IEnumerable<GithubSecretScanningAlert>> GetSecretScanningAlertsForRepository(string org, string repo)
     {
-        var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/secret-scanning/alerts?per_page=100";
-        return await _client.GetAllAsync(url)
-            .Select(secretAlert => BuildSecretScanningAlert(secretAlert))
+        // baseUrl only returns the 'default secret patterns'
+        // Custom patterns are considered to be default
+        // https://docs.github.com/en/rest/secret-scanning/secret-scanning?apiVersion=2026-03-10#list-secret-scanning-alerts-for-a-repository
+        var baseUrl = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/secret-scanning/alerts?per_page=100";
+
+        var secretsOfTypeDefault = await _client.GetAllAsync(baseUrl)
             .ToListAsync();
+
+        // Generic patterns need specifying of type
+        // Extract from https://docs.github.com/en/code-security/reference/secret-security/supported-secret-scanning-patterns#supported-generic-patterns at 2026-07-29
+        var knownGenericPatterns = new[]
+        {
+            "ec_private_key",
+            "generic_private_key",
+            "http_basic_authentication_header",
+            "http_bearer_authentication_header",
+            "mongodb_connection_string",
+            "mysql_connection_url",
+            "openssh_private_key",
+            "pgp_private_key",
+            "postgres_connection_string",
+            "rsa_private_key"
+        };
+
+        var secretTypeArgument = string.Join(",", knownGenericPatterns);
+
+        var genericUrl = baseUrl + "&secret_type=" + secretTypeArgument;
+
+        var secretsOfTypeGeneric = await _client.GetAllAsync(genericUrl)
+            .ToListAsync();
+
+        var defaultAlerts = secretsOfTypeDefault.Select(sa => BuildSecretScanningAlert(sa)).ToList();
+        var genericAlerts = secretsOfTypeGeneric.Select(sa => BuildSecretScanningAlert(sa)).ToList();
+
+        return defaultAlerts.Concat(genericAlerts);
     }
 
     public virtual async Task<IEnumerable<GithubSecretScanningAlertLocation>> GetSecretScanningAlertsLocations(string org, string repo, int alertNumber)
