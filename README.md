@@ -5,14 +5,14 @@
 
 The [GitHub Enterprise Importer](https://docs.github.com/en/migrations/using-github-enterprise-importer) (GEI, formerly Octoshift) is a highly customizable API-first migration offering designed to help you move your enterprise to GitHub Enterprise Cloud. The GEI-CLI wraps the GEI APIs as a cross-platform console application to simplify customizing your migration experience.
 
-> GEI is generally available for repository migrations originating from Azure DevOps or GitHub that target GitHub Enterprise Cloud. It is in public beta for repository migrations from BitBucket Server and Data Center to GitHub Enterprise Cloud.
+> GEI is generally available for repository migrations originating from Azure DevOps, GitHub, or GitLab that target GitHub Enterprise Cloud. It is in public beta for repository migrations from BitBucket Server and Data Center to GitHub Enterprise Cloud.
 
 ## Using the GEI CLI
 There are 4 separate CLIs that we ship as extensions for the official [GitHub CLI](https://github.com/cli/cli#installation):
 - `gh gei` - Run migrations between GitHub products
 - `gh ado2gh` - Run migrations from Azure DevOps to GitHub
 - `gh bbs2gh` - Run migrations from BitBucket Server or Data Center to GitHub
-- `gh gl2gh` - Run migrations from GitLab to GitHub _(not yet generally available)_
+- `gh gl2gh` - Run migrations from GitLab to GitHub
 
 To use `gh gei` first install the latest [GitHub CLI](https://github.com/cli/cli#installation), then run the command
 >`gh extension install github/gh-gei`
@@ -25,8 +25,6 @@ To use `gh bbs2gh` first install the latest [GitHub CLI](https://github.com/cli/
 
 To use `gh gl2gh` first install the latest [GitHub CLI](https://github.com/cli/cli#installation), then run the command
 >`gh extension install github/gh-gl2gh`
-
-> **Note:** `gh gl2gh` is not yet generally available. The extension repo and releases may not be published yet.
 
 We update the extensions frequently, so make sure you update them on a regular basis:
 >`gh extension upgrade github/gh-gei`
