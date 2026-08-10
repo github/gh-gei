@@ -94,7 +94,7 @@ jobs:
       fail-fast: false
       matrix:
         runner-os: [windows-latest, ubuntu-latest, macos-latest]
-        source-vcs: [AdoBasic, AdoCsv, Bbs, Ghes, Github, Gitlab, Proxima]
+        source-vcs: [AdoBasic, AdoCsv, Bbs, Ghes, Github, Gitlab, GithubDR]
     runs-on: ${{ matrix.runner-os }}
     concurrency: integration-test-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
     steps:
@@ -217,7 +217,7 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_BUCKET_NAME: ${{ secrets.AWS_BUCKET_NAME }}
         GITLAB_PAT: ${{ secrets.GITLAB_PAT }}
-        PROXIMA_PAT: ${{ secrets.PROXIMA_PAT }}
+        E2E_SOURCE_PROXIMA_PAT: ${{ secrets.E2E_SOURCE_PROXIMA_PAT }}
         GEI_DEBUG_MODE: 'true'
         LD_LIBRARY_PATH: '$LD_LIBRARY_PATH:${{ github.workspace }}/src/OctoshiftCLI.IntegrationTests/bin/Debug/net8.0/runtimes/ubuntu.18.04-x64/native'
       run: dotnet test src/OctoshiftCLI.IntegrationTests/OctoshiftCLI.IntegrationTests.csproj --filter "${{ matrix.source-vcs }}ToGithub" --logger:"junit;LogFilePath=integration-tests.xml" --logger "console;verbosity=normal" /p:VersionPrefix=9.9
