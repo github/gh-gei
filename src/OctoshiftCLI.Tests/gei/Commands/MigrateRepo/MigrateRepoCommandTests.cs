@@ -13,7 +13,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
 
             command.Should().NotBeNull();
             command.Name.Should().Be("migrate-repo");
-            command.Options.Count.Should().Be(27);
+            command.Options.Count.Should().Be(28);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-source-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "source-repo", true);
@@ -22,6 +22,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             TestHelpers.VerifyCommandOption(command.Options, "target-api-url", false);
             TestHelpers.VerifyCommandOption(command.Options, "target-uploads-url", false);
             TestHelpers.VerifyCommandOption(command.Options, "ghes-api-url", false);
+            TestHelpers.VerifyCommandOption(command.Options, "github-source-api-url", false);
             TestHelpers.VerifyCommandOption(command.Options, "azure-storage-connection-string", false);
             TestHelpers.VerifyCommandOption(command.Options, "aws-bucket-name", false);
             TestHelpers.VerifyCommandOption(command.Options, "aws-access-key", false);

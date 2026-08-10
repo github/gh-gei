@@ -23,6 +23,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             AddOption(TargetApiUrl);
             AddOption(TargetUploadsUrl);
             AddOption(GhesApiUrl);
+            AddOption(GithubSourceApiUrl);
             AddOption(AzureStorageConnectionString);
             AddOption(AwsBucketName);
             AddOption(AwsAccessKey);
@@ -75,6 +76,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
         public Option<string> GhesApiUrl { get; } = new("--ghes-api-url")
         {
             Description = "Required if migrating from GHES. The API endpoint for your GHES instance. For example: http(s)://ghes.contoso.com/api/v3"
+        };
+        public Option<string> GithubSourceApiUrl { get; } = new("--github-source-api-url")
+        {
+            Description = "Required if migrating from GitHub Enterprise Cloud with data residency (ghe.com). The API endpoint for the source data residency tenant. For example: https://api.tenant.ghe.com. Uses GH_SOURCE_API_URL environment variable if not set. May not be used together with --ghes-api-url."
         };
         public Option<string> AzureStorageConnectionString { get; } = new("--azure-storage-connection-string")
         {
@@ -183,13 +188,15 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             AwsApi awsApi = null;
             HttpDownloadService httpDownloadService = null;
 
-            if (args.GhesApiUrl.HasValue() || (args.GitArchivePath.HasValue() && args.MetadataArchivePath.HasValue()))
+            var sourceApiUrl = args.GetSourceApiUrl();
+
+            if (sourceApiUrl.HasValue() || (args.GitArchivePath.HasValue() && args.MetadataArchivePath.HasValue()))
             {
                 var sourceGithubApiFactory = sp.GetRequiredService<ISourceGithubApiFactory>();
                 var awsApiFactory = sp.GetRequiredService<AwsApiFactory>();
                 var azureApiFactory = sp.GetRequiredService<IAzureApiFactory>();
                 var httpDownloadServiceFactory = sp.GetRequiredService<HttpDownloadServiceFactory>();
-                ghesApi = args.NoSslVerify ? sourceGithubApiFactory.CreateClientNoSsl(args.GhesApiUrl, null, args.GithubSourcePat) : sourceGithubApiFactory.Create(args.GhesApiUrl, null, args.GithubSourcePat);
+                ghesApi = args.NoSslVerify ? sourceGithubApiFactory.CreateClientNoSsl(sourceApiUrl, null, args.GithubSourcePat) : sourceGithubApiFactory.Create(sourceApiUrl, null, args.GithubSourcePat);
                 httpDownloadService = args.NoSslVerify ? httpDownloadServiceFactory.CreateClientNoSsl() : httpDownloadServiceFactory.CreateDefault();
 
                 if (args.AzureStorageConnectionString.HasValue() || environmentVariableProvider.AzureStorageConnectionString(false).HasValue())

@@ -33,5 +33,8 @@ namespace OctoshiftCLI.Extensions
                 && Uri.TryCreate(s, UriKind.Absolute, out var uri)
                 && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
         }
+
+        public static bool IsProximaApiUrl(this string s) =>
+            !s.IsNullOrWhiteSpace() && Regex.IsMatch(s.Trim(), @"^https?://api\.[^/]+\.ghe\.com/?$", RegexOptions.IgnoreCase);
     }
 }

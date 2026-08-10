@@ -44,7 +44,7 @@ public class GenerateScriptCommandHandler : ICommandHandler<GenerateScriptComman
 
         _log.LogInformation("Generating Script...");
 
-        var script = await GenerateScript(args.GithubSourceOrg, args.GithubTargetOrg, args.GhesApiUrl, args.AwsBucketName, args.AwsRegion, args.NoSslVerify, args.Sequential, args.SkipReleases, args.LockSourceRepo, args.DownloadMigrationLogs, args.KeepArchive, args.TargetApiUrl, args.TargetUploadsUrl, args.UseGithubStorage);
+        var script = await GenerateScript(args.GithubSourceOrg, args.GithubTargetOrg, args.GetSourceApiUrl(), args.AwsBucketName, args.AwsRegion, args.NoSslVerify, args.Sequential, args.SkipReleases, args.LockSourceRepo, args.DownloadMigrationLogs, args.KeepArchive, args.TargetApiUrl, args.TargetUploadsUrl, args.UseGithubStorage);
 
         if (script.HasValue() && args.Output.HasValue())
         {
@@ -209,7 +209,10 @@ if ($Failed -ne 0) {
 
     private string GetGhesRepoOptions(string ghesApiUrl, string awsBucketName, string awsRegion, bool noSslVerify, bool keepArchive, bool useGithubStorage)
     {
-        return $"--ghes-api-url \"{ghesApiUrl}\"{(awsBucketName.HasValue() ? $" --aws-bucket-name \"{awsBucketName}\"" : "")}{(awsRegion.HasValue() ? $" --aws-region \"{awsRegion}\"" : "")}{(noSslVerify ? " --no-ssl-verify" : string.Empty)}{(keepArchive ? " --keep-archive" : string.Empty)}{(useGithubStorage ? " --use-github-storage" : string.Empty)}";
+        var sourceUrlFlag = ghesApiUrl.IsProximaApiUrl() ? "--github-source-api-url" : "--ghes-api-url";
+        var emitNoSslVerify = noSslVerify && !ghesApiUrl.IsProximaApiUrl();
+
+        return $"{sourceUrlFlag} \"{ghesApiUrl}\"{(awsBucketName.HasValue() ? $" --aws-bucket-name \"{awsBucketName}\"" : "")}{(awsRegion.HasValue() ? $" --aws-region \"{awsRegion}\"" : "")}{(emitNoSslVerify ? " --no-ssl-verify" : string.Empty)}{(keepArchive ? " --keep-archive" : string.Empty)}{(useGithubStorage ? " --use-github-storage" : string.Empty)}";
     }
 
     private string WaitForMigrationScript(string targetApiUrl, string repoMigrationKey = null) => $"gh gei wait-for-migration{(targetApiUrl.HasValue() ? $" --target-api-url \"{targetApiUrl}\"" : string.Empty)} --migration-id $RepoMigrations[\"{repoMigrationKey}\"]";

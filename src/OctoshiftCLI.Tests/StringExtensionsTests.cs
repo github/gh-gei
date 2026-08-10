@@ -39,5 +39,27 @@ namespace OctoshiftCLI.Tests
 
             result.Should().Be(expectedResult);
         }
+
+        [Theory]
+        [InlineData("https://api.tenant.ghe.com", true)]
+        [InlineData("http://api.tenant.ghe.com", true)]
+        [InlineData("https://api.TENANT.ghe.com", true)]
+        [InlineData("https://api.tenant.ghe.com/", true)]
+        [InlineData("  https://api.tenant.ghe.com  ", true)]
+        [InlineData("https://api.foo.bar.ghe.com", true)]
+        [InlineData("https://tenant.ghe.com", false)]
+        [InlineData("https://api.github.com", false)]
+        [InlineData("https://api.tenant.ghe.com/foo", false)]
+        [InlineData("https://ghes.contoso.com/api/v3", false)]
+        [InlineData("api.tenant.ghe.com", false)]
+        [InlineData("", false)]
+        [InlineData(null, false)]
+        [InlineData("   ", false)]
+        public void IsProximaApiUrl_Detects_Proxima_Api_URLs_Correctly(string value, bool expectedResult)
+        {
+            var result = value.IsProximaApiUrl();
+
+            result.Should().Be(expectedResult);
+        }
     }
 }

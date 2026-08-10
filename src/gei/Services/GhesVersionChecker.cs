@@ -23,6 +23,13 @@ public class GhesVersionChecker
 
         if (ghesApiUrl.HasValue())
         {
+            // GitHub Enterprise Cloud with data residency (Proxima) has GHOS available and never requires
+            // customer-provided blob storage credentials.
+            if (ghesApiUrl.IsProximaApiUrl())
+            {
+                return false;
+            }
+
             blobCredentialsRequired = true;
 
             _log.LogInformation("Using GitHub Enterprise Server - verifying server version");

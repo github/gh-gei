@@ -12,6 +12,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
         public string GithubTargetOrg { get; set; }
         public FileInfo Output { get; set; }
         public string GhesApiUrl { get; set; }
+        public string GithubSourceApiUrl { get; set; }
         public string AwsBucketName { get; set; }
         public string AwsRegion { get; set; }
         public bool NoSslVerify { get; set; }
@@ -26,6 +27,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
         public string TargetUploadsUrl { get; set; }
         public bool UseGithubStorage { get; set; }
 
+        public string GetSourceApiUrl() => GithubSourceApiUrl.HasValue() ? GithubSourceApiUrl : GhesApiUrl;
+
         public override void Validate(OctoLogger log)
         {
             if (GithubSourceOrg.IsUrl())
@@ -38,11 +41,23 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
                 throw new OctoshiftCliException($"The --github-target-org option expects an organization name, not a URL. Please provide just the organization name (e.g., 'my-org' instead of 'https://github.com/my-org').");
             }
 
+            if (GithubSourceApiUrl.IsNullOrWhiteSpace())
+            {
+                GithubSourceApiUrl = System.Environment.GetEnvironmentVariable("GH_SOURCE_API_URL");
+            }
+
+            if (GhesApiUrl.HasValue() && GithubSourceApiUrl.HasValue())
+            {
+                throw new OctoshiftCliException("Only one of --github-source-api-url or --ghes-api-url may be specified.");
+            }
+
+            var sourceApiUrl = GetSourceApiUrl();
+
             if (AwsBucketName.HasValue())
             {
-                if (GhesApiUrl.IsNullOrWhiteSpace())
+                if (sourceApiUrl.IsNullOrWhiteSpace())
                 {
-                    throw new OctoshiftCliException("--ghes-api-url must be specified when --aws-bucket-name is specified.");
+                    throw new OctoshiftCliException("--ghes-api-url or --github-source-api-url must be specified when --aws-bucket-name is specified.");
                 }
 
                 if (UseGithubStorage)
@@ -56,19 +71,21 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
                 throw new OctoshiftCliException("--ghes-api-url must be specified when --no-ssl-verify is specified.");
             }
 
-            if (GhesApiUrl.IsNullOrWhiteSpace() && UseGithubStorage)
+            if (sourceApiUrl.IsNullOrWhiteSpace() && UseGithubStorage)
             {
-                throw new OctoshiftCliException("--ghes-api-url must be specified when --use-github-storage is specified.");
+                throw new OctoshiftCliException("--ghes-api-url or --github-source-api-url must be specified when --use-github-storage is specified.");
             }
 
-            if (GhesApiUrl.HasValue())
+            if (sourceApiUrl.HasValue())
             {
-                var result = Uri.TryCreate(GhesApiUrl, UriKind.Absolute, out var uriResult)
+                var result = Uri.TryCreate(sourceApiUrl, UriKind.Absolute, out var uriResult)
                     && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
 
                 if (!result)
                 {
-                    throw new OctoshiftCliException("--ghes-api-url is invalid. Please check URL before trying again.");
+                    throw new OctoshiftCliException(GithubSourceApiUrl.HasValue()
+                        ? "--github-source-api-url is invalid. Please check URL before trying again."
+                        : "--ghes-api-url is invalid. Please check URL before trying again.");
                 }
             }
         }

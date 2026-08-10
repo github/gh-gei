@@ -21,6 +21,7 @@ public class MigrateCodeScanningAlertsCommand : CommandBase<MigrateCodeScanningA
         AddOption(TargetApiUrl);
 
         AddOption(GhesApiUrl);
+        AddOption(GithubSourceApiUrl);
         AddOption(NoSslVerify);
 
         AddOption(GithubSourcePat);
@@ -45,6 +46,11 @@ public class MigrateCodeScanningAlertsCommand : CommandBase<MigrateCodeScanningA
     {
         Description =
             "Required if migrating from GHES. The API endpoint for your GHES instance. For example: http(s)://ghes.contoso.com/api/v3"
+    };
+    public Option<string> GithubSourceApiUrl { get; } = new("--github-source-api-url")
+    {
+        Description =
+            "Required if migrating from GitHub Enterprise Cloud with data residency (ghe.com). The API endpoint for the source data residency tenant. For example: https://api.tenant.ghe.com. Uses GH_SOURCE_API_URL environment variable if not set. May not be used together with --ghes-api-url."
     };
     public Option<bool> NoSslVerify { get; } = new("--no-ssl-verify")
     {
@@ -86,7 +92,7 @@ public class MigrateCodeScanningAlertsCommand : CommandBase<MigrateCodeScanningA
 
         var log = sp.GetRequiredService<OctoLogger>();
         var codeScanningAlertServiceFactory = sp.GetRequiredService<CodeScanningAlertServiceFactory>();
-        var codeScanningAlertService = codeScanningAlertServiceFactory.Create(args.GhesApiUrl, args.GithubSourcePat, args.TargetApiUrl, args.GithubTargetPat, args.NoSslVerify);
+        var codeScanningAlertService = codeScanningAlertServiceFactory.Create(args.GetSourceApiUrl(), args.GithubSourcePat, args.TargetApiUrl, args.GithubTargetPat, args.NoSslVerify);
 
         return new MigrateCodeScanningAlertsCommandHandler(log, codeScanningAlertService);
     }

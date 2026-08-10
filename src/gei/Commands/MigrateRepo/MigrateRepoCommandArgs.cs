@@ -13,6 +13,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
         public string TargetApiUrl { get; set; }
         public string TargetUploadsUrl { get; set; }
         public string GhesApiUrl { get; set; }
+        public string GithubSourceApiUrl { get; set; }
         [Secret]
         public string AzureStorageConnectionString { get; set; }
         public string AwsBucketName { get; set; }
@@ -39,6 +40,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
         public bool KeepArchive { get; set; }
         public bool UseGithubStorage { get; set; }
 
+        public string GetSourceApiUrl() => GithubSourceApiUrl.HasValue() ? GithubSourceApiUrl : GhesApiUrl;
+
         public override void Validate(OctoLogger log)
         {
             if (GithubSourceOrg.IsUrl())
@@ -63,6 +66,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
 
             DefaultSourcePat(log);
             DefaultTargetRepo(log);
+            DefaultGithubSourceApiUrl();
 
             if (GitArchiveUrl.HasValue() && GitArchivePath.HasValue())
             {
@@ -84,26 +88,31 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
                 throw new OctoshiftCliException("When using archive files, you must provide both --git-archive-path --metadata-archive-path");
             }
 
-            if (GhesApiUrl.IsNullOrWhiteSpace())
+            if (GhesApiUrl.HasValue() && GithubSourceApiUrl.HasValue())
+            {
+                throw new OctoshiftCliException("Only one of --github-source-api-url or --ghes-api-url may be specified.");
+            }
+
+            if (NoSslVerify && GhesApiUrl.IsNullOrWhiteSpace())
+            {
+                throw new OctoshiftCliException("--ghes-api-url must be specified when --no-ssl-verify is specified.");
+            }
+
+            if (GetSourceApiUrl().IsNullOrWhiteSpace())
             {
                 if (AwsBucketName.HasValue() && GitArchivePath.IsNullOrWhiteSpace())
                 {
-                    throw new OctoshiftCliException("When using --aws-bucket-name, you must provide --ghes-api-url, or --git-archive-path and --metadata-archive-path");
+                    throw new OctoshiftCliException("When using --aws-bucket-name, you must provide --ghes-api-url, --github-source-api-url, or --git-archive-path and --metadata-archive-path");
                 }
 
                 if (UseGithubStorage && GitArchivePath.IsNullOrWhiteSpace())
                 {
-                    throw new OctoshiftCliException("When using --use-github-storage, you must provide --ghes-api-url, or --git-archive-path and --metadata-archive-path");
-                }
-
-                if (NoSslVerify)
-                {
-                    throw new OctoshiftCliException("--ghes-api-url must be specified when --no-ssl-verify is specified.");
+                    throw new OctoshiftCliException("When using --use-github-storage, you must provide --ghes-api-url, --github-source-api-url, or --git-archive-path and --metadata-archive-path");
                 }
 
                 if (KeepArchive)
                 {
-                    throw new OctoshiftCliException("--ghes-api-url must be specified when --keep-archive is specified.");
+                    throw new OctoshiftCliException("--ghes-api-url or --github-source-api-url must be specified when --keep-archive is specified.");
                 }
             }
 
@@ -133,6 +142,14 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
             {
                 GithubSourcePat = GithubTargetPat;
                 log?.LogInformation("Since github-target-pat is provided, github-source-pat will also use its value.");
+            }
+        }
+
+        private void DefaultGithubSourceApiUrl()
+        {
+            if (GithubSourceApiUrl.IsNullOrWhiteSpace())
+            {
+                GithubSourceApiUrl = System.Environment.GetEnvironmentVariable("GH_SOURCE_API_URL");
             }
         }
     }

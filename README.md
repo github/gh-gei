@@ -53,6 +53,14 @@ To see the available commands and options run:
 
 Refer to the [official documentation](https://docs.github.com/en/migrations/using-github-enterprise-importer) for more details, including differences when migrating from GitHub Enterprise Server.
 
+#### Migrating from GitHub Enterprise Cloud with data residency (ghe.com)
+
+`gh gei` also supports migrating from a GitHub Enterprise Cloud with data residency tenant. Pass `--github-source-api-url` with the API endpoint of your source tenant (or set the `GH_SOURCE_API_URL` environment variable):
+
+>`gh gei migrate-repo --github-source-org SOURCE_ORG --source-repo SOURCE_REPO --github-source-api-url https://api.SUBDOMAIN.ghe.com --github-target-org TARGET_ORG --target-repo TARGET_REPO`
+
+If the target is also a data residency tenant, add `--target-api-url` and `--target-uploads-url` as usual. `--github-source-api-url` and `--ghes-api-url` cannot be used together.
+
 ### Azure DevOps to GitHub Usage
 1. Create Personal Access Tokens with access to the Azure DevOps org, and the GitHub org (for more details on scopes needed refer to our [official documentation](https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer)).
 

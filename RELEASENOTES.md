@@ -1,1 +1,1 @@
-
+- Added support for migrating from GitHub Enterprise Cloud with data residency (ghe.com) as a source in `gh gei migrate-repo`, `generate-script`, `migrate-secret-alerts`, and `migrate-code-scanning-alerts`. Configure via `--github-source-api-url` (e.g. `https://api.tenant.ghe.com`) or the `GH_SOURCE_API_URL` environment variable. `--github-source-api-url` and `--ghes-api-url` cannot be used together.
