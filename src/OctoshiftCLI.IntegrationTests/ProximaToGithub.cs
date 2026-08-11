@@ -8,15 +8,15 @@ using Xunit.Abstractions;
 
 namespace OctoshiftCLI.IntegrationTests;
 
-// Integration test for GitHub Enterprise Cloud with data residency (GithubDR) source migrations.
+// Integration test for GitHub Enterprise Cloud with data residency (Proxima) source migrations.
 // Requires E2E_SOURCE_PROXIMA_PAT and GHEC_PAT secrets to be set. The source repo is treated as
 // read-only (tenant-managed); only the target org is reset each run.
 [Collection("Integration Tests")]
-public sealed class GithubDRToGithub : IDisposable
+public sealed class ProximaToGithub : IDisposable
 {
-    private const string GITHUBDR_API_URL = "https://api.migration-tools-staffwus201.ghe.com";
-    private const string GITHUBDR_SOURCE_ORG = "octoshift";
-    private const string GITHUBDR_SOURCE_REPO = "tiny";
+    private const string PROXIMA_API_URL = "https://api.migration-tools-staffwus201.ghe.com";
+    private const string PROXIMA_SOURCE_ORG = "octoshift";
+    private const string PROXIMA_SOURCE_REPO = "tiny";
     private const string UPLOADS_URL = "https://uploads.github.com";
 
     private readonly ITestOutputHelper _output;
@@ -32,7 +32,7 @@ public sealed class GithubDRToGithub : IDisposable
     private readonly Dictionary<string, string> _tokens;
     private readonly DateTime _startTime;
 
-    public GithubDRToGithub(ITestOutputHelper output)
+    public ProximaToGithub(ITestOutputHelper output)
     {
         _startTime = DateTime.Now;
         _output = output;
@@ -53,13 +53,13 @@ public sealed class GithubDRToGithub : IDisposable
         };
 
         _versionClient = new HttpClient();
-        var retryPolicy = new RetryPolicy(logger, "GithubDR (E2E_SOURCE_PROXIMA_PAT)");
+        var retryPolicy = new RetryPolicy(logger, "Proxima (E2E_SOURCE_PROXIMA_PAT)");
         var environmentVariableProvider = new EnvironmentVariableProvider(logger);
 
         _sourceGithubHttpClient = new HttpClient();
-        _sourceGithubClient = new GithubClient(logger, _sourceGithubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger, "GithubDR (E2E_SOURCE_PROXIMA_PAT)"), new DateTimeProvider(), sourceGithubToken);
+        _sourceGithubClient = new GithubClient(logger, _sourceGithubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger, "Proxima (E2E_SOURCE_PROXIMA_PAT)"), new DateTimeProvider(), sourceGithubToken);
         _archiveUploader = new ArchiveUploader(_targetGithubClient, UPLOADS_URL, logger, retryPolicy, environmentVariableProvider);
-        _sourceGithubApi = new GithubApi(_sourceGithubClient, GITHUBDR_API_URL, new RetryPolicy(logger, "GithubDR (E2E_SOURCE_PROXIMA_PAT)"), _archiveUploader);
+        _sourceGithubApi = new GithubApi(_sourceGithubClient, PROXIMA_API_URL, new RetryPolicy(logger, "Proxima (E2E_SOURCE_PROXIMA_PAT)"), _archiveUploader);
 
         _targetGithubHttpClient = new HttpClient();
         _targetGithubClient = new GithubClient(logger, _targetGithubHttpClient, new VersionChecker(_versionClient, logger), new RetryPolicy(logger, "GitHub (GHEC_PAT)"), new DateTimeProvider(), targetGithubToken);
@@ -71,21 +71,21 @@ public sealed class GithubDRToGithub : IDisposable
     [Fact]
     public async Task Basic()
     {
-        var githubTargetOrg = $"octoshift-e2e-githubdr-{TestHelper.GetOsName()}";
+        var githubTargetOrg = $"octoshift-e2e-proxima-{TestHelper.GetOsName()}";
 
         var retryPolicy = new RetryPolicy(null);
 
         // Source repo is tenant-managed (read-only); only reset the target.
         await retryPolicy.Retry(async () => await _targetHelper.ResetGithubTestEnvironment(githubTargetOrg));
 
-        var command = $"gei migrate-repo --github-source-org {GITHUBDR_SOURCE_ORG} --source-repo {GITHUBDR_SOURCE_REPO} --github-source-api-url {GITHUBDR_API_URL} --github-target-org {githubTargetOrg} --target-repo {GITHUBDR_SOURCE_REPO} --target-repo-visibility private --use-github-storage";
+        var command = $"gei migrate-repo --github-source-org {PROXIMA_SOURCE_ORG} --source-repo {PROXIMA_SOURCE_REPO} --github-source-api-url {PROXIMA_API_URL} --github-target-org {githubTargetOrg} --target-repo {PROXIMA_SOURCE_REPO} --target-repo-visibility private --use-github-storage";
 
         await _targetHelper.RunCliCommand(command, "gh", _tokens);
 
         _targetHelper.AssertNoErrorInLogs(_startTime);
 
-        await _targetHelper.AssertGithubRepoExists(githubTargetOrg, GITHUBDR_SOURCE_REPO);
-        await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, GITHUBDR_SOURCE_REPO);
+        await _targetHelper.AssertGithubRepoExists(githubTargetOrg, PROXIMA_SOURCE_REPO);
+        await _targetHelper.AssertGithubRepoInitialized(githubTargetOrg, PROXIMA_SOURCE_REPO);
     }
 
     public void Dispose()
