@@ -51,6 +51,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
                 throw new OctoshiftCliException("Only one of --github-source-api-url or --ghes-api-url may be specified.");
             }
 
+            if (GithubSourceApiUrl.HasValue() && !GithubSourceApiUrl.IsProximaApiUrl())
+            {
+                throw new OctoshiftCliException("--github-source-api-url must be a valid GitHub Enterprise Cloud with data residency API URL (e.g. https://api.tenant.ghe.com).");
+            }
+
             var sourceApiUrl = GetSourceApiUrl();
 
             if (AwsBucketName.HasValue())

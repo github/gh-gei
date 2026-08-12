@@ -93,4 +93,25 @@ public class MigrateCodeScanningAlertsCommandArgsTests
             .ThrowExactly<OctoshiftCliException>()
             .WithMessage("The --target-repo option expects a repository name, not a URL. Please provide just the repository name (e.g., 'my-repo' instead of 'https://github.com/my-org/my-repo').");
     }
+
+    [Theory]
+    [InlineData("https://api.example.com")]
+    [InlineData("https://api.tenant.ghe.com/foo")]
+    [InlineData("https://tenant.ghe.com")]
+    [InlineData("not a url")]
+    public void GithubSourceApiUrl_Non_Proxima_Value_Throws(string invalidUrl)
+    {
+        var args = new MigrateCodeScanningAlertsCommandArgs
+        {
+            SourceOrg = SOURCE_ORG,
+            SourceRepo = SOURCE_REPO,
+            TargetOrg = TARGET_ORG,
+            GithubSourceApiUrl = invalidUrl
+        };
+
+        FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+            .Should()
+            .ThrowExactly<OctoshiftCliException>()
+            .WithMessage("*--github-source-api-url must be a valid*");
+    }
 }
