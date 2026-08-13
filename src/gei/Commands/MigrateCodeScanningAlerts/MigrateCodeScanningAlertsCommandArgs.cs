@@ -12,12 +12,15 @@ public class MigrateCodeScanningAlertsCommandArgs : CommandArgs
     public string TargetRepo { get; set; }
     public string TargetApiUrl { get; set; }
     public string GhesApiUrl { get; set; }
+    public string GithubSourceApiUrl { get; set; }
     public bool NoSslVerify { get; set; }
     public bool DryRun { get; set; }
     [Secret]
     public string GithubSourcePat { get; set; }
     [Secret]
     public string GithubTargetPat { get; set; }
+
+    public string GetSourceApiUrl() => GithubSourceApiUrl.HasValue() ? GithubSourceApiUrl : GhesApiUrl;
 
     public override void Validate(OctoLogger log)
     {
@@ -45,6 +48,26 @@ public class MigrateCodeScanningAlertsCommandArgs : CommandArgs
         {
             TargetRepo = SourceRepo;
             log?.LogInformation("Since target-repo is not provided, source-repo value will be used for target-repo.");
+        }
+
+        if (GithubSourceApiUrl.IsNullOrWhiteSpace())
+        {
+            GithubSourceApiUrl = System.Environment.GetEnvironmentVariable("GH_SOURCE_API_URL");
+        }
+
+        if (GhesApiUrl.HasValue() && GithubSourceApiUrl.HasValue())
+        {
+            throw new OctoshiftCliException("Only one of --github-source-api-url or --ghes-api-url may be specified.");
+        }
+
+        if (GithubSourceApiUrl.HasValue() && !GithubSourceApiUrl.IsProximaApiUrl())
+        {
+            throw new OctoshiftCliException("--github-source-api-url must be a valid GitHub Enterprise Cloud with data residency API URL (e.g. https://api.tenant.ghe.com).");
+        }
+
+        if (NoSslVerify && GhesApiUrl.IsNullOrWhiteSpace())
+        {
+            throw new OctoshiftCliException("--ghes-api-url must be specified when --no-ssl-verify is specified.");
         }
     }
 }

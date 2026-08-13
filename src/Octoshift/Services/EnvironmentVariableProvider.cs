@@ -7,6 +7,7 @@ public class EnvironmentVariableProvider
 {
     private const string SOURCE_GH_PAT = "GH_SOURCE_PAT";
     private const string TARGET_GH_PAT = "GH_PAT";
+    private const string SOURCE_GH_API_URL = "GH_SOURCE_API_URL";
     private const string ADO_PAT = "ADO_PAT";
     private const string AZURE_STORAGE_CONNECTION_STRING = "AZURE_STORAGE_CONNECTION_STRING";
     private const string AWS_ACCESS_KEY_ID = "AWS_ACCESS_KEY_ID";
@@ -30,6 +31,8 @@ public class EnvironmentVariableProvider
 
     public virtual string SourceGithubPersonalAccessToken(bool throwIfNotFound = true) =>
         GetSecret(SOURCE_GH_PAT, false) ?? TargetGithubPersonalAccessToken(throwIfNotFound);
+
+    public virtual string SourceGithubApiUrl() => GetValue(SOURCE_GH_API_URL, false);
 
     public virtual string TargetGithubPersonalAccessToken(bool throwIfNotFound = true) =>
         GetSecret(TARGET_GH_PAT, throwIfNotFound);

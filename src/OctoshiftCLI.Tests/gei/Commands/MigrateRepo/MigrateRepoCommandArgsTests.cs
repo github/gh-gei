@@ -376,5 +376,84 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 .ThrowExactly<OctoshiftCliException>()
                 .WithMessage("The --target-repo option expects a repository name, not a URL. Please provide just the repository name (e.g., 'my-repo' instead of 'https://github.com/my-org/my-repo').");
         }
+
+        [Fact]
+        public void GithubSourceApiUrl_And_GhesApiUrl_Both_Set_Throws()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                GhesApiUrl = GHES_API_URL,
+                GithubSourceApiUrl = "https://api.tenant.ghe.com"
+            };
+
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("*Only one of --github-source-api-url or --ghes-api-url*");
+        }
+
+        [Fact]
+        public void UseGithubStorage_Validates_With_GithubSourceApiUrl()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                GithubSourceApiUrl = "https://api.tenant.ghe.com",
+                UseGithubStorage = true
+            };
+
+            args.Validate(_mockOctoLogger.Object);
+
+            args.TargetRepo.Should().Be(SOURCE_REPO);
+        }
+
+        [Fact]
+        public void GetSourceApiUrl_Prefers_GithubSourceApiUrl()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                GhesApiUrl = GHES_API_URL,
+                GithubSourceApiUrl = "https://api.tenant.ghe.com"
+            };
+
+            args.GetSourceApiUrl().Should().Be("https://api.tenant.ghe.com");
+        }
+
+        [Fact]
+        public void GetSourceApiUrl_Falls_Back_To_GhesApiUrl()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                GhesApiUrl = GHES_API_URL
+            };
+
+            args.GetSourceApiUrl().Should().Be(GHES_API_URL);
+        }
+
+        [Theory]
+        [InlineData("https://api.example.com")]
+        [InlineData("https://api.tenant.ghe.com/foo")]
+        [InlineData("https://tenant.ghe.com")]
+        [InlineData("not a url")]
+        public void GithubSourceApiUrl_Non_Proxima_Value_Throws(string invalidUrl)
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                GithubSourceApiUrl = invalidUrl
+            };
+
+            FluentActions.Invoking(() => args.Validate(_mockOctoLogger.Object))
+                .Should()
+                .ThrowExactly<OctoshiftCliException>()
+                .WithMessage("*--github-source-api-url must be a valid*");
+        }
     }
 }

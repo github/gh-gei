@@ -245,6 +245,36 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
         }
 
         [Fact]
+        public async Task Sequential_Github_Proxima_Source_Emits_GithubSourceApiUrl_Flag()
+        {
+            // Arrange
+            const string proximaApiUrl = "https://api.tenant.ghe.com";
+
+            _mockGithubApi
+                .Setup(m => m.GetRepos(SOURCE_ORG))
+                .ReturnsAsync(new[] { (REPO, "private") });
+
+            var expected = $"Exec {{ gh gei migrate-repo --github-source-org \"{SOURCE_ORG}\" --source-repo \"{REPO}\" --github-target-org \"{TARGET_ORG}\" --target-repo \"{REPO}\" --github-source-api-url \"{proximaApiUrl}\" --target-repo-visibility private }}";
+
+            // Act
+            var args = new GenerateScriptCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                GithubTargetOrg = TARGET_ORG,
+                Output = new FileInfo("unit-test-output"),
+                GithubSourceApiUrl = proximaApiUrl,
+                NoSslVerify = true, // should be ignored for Proxima
+                Sequential = true
+            };
+            await _handler.Handle(args);
+
+            _script = TrimNonExecutableLines(_script);
+
+            // Assert
+            _script.Should().Be(expected);
+        }
+
+        [Fact]
         public async Task Parallel_Github_Multiple_Repos()
         {
             // Arrange

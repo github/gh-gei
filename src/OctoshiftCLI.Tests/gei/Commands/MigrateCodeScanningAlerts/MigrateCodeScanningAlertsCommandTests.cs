@@ -33,7 +33,7 @@ public class MigrateCodeScanningAlertsCommandTests
     {
         _command.Should().NotBeNull();
         _command.Name.Should().Be("migrate-code-scanning-alerts");
-        _command.Options.Count.Should().Be(11);
+        _command.Options.Count.Should().Be(12);
 
         TestHelpers.VerifyCommandOption(_command.Options, "source-org", true);
         TestHelpers.VerifyCommandOption(_command.Options, "source-repo", true);
@@ -41,6 +41,7 @@ public class MigrateCodeScanningAlertsCommandTests
         TestHelpers.VerifyCommandOption(_command.Options, "target-repo", false);
         TestHelpers.VerifyCommandOption(_command.Options, "target-api-url", false);
         TestHelpers.VerifyCommandOption(_command.Options, "ghes-api-url", false);
+        TestHelpers.VerifyCommandOption(_command.Options, "github-source-api-url", false);
         TestHelpers.VerifyCommandOption(_command.Options, "no-ssl-verify", false);
         TestHelpers.VerifyCommandOption(_command.Options, "github-source-pat", false);
         TestHelpers.VerifyCommandOption(_command.Options, "github-target-pat", false);

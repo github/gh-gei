@@ -51,4 +51,12 @@ public class GhesVersionCheckerTests
         var result = await _service.AreBlobCredentialsRequired("");
         result.Should().Be(false);
     }
+
+    [Fact]
+    public async Task Proxima_Api_Url_Returns_False_Without_Calling_Source()
+    {
+        var result = await _service.AreBlobCredentialsRequired("https://api.tenant.ghe.com");
+        result.Should().Be(false);
+        _mockGithubApi.Verify(m => m.GetEnterpriseServerVersion(), Times.Never);
+    }
 }

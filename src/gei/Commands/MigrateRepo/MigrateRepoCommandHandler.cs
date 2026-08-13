@@ -67,14 +67,15 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         _log.LogInformation("Migrating Repo...");
 
-        var blobCredentialsRequired = args.GitArchivePath.HasValue() || await _ghesVersionChecker.AreBlobCredentialsRequired(args.GhesApiUrl);
+        var sourceApiUrl = args.GetSourceApiUrl();
+        var blobCredentialsRequired = args.GitArchivePath.HasValue() || await _ghesVersionChecker.AreBlobCredentialsRequired(sourceApiUrl);
 
-        if (args.GhesApiUrl.HasValue() || args.GitArchivePath.HasValue())
+        if (sourceApiUrl.HasValue() || args.GitArchivePath.HasValue())
         {
             ValidateUploadOptions(args, blobCredentialsRequired);
         }
 
-        if (args.GhesApiUrl.HasValue())
+        if (sourceApiUrl.HasValue())
         {
             var targetRepoExists = await _targetGithubApi.DoesRepoExist(args.GithubTargetOrg, args.TargetRepo);
             var targetOrgExists = await _targetGithubApi.DoesOrgExist(args.GithubTargetOrg);
@@ -105,7 +106,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             throw new OctoshiftCliException(message, ex);
         }
 
-        if (args.GhesApiUrl.HasValue())
+        if (sourceApiUrl.HasValue())
         {
             (args.GitArchiveUrl, args.MetadataArchiveUrl) = await GenerateAndUploadArchive(
               args.GithubSourceOrg,
@@ -170,7 +171,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
                 args.MetadataArchiveUrl,
                 args.SkipReleases,
                 args.TargetRepoVisibility,
-                args.GhesApiUrl.IsNullOrWhiteSpace() && args.LockSourceRepo);
+                sourceApiUrl.IsNullOrWhiteSpace() && args.LockSourceRepo);
         }
         catch (OctoshiftCliException ex)
         {
@@ -216,7 +217,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private string GetSourceToken(MigrateRepoCommandArgs args) => args.GithubSourcePat ?? _environmentVariableProvider.SourceGithubPersonalAccessToken();
 
-    private string GetSourceRepoUrl(MigrateRepoCommandArgs args) => GetGithubRepoUrl(args.GithubSourceOrg, args.SourceRepo, args.GhesApiUrl.HasValue() ? ExtractGhesBaseUrl(args.GhesApiUrl) : null);
+    private string GetSourceRepoUrl(MigrateRepoCommandArgs args) => GetGithubRepoUrl(args.GithubSourceOrg, args.SourceRepo, args.GetSourceApiUrl().HasValue() ? ExtractGhesBaseUrl(args.GetSourceApiUrl()) : null);
 
     private string ExtractGhesBaseUrl(string ghesApiUrl)
     {

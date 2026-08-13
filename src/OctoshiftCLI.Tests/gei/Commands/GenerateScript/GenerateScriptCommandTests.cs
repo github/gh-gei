@@ -39,11 +39,12 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.GenerateScript
             var command = new GenerateScriptCommand();
             command.Should().NotBeNull();
             command.Name.Should().Be("generate-script");
-            command.Options.Count.Should().Be(17);
+            command.Options.Count.Should().Be(18);
 
             TestHelpers.VerifyCommandOption(command.Options, "github-source-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "github-target-org", true);
             TestHelpers.VerifyCommandOption(command.Options, "ghes-api-url", false);
+            TestHelpers.VerifyCommandOption(command.Options, "github-source-api-url", false);
             TestHelpers.VerifyCommandOption(command.Options, "no-ssl-verify", false);
             TestHelpers.VerifyCommandOption(command.Options, "skip-releases", false);
             TestHelpers.VerifyCommandOption(command.Options, "lock-source-repo", false);

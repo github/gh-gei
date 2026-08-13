@@ -24,6 +24,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
             AddOption(TargetApiUrl);
             AddOption(TargetUploadsUrl);
             AddOption(GhesApiUrl);
+            AddOption(GithubSourceApiUrl);
             AddOption(AwsBucketName);
             AddOption(AwsRegion);
             AddOption(NoSslVerify);
@@ -53,6 +54,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
         public Option<string> GhesApiUrl { get; } = new("--ghes-api-url")
         {
             Description = "Required if migrating from GHES. The api endpoint for the hostname of your GHES instance. For example: http(s)://myghes.com/api/v3"
+        };
+        public Option<string> GithubSourceApiUrl { get; } = new("--github-source-api-url")
+        {
+            Description = "Required if migrating from GitHub Enterprise Cloud with data residency (ghe.com). The API endpoint for the source data residency tenant. For example: https://api.tenant.ghe.com. Uses GH_SOURCE_API_URL environment variable if not set. May not be used together with --ghes-api-url."
         };
         public Option<bool> NoSslVerify { get; } = new("--no-ssl-verify")
         {
@@ -128,9 +133,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.GenerateScript
 
             var sourceGithubApiFactory = sp.GetRequiredService<ISourceGithubApiFactory>();
 
-            var sourceGithubApi = args.GhesApiUrl.HasValue() && args.NoSslVerify ?
-                sourceGithubApiFactory.CreateClientNoSsl(args.GhesApiUrl, args.TargetUploadsUrl, args.GithubSourcePat) :
-                sourceGithubApiFactory.Create(args.GhesApiUrl, args.TargetUploadsUrl, args.GithubSourcePat);
+            var sourceApiUrl = args.GetSourceApiUrl();
+
+            var sourceGithubApi = sourceApiUrl.HasValue() && args.NoSslVerify ?
+                sourceGithubApiFactory.CreateClientNoSsl(sourceApiUrl, args.TargetUploadsUrl, args.GithubSourcePat) :
+                sourceGithubApiFactory.Create(sourceApiUrl, args.TargetUploadsUrl, args.GithubSourcePat);
 
             var ghesVersionChecker = ghesVersionCheckerFactory.Create(sourceGithubApi);
 
