@@ -414,7 +414,7 @@ public class GithubApi
                     $lockSource: Boolean)";
         var gql = @"
                 startRepositoryMigration(
-                    input: { 
+                    input: {
                         sourceId: $sourceId,
                         ownerId: $ownerId,
                         sourceRepositoryUrl: $sourceRepositoryUrl,
@@ -480,7 +480,7 @@ public class GithubApi
                         $targetEnterpriseId: ID!,
                         $sourceAccessToken: String!)";
         var gql = @"
-                startOrganizationMigration( 
+                startOrganizationMigration(
                     input: {
                         sourceOrgUrl: $sourceOrgUrl,
                         targetOrgName: $targetOrgName,
@@ -862,6 +862,31 @@ public class GithubApi
         return (string)data["data"]["user"]["id"];
     }
 
+    // Resolves a GitHub App / bot account (e.g. "example-ci[bot]") to its GraphQL node id.
+    // The GraphQL user(login:) query hides bots, so we use the REST users endpoint, which
+    // returns bot accounts (type "Bot") along with their node_id.
+    public virtual async Task<string> GetBotId(string login)
+    {
+        var url = $"{_apiUrl}/users/{login.EscapeDataString()}";
+
+        try
+        {
+            var response = await _client.GetAsync(url);
+            var data = JObject.Parse(response);
+
+            if (!string.Equals((string)data["type"], "Bot", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new OctoshiftCliException($"{login} is not a GitHub App / bot account.");
+            }
+
+            return (string)data["node_id"];
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            throw new OctoshiftCliException($"Could not resolve to a bot account with the login of '{login}'.", ex);
+        }
+    }
+
     public virtual async Task<CreateAttributionInvitationResult> CreateAttributionInvitation(string orgId, string mannequinId, string targetUserId)
     {
         var url = $"{_apiUrl}/graphql";
@@ -948,6 +973,49 @@ public class GithubApi
             ]
             };
             return result;
+        }
+    }
+
+    public virtual async Task<ReattributeMannequinToBotResult> ReattributeMannequinToBot(string orgId, string mannequinId, string targetBotId)
+    {
+        var url = $"{_apiUrl}/graphql";
+        var mutation = "mutation($orgId: ID!,$sourceId: ID!,$targetId: ID!)";
+        var gql = @"
+	            reattributeMannequinToBot(
+		            input: { ownerId: $orgId, sourceId: $sourceId, targetId: $targetId }
+	            ) {
+		            source {
+			            ... on Mannequin {
+				            id
+				            login
+			            }
+		            }
+
+		            target {
+			            ... on Bot {
+				            id
+				            login
+			            }
+		            }
+	            }";
+
+        var payload = new
+        {
+            query = $"{mutation} {{ {gql} }}",
+            variables = new { orgId, sourceId = mannequinId, targetId = targetBotId }
+        };
+
+        try
+        {
+            return await _retryPolicy.Retry(async () =>
+            {
+                var data = await _client.PostGraphQLAsync(url, payload);
+                return data.ToObject<ReattributeMannequinToBotResult>();
+            });
+        }
+        catch (OctoshiftCliException ex) when (ex.Message.Contains("Field 'reattributeMannequinToBot' doesn't exist on type 'Mutation'"))
+        {
+            throw new OctoshiftCliException("Reclaiming mannequins to a GitHub App / bot account is not enabled for your GitHub organization. For more details, contact GitHub Support.", ex);
         }
     }
 
@@ -1118,7 +1186,7 @@ public class GithubApi
                 )";
         var gql = @"
                 abortRepositoryMigration(
-                    input: { 
+                    input: {
                         migrationId: $migrationId
                     })
                    { success }";

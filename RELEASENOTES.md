@@ -1,1 +1,1 @@
-
+- Added support for reclaiming mannequins to a customer-owned GitHub App / bot account. A target login ending in `[bot]` is resolved to the app's node id via the REST users endpoint and reattributed with the new `reattributeMannequinToBot` GraphQL mutation. This is gated behind the `mannequin_claiming_bot` GitHub feature and requires the target app to be owned or administered by the acting organization admin.

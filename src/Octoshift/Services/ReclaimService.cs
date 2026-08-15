@@ -98,11 +98,28 @@ public class ReclaimService
             throw new OctoshiftCliException($"User {mannequinUser} is already mapped to a user. Use the force option if you want to reclaim the mannequin again.");
         }
 
-        var targetUserId = await _githubApi.GetUserId(targetUser);
+        var isBot = IsBotLogin(targetUser);
+
+        var targetUserId = isBot
+            ? await _githubApi.GetBotId(targetUser)
+            : await _githubApi.GetUserId(targetUser);
 
         var success = true;
 
-        if (skipInvitation)
+        if (isBot)
+        {
+            // Bots cannot accept an emailed invitation; reclaiming to a bot always auto-accepts.
+            foreach (var mannequin in mannequins.GetUniqueUsers())
+            {
+                var result = await _githubApi.ReattributeMannequinToBot(githubOrgId, mannequin.Id, targetUserId);
+
+                if (!HandleBotReclaimationResult(mannequin.Login, targetUser, mannequin, targetUserId, result))
+                {
+                    throw new OctoshiftCliException("Failed to reclaim mannequin.");
+                }
+            }
+        }
+        else if (skipInvitation)
         {
             foreach (var mannequin in mannequins.GetUniqueUsers())
             {
@@ -202,19 +219,32 @@ public class ReclaimService
                 continue;
             }
 
+            var isBot = IsBotLogin(mannequin.MappedUser.Login);
+
             string claimantId;
 
             try
             {
-                claimantId = await _githubApi.GetUserId(mannequin.MappedUser.Login);
+                claimantId = isBot
+                    ? await _githubApi.GetBotId(mannequin.MappedUser.Login)
+                    : await _githubApi.GetUserId(mannequin.MappedUser.Login);
             }
-            catch (OctoshiftCliException ex) when (ex.Message.Contains("Could not resolve to a User with the login"))
+            catch (OctoshiftCliException ex) when (ex.Message.Contains("Could not resolve to a User with the login") || ex.Message.Contains("Could not resolve to a bot account with the login"))
             {
                 _log.LogWarning($"Claimant \"{mannequin.MappedUser.Login}\" not found. Will ignore it.");
                 continue;
             }
 
-            if (skipInvitation)
+            if (isBot)
+            {
+                var result = await _githubApi.ReattributeMannequinToBot(githubOrgId, mannequin.Id, claimantId);
+
+                if (!HandleBotReclaimationResult(mannequin.Login, mannequin.MappedUser.Login, mannequin, claimantId, result))
+                {
+                    return;
+                }
+            }
+            else if (skipInvitation)
             {
                 var result = await _githubApi.ReclaimMannequinSkipInvitation(githubOrgId, mannequin.Id, claimantId);
 
@@ -295,6 +325,30 @@ public class ReclaimService
         _log.LogInformation($"Successfully reclaimed content belonging to mannequin {mannequinUser} ({mannequin.Id}) to {targetUser}");
 
         return true; // Indiciates we should continue onto the next mannequin
+    }
+
+    private static bool IsBotLogin(string login) =>
+        login != null && login.EndsWith("[bot]", StringComparison.OrdinalIgnoreCase);
+
+    private bool HandleBotReclaimationResult(string mannequinUser, string targetUser, Mannequin mannequin, string targetBotId, ReattributeMannequinToBotResult result)
+    {
+        if (result.Errors != null)
+        {
+            _log.LogWarning($"Failed to reattribute content belonging to mannequin {mannequinUser} ({mannequin.Id}) to {targetUser}: {result.Errors[0].Message}");
+            return true;
+        }
+
+        if (result.Data.ReattributeMannequinToBot is null ||
+            result.Data.ReattributeMannequinToBot.Source.Id != mannequin.Id ||
+            result.Data.ReattributeMannequinToBot.Target.Id != targetBotId)
+        {
+            _log.LogWarning($"Failed to reattribute content belonging to mannequin {mannequinUser} ({mannequin.Id}) to {targetUser}");
+            return true;
+        }
+
+        _log.LogInformation($"Successfully reclaimed content belonging to mannequin {mannequinUser} ({mannequin.Id}) to {targetUser}");
+
+        return true;
     }
 
     private (string MannequinUser, string MannequinId, string TargetUser) ParseLine(string line)
