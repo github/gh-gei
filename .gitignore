@@ -364,6 +364,9 @@ MigrationBackup/
 /gei
 /ado2gh
 /bbs2gh
+cmd/gei/gei
+cmd/ado2gh/ado2gh
+cmd/bbs2gh/bbs2gh
 
 # Go coverage reports
 coverage/
