@@ -1,0 +1,16 @@
+{
+  "value": [
+    {
+      "id": "project-123",
+      "name": "TestProject1"
+    },
+    {
+      "id": "project-456",
+      "name": "TestProject2"
+    },
+    {
+      "id": "project-789",
+      "name": "TestProject3"
+    }
+  ]
+}

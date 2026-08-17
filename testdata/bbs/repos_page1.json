@@ -1,0 +1,14 @@
+{
+  "values": [
+    {
+      "id": 101,
+      "slug": "repo-one",
+      "name": "Repository One"
+    }
+  ],
+  "size": 1,
+  "isLastPage": false,
+  "start": 0,
+  "limit": 1,
+  "nextPageStart": 1
+}
