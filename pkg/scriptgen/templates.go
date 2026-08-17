@@ -71,10 +71,43 @@ if (-not $env:AWS_SECRET_ACCESS_KEY) {
 	// ValidateADOPAT validates that ADO_PAT is set (for ado2gh)
 	ValidateADOPAT = `
 if (-not $env:ADO_PAT) {
-    Write-Error "ADO_PAT environment variable must be set to a valid Azure DevOps Personal Access Token."
+    Write-Error "ADO_PAT environment variable must be set to a valid Azure DevOps Personal Access Token with the appropriate scopes. For more information see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer#personal-access-tokens-for-azure-devops"
     exit 1
 } else {
     Write-Host "ADO_PAT environment variable is set and will be used to authenticate to Azure DevOps."
+}`
+
+	// ValidateADOEnvVars is the combined ADO_PAT + GH_PAT validation block
+	// used by ado2gh generate-script (matches the C# VALIDATE_ENV_VARS constant).
+	ValidateADOEnvVars = `
+if (-not $env:ADO_PAT) {
+    Write-Error "ADO_PAT environment variable must be set to a valid Azure DevOps Personal Access Token with the appropriate scopes. For more information see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer#personal-access-tokens-for-azure-devops"
+    exit 1
+} else {
+    Write-Host "ADO_PAT environment variable is set and will be used to authenticate to Azure DevOps."
+}
+
+if (-not $env:GH_PAT) {
+    Write-Error "GH_PAT environment variable must be set to a valid GitHub Personal Access Token with the appropriate scopes. For more information see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer#creating-a-personal-access-token-for-github-enterprise-importer"
+    exit 1
+} else {
+    Write-Host "GH_PAT environment variable is set and will be used to authenticate to GitHub."
+}`
+
+	// ExecBatchFunctionBlock defines the ExecBatch helper for parallel ado2gh scripts
+	ExecBatchFunctionBlock = `
+function ExecBatch {
+    param (
+        [scriptblock[]]$ScriptBlocks
+    )
+    $Global:LastBatchFailures = 0
+    foreach ($ScriptBlock in $ScriptBlocks)
+    {
+        & @ScriptBlock
+        if ($lastexitcode -ne 0) {
+            $Global:LastBatchFailures++
+        }
+    }
 }`
 
 	// ValidateBBSUsername validates that BBS_USERNAME is set (for bbs2gh)

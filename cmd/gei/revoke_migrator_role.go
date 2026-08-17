@@ -4,15 +4,13 @@ import (
 	"context"
 	"strings"
 
+	"github.com/github/gh-gei/internal/sharedcmd"
 	"github.com/github/gh-gei/pkg/logger"
 	"github.com/spf13/cobra"
 )
 
 // migratorRoleRevoker is the consumer-defined interface for revoking migrator roles.
-type migratorRoleRevoker interface {
-	GetOrganizationId(ctx context.Context, org string) (string, error)
-	RevokeMigratorRole(ctx context.Context, orgID, actor, actorType string) (bool, error)
-}
+type migratorRoleRevoker = sharedcmd.MigratorRoleRevoker
 
 // newRevokeMigratorRoleCmd creates the revoke-migrator-role cobra command.
 func newRevokeMigratorRoleCmd(gh migratorRoleRevoker, log *logger.Logger) *cobra.Command {
@@ -27,11 +25,13 @@ func newRevokeMigratorRoleCmd(gh migratorRoleRevoker, log *logger.Logger) *cobra
 		Short: "Revokes the migrator role from a user or team for a GitHub organization",
 		Long:  "Revokes the migrator role from a user or team for a GitHub organization.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := validateMigratorRoleArgs(githubOrg, actor, actorType, cmd); err != nil {
+			ghesAPIURL, _ := cmd.Flags().GetString("ghes-api-url")
+			targetAPIURL, _ := cmd.Flags().GetString("target-api-url")
+			if err := sharedcmd.ValidateMigratorRoleArgs(githubOrg, actor, actorType, ghesAPIURL, targetAPIURL); err != nil {
 				return err
 			}
 			actorType = strings.ToUpper(actorType)
-			return runRevokeMigratorRole(cmd.Context(), gh, log, githubOrg, actor, actorType)
+			return sharedcmd.RunRevokeMigratorRole(cmd.Context(), gh, log, githubOrg, actor, actorType)
 		},
 	}
 
@@ -45,24 +45,7 @@ func newRevokeMigratorRoleCmd(gh migratorRoleRevoker, log *logger.Logger) *cobra
 	return cmd
 }
 
+// runRevokeMigratorRole delegates to sharedcmd for backward compat with tests.
 func runRevokeMigratorRole(ctx context.Context, gh migratorRoleRevoker, log *logger.Logger, githubOrg, actor, actorType string) error {
-	log.Info("Revoking migrator role ...")
-
-	orgID, err := gh.GetOrganizationId(ctx, githubOrg)
-	if err != nil {
-		return err
-	}
-
-	success, err := gh.RevokeMigratorRole(ctx, orgID, actor, actorType)
-	if err != nil {
-		return err
-	}
-
-	if success {
-		log.Success("Migrator role successfully revoked for the %s \"%s\"", actorType, actor)
-	} else {
-		log.Errorf("Migrator role couldn't be revoked for the %s \"%s\"", actorType, actor)
-	}
-
-	return nil
+	return sharedcmd.RunRevokeMigratorRole(ctx, gh, log, githubOrg, actor, actorType)
 }

@@ -26,6 +26,7 @@ This is a C# based repository that produces several CLIs that are used by custom
 - `cmd/gei/`, `cmd/ado2gh/`, `cmd/bbs2gh/`: Go CLI entry points
 - `pkg/scriptgen/`: PowerShell script generation (ported from C#)
 - `pkg/github/`: GitHub API client (REST + GraphQL)
+- `pkg/ado/`: Azure DevOps API client
 - `pkg/storage/`: Cloud storage clients (Azure Blob, AWS S3, GitHub-owned multipart)
 - `pkg/archive/`: Archive upload orchestration
 - `pkg/logger/`, `pkg/env/`: Shared Go packages
@@ -42,24 +43,24 @@ This is a C# based repository that produces several CLIs that are used by custom
 
 ## Go Port Sync Requirements
 
-**Current state:** The `gei` CLI is fully ported to Go, including `migrate-repo`, `migrate-org`, and all alert migration commands. The GitHub API client, shared commands, and cloud storage clients are also ported.
+**Current state:** `gei` and `ado2gh` are fully ported to Go. This includes the ADO API client, all ado2gh commands (migrate-repo, generate-script, inventory-report, etc.), and all gei commands. The GitHub API client, shared commands, and cloud storage clients are also ported.
 
 **When making C# changes, check if the Go port needs updating:**
 
 | C# Area | Go Equivalent | Sync Required? |
 |----------|--------------|----------------|
 | `src/gei/Commands/` (any command) | `cmd/gei/` | **Yes** — all gei commands are ported |
+| `src/ado2gh/Commands/` (any command) | `cmd/ado2gh/` | **Yes** — all ado2gh commands are ported |
 | `GenerateScriptCommandHandler.cs` (any CLI) | `cmd/{cli}/generate_script.go` + `pkg/scriptgen/generator.go` | **Yes** — scripts must be identical |
 | `src/Octoshift/Services/GithubApi.cs` | `pkg/github/client.go` | **Yes** — API behavior must match |
 | `src/Octoshift/Services/GithubClient.cs` | `pkg/github/client.go` | **Yes** — HTTP/auth behavior must match |
+| `src/Octoshift/Services/AdoApi.cs` | `pkg/ado/client.go` | **Yes** — API behavior must match |
 | Shared commands in `src/Octoshift/Commands/` | `internal/sharedcmd/` | **Yes** — command behavior must match |
 | `src/Octoshift/Services/AzureApi.cs` | `pkg/storage/azure/client.go` | **Yes** — upload behavior must match |
 | `src/Octoshift/Services/AwsApi.cs` | `pkg/storage/aws/client.go` | **Yes** — upload behavior must match |
 | `src/Octoshift/Services/HttpDownloadService.cs` | `pkg/storage/ghowned/client.go` | **Yes** — multipart upload must match |
 | `src/Octoshift/Services/ArchiveUploader.cs` | `pkg/archive/uploader.go` | **Yes** — orchestration must match |
-| ADO API client (`src/Octoshift/Services/AdoApi.cs`) | Not yet ported | No |
 | BBS API client (`src/Octoshift/Services/BbsApi.cs`) | Not yet ported | No |
-| `ado2gh` commands | Not yet ported | No |
 | `bbs2gh` commands | Not yet ported | No |
 
 **Testing:** Run `go test ./...` to verify Go changes. Run `golangci-lint run` to check for lint issues.
