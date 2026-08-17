@@ -25,8 +25,10 @@ This is a C# based repository that produces several CLIs that are used by custom
 ### Go Port Directories
 - `cmd/gei/`, `cmd/ado2gh/`, `cmd/bbs2gh/`: Go CLI entry points
 - `pkg/scriptgen/`: PowerShell script generation (ported from C#)
+- `pkg/github/`: GitHub API client (REST + GraphQL)
 - `pkg/logger/`, `pkg/env/`: Shared Go packages
 - `internal/cmdutil/`: Command utility helpers
+- `internal/sharedcmd/`: Shared commands (download-logs, version, wait-for-migration, etc.)
 
 ## Key Guidelines
 1. Follow C# best practices and idiomatic patterns
@@ -38,14 +40,18 @@ This is a C# based repository that produces several CLIs that are used by custom
 
 ## Go Port Sync Requirements
 
-**Current state:** The Go port has the base framework and `generate-script` commands for all three CLIs. Script generation has full behavioral parity with C#.
+**Current state:** The Go port has `generate-script` commands, the GitHub API client, and shared commands (download-logs, version, wait-for-migration, grant-migrator-role, revoke-migrator-role, create-team, add-team-members, lock-ado-repo, disable-ado-repo, configure-autolink).
 
-**When making C# changes to script generation logic:**
-- If you modify `GenerateScriptCommandHandler.cs` in any of the three CLIs, you MUST make the corresponding change in Go:
-  - `src/gei/Commands/GenerateScript/` → `cmd/gei/generate_script.go` + `pkg/scriptgen/generator.go`
-  - `src/ado2gh/Commands/GenerateScript/` → `cmd/ado2gh/generate_script.go`
-  - `src/bbs2gh/Commands/GenerateScript/` → `cmd/bbs2gh/generate_script.go`
-- Run `go test ./...` to verify the Go changes compile and tests pass
-- Generated PowerShell scripts must be identical between C# and Go
+**When making C# changes, check if the Go port needs updating:**
 
-**When making other C# changes:** No Go sync required yet. The remaining commands are not yet ported.
+| C# Area | Go Equivalent | Sync Required? |
+|----------|--------------|----------------|
+| `GenerateScriptCommandHandler.cs` (any CLI) | `cmd/{cli}/generate_script.go` + `pkg/scriptgen/generator.go` | **Yes** — scripts must be identical |
+| `src/Octoshift/Services/GithubApi.cs` | `pkg/github/client.go` | **Yes** — API behavior must match |
+| `src/Octoshift/Services/GithubClient.cs` | `pkg/github/client.go` | **Yes** — HTTP/auth behavior must match |
+| Shared commands in `src/Octoshift/Commands/` | `internal/sharedcmd/` | **Yes** — command behavior must match |
+| `src/gei/Commands/DownloadLogs/` | `cmd/gei/download_logs.go` | **Yes** |
+| ADO/BBS API clients or commands | Not yet ported | No |
+| `migrate-repo` commands | Not yet ported | No |
+
+**Testing:** Run `go test ./...` to verify Go changes. Run `golangci-lint run` to check for lint issues.

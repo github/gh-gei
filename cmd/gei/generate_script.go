@@ -10,7 +10,6 @@ import (
 
 	"github.com/github/gh-gei/pkg/env"
 	"github.com/github/gh-gei/pkg/github"
-	"github.com/github/gh-gei/pkg/http"
 	"github.com/github/gh-gei/pkg/logger"
 	"github.com/github/gh-gei/pkg/scriptgen"
 	"github.com/spf13/cobra"
@@ -104,16 +103,15 @@ func runGenerateScript(ctx context.Context, opts *generateScriptOptions, log *lo
 		sourceAPIURL = "https://api.github.com"
 	}
 
-	httpCfg := http.DefaultConfig()
-	httpCfg.NoSSLVerify = opts.noSSLVerify
-	httpClient := http.NewClient(httpCfg, log)
-
-	githubCfg := github.Config{
-		APIURL:      sourceAPIURL,
-		PAT:         githubPAT,
-		NoSSLVerify: opts.noSSLVerify,
+	clientOpts := []github.Option{
+		github.WithAPIURL(sourceAPIURL),
+		github.WithLogger(log),
+		github.WithVersion(version),
 	}
-	githubClient := github.NewClient(githubCfg, httpClient, log)
+	if opts.noSSLVerify {
+		clientOpts = append(clientOpts, github.WithNoSSLVerify())
+	}
+	githubClient := github.NewClient(githubPAT, clientOpts...)
 
 	// Get repositories from source org
 	log.Info("GITHUB ORG: %s", opts.githubSourceOrg)

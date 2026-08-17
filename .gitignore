@@ -360,6 +360,11 @@ MigrationBackup/
 /src/OctoshiftCLI.IntegrationTests/Properties/launchSettings.json
 /src/ado2gh/Properties/launchSettings.json
 
+# Go binaries (built from cmd/)
+/gei
+/ado2gh
+/bbs2gh
+
 # Go coverage reports
 coverage/
 *.out
