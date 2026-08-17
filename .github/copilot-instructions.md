@@ -26,6 +26,8 @@ This is a C# based repository that produces several CLIs that are used by custom
 - `cmd/gei/`, `cmd/ado2gh/`, `cmd/bbs2gh/`: Go CLI entry points
 - `pkg/scriptgen/`: PowerShell script generation (ported from C#)
 - `pkg/github/`: GitHub API client (REST + GraphQL)
+- `pkg/storage/`: Cloud storage clients (Azure Blob, AWS S3, GitHub-owned multipart)
+- `pkg/archive/`: Archive upload orchestration
 - `pkg/logger/`, `pkg/env/`: Shared Go packages
 - `internal/cmdutil/`: Command utility helpers
 - `internal/sharedcmd/`: Shared commands (download-logs, version, wait-for-migration, etc.)
@@ -40,7 +42,7 @@ This is a C# based repository that produces several CLIs that are used by custom
 
 ## Go Port Sync Requirements
 
-**Current state:** The Go port has `generate-script` commands, the GitHub API client, and shared commands (download-logs, version, wait-for-migration, grant-migrator-role, revoke-migrator-role, create-team, add-team-members, lock-ado-repo, disable-ado-repo, configure-autolink).
+**Current state:** The Go port has `generate-script` commands, the GitHub API client, shared commands, and cloud storage clients (Azure Blob, AWS S3, GitHub-owned multipart upload). Archive upload orchestration and GHES version checking are also ported.
 
 **When making C# changes, check if the Go port needs updating:**
 
@@ -50,7 +52,10 @@ This is a C# based repository that produces several CLIs that are used by custom
 | `src/Octoshift/Services/GithubApi.cs` | `pkg/github/client.go` | **Yes** — API behavior must match |
 | `src/Octoshift/Services/GithubClient.cs` | `pkg/github/client.go` | **Yes** — HTTP/auth behavior must match |
 | Shared commands in `src/Octoshift/Commands/` | `internal/sharedcmd/` | **Yes** — command behavior must match |
-| `src/gei/Commands/DownloadLogs/` | `cmd/gei/download_logs.go` | **Yes** |
+| `src/Octoshift/Services/AzureApi.cs` | `pkg/storage/azure/client.go` | **Yes** — upload behavior must match |
+| `src/Octoshift/Services/AwsApi.cs` | `pkg/storage/aws/client.go` | **Yes** — upload behavior must match |
+| `src/Octoshift/Services/HttpDownloadService.cs` | `pkg/storage/ghowned/client.go` | **Yes** — multipart upload must match |
+| `src/Octoshift/Services/ArchiveUploader.cs` | `pkg/archive/uploader.go` | **Yes** — orchestration must match |
 | ADO/BBS API clients or commands | Not yet ported | No |
 | `migrate-repo` commands | Not yet ported | No |
 
