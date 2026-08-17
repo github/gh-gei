@@ -57,7 +57,7 @@ func TestUpload_SmallArchive_SinglePost(t *testing.T) {
 		receivedPath = r.URL.Path + "?" + r.URL.RawQuery
 		receivedBody, _ = io.ReadAll(r.Body)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"uri": expectedURI})
+		json.NewEncoder(w).Encode(map[string]interface{}{"uri": expectedURI, "size": 1024})
 	}))
 	defer srv.Close()
 
@@ -80,7 +80,7 @@ func TestUpload_SmallArchive_ExactlyAtLimit(t *testing.T) {
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"uri": expectedURI})
+		json.NewEncoder(w).Encode(map[string]interface{}{"uri": expectedURI, "size": 1024})
 	}))
 	defer srv.Close()
 
@@ -138,7 +138,7 @@ func TestUpload_LargeArchive_MultipartUpload(t *testing.T) {
 		}
 		if r.Method == http.MethodPut && path == "/upload/complete" {
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]string{"uri": expectedURI})
+			json.NewEncoder(w).Encode(map[string]interface{}{"uri": expectedURI, "size": 1024})
 			return
 		}
 		w.WriteHeader(http.StatusNotFound)
@@ -258,7 +258,7 @@ func TestUpload_LargeArchive_RelativeLocationHeader(t *testing.T) {
 		}
 		if r.Method == http.MethodPut && r.URL.Path == "/relative/complete" {
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]string{"uri": expectedURI})
+			json.NewEncoder(w).Encode(map[string]interface{}{"uri": expectedURI, "size": 1024})
 			return
 		}
 		w.WriteHeader(http.StatusNotFound)
@@ -317,7 +317,7 @@ func TestUpload_WithLogger(t *testing.T) {
 		}
 		if r.Method == http.MethodPut && r.URL.Path == testUploadDone {
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]string{"uri": expectedURI})
+			json.NewEncoder(w).Encode(map[string]interface{}{"uri": expectedURI, "size": 1024})
 			return
 		}
 	}))
@@ -395,7 +395,7 @@ func TestUpload_PatchContentType(t *testing.T) {
 			}
 		case http.MethodPut:
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]string{"uri": "gei://test"})
+			json.NewEncoder(w).Encode(map[string]interface{}{"uri": "gei://test", "size": 1024})
 		}
 	}))
 	defer srv.Close()

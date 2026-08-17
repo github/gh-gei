@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -19,6 +21,7 @@ import (
 	"github.com/github/gh-gei/pkg/migration"
 	awsStorage "github.com/github/gh-gei/pkg/storage/aws"
 	azureStorage "github.com/github/gh-gei/pkg/storage/azure"
+	"github.com/github/gh-gei/pkg/storage/ghowned"
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 )
@@ -127,6 +130,7 @@ type bbsMigrateRepoArgs struct {
 	awsRegion                    string
 	keepArchive                  bool
 	targetAPIURL                 string
+	targetUploadsURL             string
 	queueOnly                    bool
 	useGithubStorage             bool
 }
@@ -393,7 +397,7 @@ func validateBbsUploadOptions(a *bbsMigrateRepoArgs, envProv bbsMigrateRepoEnvPr
 	shouldUseAzure := resolveBbsAzureConnectionString(a.azureStorageConnectionString, envProv) != ""
 	shouldUseAWS := a.awsBucketName != ""
 
-	if err := validateBbsUploadConflicts(a, shouldUseAzure, shouldUseAWS, envProv); err != nil {
+	if err := validateBbsUploadConflicts(a, shouldUseAzure, shouldUseAWS); err != nil {
 		return err
 	}
 
@@ -404,8 +408,8 @@ func validateBbsUploadOptions(a *bbsMigrateRepoArgs, envProv bbsMigrateRepoEnvPr
 	return nil
 }
 
-func validateBbsUploadConflicts(a *bbsMigrateRepoArgs, shouldUseAzure, shouldUseAWS bool, envProv bbsMigrateRepoEnvProvider) error {
-	if !shouldUseAWS && hasAWSSubOptions(a, envProv) {
+func validateBbsUploadConflicts(a *bbsMigrateRepoArgs, shouldUseAzure, shouldUseAWS bool) error {
+	if !shouldUseAWS && hasAWSSubOptions(a) {
 		return cmdutil.NewUserError("The AWS S3 bucket name must be provided with --aws-bucket-name if other AWS S3 upload options are set.")
 	}
 	if a.useGithubStorage && shouldUseAWS {
@@ -427,11 +431,11 @@ func validateBbsUploadConflicts(a *bbsMigrateRepoArgs, shouldUseAzure, shouldUse
 	return nil
 }
 
-func hasAWSSubOptions(a *bbsMigrateRepoArgs, envProv bbsMigrateRepoEnvProvider) bool {
-	return a.awsAccessKey != "" || resolveBbsAWSAccessKey("", envProv) != "" ||
-		a.awsSecretKey != "" || resolveBbsAWSSecretKey("", envProv) != "" ||
-		a.awsSessionToken != "" || envProv.AWSSessionToken() != "" ||
-		a.awsRegion != "" || resolveBbsAWSRegion("", envProv) != ""
+func hasAWSSubOptions(a *bbsMigrateRepoArgs) bool {
+	return a.awsAccessKey != "" ||
+		a.awsSecretKey != "" ||
+		a.awsSessionToken != "" ||
+		a.awsRegion != ""
 }
 
 func validateBbsAWSCredentials(a *bbsMigrateRepoArgs, envProv bbsMigrateRepoEnvProvider) error {
@@ -660,13 +664,13 @@ func bbsImportArchive(
 	if migration.IsRepoFailed(m.State) {
 		log.Errorf("Migration Failed. Migration ID: %s", migrationID)
 		sharedcmd.LogWarningsCount(log, m.WarningsCount)
-		log.Info("Migration log available at %s or by running `gh bbs2gh download-logs --github-target-org %s --target-repo %s`", m.MigrationLogURL, a.githubOrg, a.githubRepo)
+		log.Info("Migration log available at %s or by running `gh bbs2gh download-logs --github-org %s --github-repo %s`", m.MigrationLogURL, a.githubOrg, a.githubRepo)
 		return cmdutil.NewUserError(m.FailureReason)
 	}
 
 	log.Success("Migration completed (ID: %s)! State: %s", migrationID, m.State)
 	sharedcmd.LogWarningsCount(log, m.WarningsCount)
-	log.Info("Migration log available at %s or by running `gh bbs2gh download-logs --github-target-org %s --target-repo %s`", m.MigrationLogURL, a.githubOrg, a.githubRepo)
+	log.Info("Migration log available at %s or by running `gh bbs2gh download-logs --github-org %s --github-repo %s`", m.MigrationLogURL, a.githubOrg, a.githubRepo)
 	return nil
 }
 
@@ -689,8 +693,7 @@ func pollBbsExport(ctx context.Context, bbsAPI bbsMigrateRepoBbsAPI, exportID in
 			return nil
 		}
 
-		if upper != "INITIALISING" && upper != "IN_PROGRESS" { //nolint:misspell // BBS API uses British spelling
-			// Error state
+		if upper == "FAILED" || upper == "ABORTED" {
 			return cmdutil.NewUserErrorf("BBS export failed with state: %s - %s", exportState, message)
 		}
 
@@ -788,6 +791,17 @@ type awsLogAdapter struct {
 
 func (a *awsLogAdapter) LogInfo(format string, args ...interface{}) { a.log.Info(format, args...) }
 
+// bbsTokenRoundTripper attaches a Bearer token to every outgoing request.
+type bbsTokenRoundTripper struct {
+	token string
+}
+
+func (t *bbsTokenRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	req = req.Clone(req.Context())
+	req.Header.Set("Authorization", "Bearer "+t.token)
+	return http.DefaultTransport.RoundTrip(req)
+}
+
 // ---------------------------------------------------------------------------
 // Production command constructor (used by main.go)
 // ---------------------------------------------------------------------------
@@ -859,6 +873,7 @@ func newMigrateRepoCmdLive() *cobra.Command {
 	cmd.Flags().StringVar(&a.githubPAT, "github-pat", "", "Personal access token for the target GitHub instance")
 	cmd.Flags().StringVar(&a.targetRepoVisibility, "target-repo-visibility", "", "Target repository visibility (public, private, internal)")
 	cmd.Flags().StringVar(&a.targetAPIURL, "target-api-url", bbsDefaultTargetAPIURL, "API URL for the target GitHub instance")
+	cmd.Flags().StringVar(&a.targetUploadsURL, "target-uploads-url", "", "Uploads URL for the target GitHub instance")
 
 	// Upload storage flags
 	cmd.Flags().StringVar(&a.azureStorageConnectionString, "azure-storage-connection-string", "", "Azure Blob Storage connection string")
@@ -872,6 +887,9 @@ func newMigrateRepoCmdLive() *cobra.Command {
 	cmd.Flags().BoolVar(&a.keepArchive, "keep-archive", false, "Keep downloaded archive files after upload")
 	cmd.Flags().BoolVar(&a.queueOnly, "queue-only", false, "Queue the migration without waiting for completion")
 	cmd.Flags().BoolVar(&a.useGithubStorage, "use-github-storage", false, "Use GitHub-owned storage for archives")
+
+	// Hidden flags
+	_ = cmd.Flags().MarkHidden("target-uploads-url")
 
 	return cmd
 }
@@ -970,7 +988,42 @@ func buildBbsArchiveUploader(a *bbsMigrateRepoArgs, envProv bbsMigrateRepoEnvPro
 	}
 
 	if a.useGithubStorage {
-		log.Warning("GitHub-owned storage is not yet fully implemented in the Go port")
+		uploadsURL := a.targetUploadsURL
+		if uploadsURL == "" {
+			uploadsURL = "https://uploads.github.com"
+		}
+
+		// Resolve target token for the ghowned HTTP client
+		targetToken := resolveBbsTargetToken(a.githubPAT, envProv)
+
+		ghHTTPClient := &http.Client{
+			Transport: &bbsTokenRoundTripper{token: targetToken},
+		}
+
+		var ghOwnedOpts []ghowned.Option
+		ghOwnedOpts = append(ghOwnedOpts, ghowned.WithLogger(log))
+
+		envReal := env.New()
+		if mebiStr := envReal.GitHubOwnedStorageMultipartMebibytes(); mebiStr != "" {
+			if mebi, err := strconv.ParseInt(mebiStr, 10, 64); err == nil {
+				ghOwnedOpts = append(ghOwnedOpts, ghowned.WithPartSizeMebibytes(mebi))
+			}
+		}
+
+		ghOwnedClient := ghowned.NewClient(uploadsURL, ghHTTPClient, ghOwnedOpts...)
+
+		// Build a GitHub client for org ID resolution
+		tgtAPI := a.targetAPIURL
+		if tgtAPI == "" {
+			tgtAPI = bbsDefaultTargetAPIURL
+		}
+		targetGH := github.NewClient(targetToken,
+			github.WithAPIURL(tgtAPI),
+			github.WithLogger(log),
+			github.WithVersion(version),
+		)
+
+		uploaderOpts = append(uploaderOpts, archive.WithGitHub(ghOwnedClient, targetGH))
 	}
 
 	return archive.NewUploader(uploaderOpts...), nil

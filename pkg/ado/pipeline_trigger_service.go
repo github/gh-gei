@@ -341,7 +341,7 @@ func (s *PipelineTriggerService) createBranchPolicyRequiredTriggers(originalTrig
 }
 
 func (s *PipelineTriggerService) createStandardTriggers(originalTriggers json.RawMessage) interface{} {
-	if originalTriggers != nil && string(originalTriggers) != "null" {
+	if originalTriggers != nil && string(originalTriggers) != nullStr {
 		hadPullRequestTrigger := s.hasPullRequestTrigger(originalTriggers)
 		originalCiReport := s.getOriginalReportBuildStatus(originalTriggers, "continuousIntegration")
 		originalPrReport := s.getOriginalReportBuildStatus(originalTriggers, "pullRequest")
@@ -412,7 +412,7 @@ func (s *PipelineTriggerService) hasPullRequestTrigger(originalTriggers json.Raw
 }
 
 func (s *PipelineTriggerService) getOriginalReportBuildStatus(originalTriggers json.RawMessage, triggerType string) bool {
-	if originalTriggers == nil || string(originalTriggers) == "null" {
+	if originalTriggers == nil || string(originalTriggers) == nullStr {
 		return true // Default to true when no original triggers exist
 	}
 

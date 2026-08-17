@@ -16,8 +16,8 @@ type TeamProject struct {
 type Repository struct {
 	ID         string `json:"id"`
 	Name       string `json:"name"`
-	Size       uint64 `json:"size,string"` // ADO returns size as string in paginated response
-	IsDisabled bool   `json:"isDisabled,string"`
+	Size       uint64 `json:"size"`
+	IsDisabled bool   `json:"isDisabled"`
 }
 
 // BoardsConnection holds an Azure Boards ↔ GitHub external connection.

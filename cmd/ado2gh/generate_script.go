@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/github/gh-gei/pkg/ado"
+	"github.com/github/gh-gei/pkg/env"
 	"github.com/github/gh-gei/pkg/logger"
 	"github.com/github/gh-gei/pkg/scriptgen"
 	"github.com/spf13/cobra"
@@ -43,6 +44,7 @@ type generateScriptArgs struct {
 	githubOrg             string
 	adoOrg                string
 	adoTeamProject        string
+	adoPAT                string
 	output                string
 	sequential            bool
 	adoServerURL          string
@@ -132,11 +134,60 @@ func newGenerateScriptCmd(
 // ---------------------------------------------------------------------------
 
 func newGenerateScriptCmdLive() *cobra.Command {
-	// TODO: wire up real ADO client and inspector
-	return &cobra.Command{
+	var a generateScriptArgs
+
+	cmd := &cobra.Command{
 		Use:   "generate-script",
 		Short: "Generates a migration script",
+		Long:  "Generates a PowerShell script that automates an Azure DevOps to GitHub migration.",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			log := getLogger(cmd)
+			envProv := env.New()
+
+			adoPAT := a.adoPAT
+			if adoPAT == "" {
+				adoPAT = envProv.ADOPAT()
+			}
+
+			adoServerURL := a.adoServerURL
+			if adoServerURL == "" {
+				adoServerURL = "https://dev.azure.com"
+			}
+
+			client := ado.NewClient(adoServerURL, adoPAT, log)
+			ins := ado.NewInspector(log, client)
+			ins.OrgFilter = a.adoOrg
+			ins.TeamProjectFilter = a.adoTeamProject
+
+			return runGenerateScript(cmd.Context(), client, ins, log, a, defaultWriteToFile)
+		},
 	}
+
+	// Required flags
+	cmd.Flags().StringVar(&a.githubOrg, "github-org", "", "Target GitHub organization name (REQUIRED)")
+
+	// Optional flags
+	cmd.Flags().StringVar(&a.adoOrg, "ado-org", "", "Azure DevOps organization name")
+	cmd.Flags().StringVar(&a.adoTeamProject, "ado-team-project", "", "Azure DevOps team project name")
+	cmd.Flags().StringVar(&a.output, "output", "./migrate.ps1", "Output file path for the migration script")
+	cmd.Flags().BoolVar(&a.sequential, "sequential", false, "Generate a sequential (non-parallel) script")
+	cmd.Flags().StringVar(&a.adoServerURL, "ado-server-url", "", "Azure DevOps Server URL")
+	cmd.Flags().StringVar(&a.targetAPIURL, "target-api-url", "", "API URL for the target GitHub instance")
+	cmd.Flags().BoolVar(&a.createTeams, "create-teams", false, "Include team creation and assignment scripts")
+	cmd.Flags().BoolVar(&a.linkIdpGroups, "link-idp-groups", false, "Link IdP groups to teams")
+	cmd.Flags().BoolVar(&a.lockAdoRepos, "lock-ado-repos", false, "Lock ADO repos before migration")
+	cmd.Flags().BoolVar(&a.disableAdoRepos, "disable-ado-repos", false, "Disable ADO repos after migration")
+	cmd.Flags().BoolVar(&a.rewirePipelines, "rewire-pipelines", false, "Rewire Azure Pipelines to GitHub repos")
+	cmd.Flags().BoolVar(&a.downloadMigrationLogs, "download-migration-logs", false, "Download migration logs after migration")
+	cmd.Flags().BoolVar(&a.all, "all", false, "Enable all optional migration steps")
+	cmd.Flags().StringVar(&a.repoList, "repo-list", "", "Path to a CSV file with repos to migrate")
+	cmd.Flags().StringVar(&a.adoPAT, "ado-pat", "", "")
+
+	// Hidden flags
+	_ = cmd.Flags().MarkHidden("ado-server-url")
+	_ = cmd.Flags().MarkHidden("ado-pat")
+
+	return cmd
 }
 
 // ---------------------------------------------------------------------------
@@ -749,6 +800,6 @@ func wrap(script string) string {
 }
 
 // defaultWriteToFile writes content to a file (production implementation).
-func defaultWriteToFile(path, content string) error { //nolint:unused // will be used when newGenerateScriptCmdLive is fully wired
+func defaultWriteToFile(path, content string) error {
 	return os.WriteFile(path, []byte(content), 0o600)
 }

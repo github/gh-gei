@@ -163,8 +163,8 @@ func newDownloadLogsCmdLive() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&migrationID, "migration-id", "", "The ID of the migration")
-	cmd.Flags().StringVar(&githubTargetOrg, "github-target-org", "", "Target GitHub organization")
-	cmd.Flags().StringVar(&targetRepo, "target-repo", "", "Target repository name")
+	cmd.Flags().StringVar(&githubTargetOrg, "github-org", "", "Target GitHub organization")
+	cmd.Flags().StringVar(&targetRepo, "github-repo", "", "Target repository name")
 	cmd.Flags().StringVar(&logFile, "migration-log-file", "", "Custom output filename for the migration log")
 	cmd.Flags().BoolVar(&overwrite, "overwrite", false, "Overwrite the log file if it already exists")
 	cmd.Flags().StringVar(&githubTargetPAT, "github-target-pat", "", "Personal access token for the target GitHub instance")
