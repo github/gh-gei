@@ -95,6 +95,148 @@ public sealed class GithubClientTests
             .ReturnsAsync(CreateHttpResponseFactory(content: EXPECTED_RESPONSE_CONTENT));
 
         using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN)
+        {
+            _serverErrorDefaultDelay = 0
+        };
+
+        // Act
+        var returnedContent = await githubClient.GetAsync(URL);
+
+        // Assert
+        returnedContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.BadGateway)]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
+    [InlineData(HttpStatusCode.GatewayTimeout)]
+    public async Task GetAsync_Retries_Transient_Server_Errors_With_Dedicated_Handler(HttpStatusCode httpStatusCode)
+    {
+        // Arrange
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .SetupSequence<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(CreateHttpResponseFactory(statusCode: httpStatusCode, content: "SERVER_ERROR"))
+            .ReturnsAsync(CreateHttpResponseFactory(statusCode: httpStatusCode, content: "SERVER_ERROR"))
+            .ReturnsAsync(CreateHttpResponseFactory(content: EXPECTED_RESPONSE_CONTENT));
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN)
+        {
+            _serverErrorDefaultDelay = 0
+        };
+
+        // Act
+        var returnedContent = await githubClient.GetAsync(URL);
+
+        // Assert
+        returnedContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
+        _mockOctoLogger.Verify(m => m.LogWarning(It.Is<string>(s => s.Contains("Server error detected"))), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task GetAsync_Throws_After_Max_Server_Error_Retries()
+    {
+        // Arrange
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(CreateHttpResponseFactory(statusCode: HttpStatusCode.BadGateway, content: "SERVER_ERROR"));
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN)
+        {
+            _serverErrorDefaultDelay = 0,
+            _serverErrorMaxRetries = 2
+        };
+
+        // Act / Assert
+        await FluentActions
+            .Invoking(async () => await githubClient.GetAsync(URL))
+            .Should()
+            .ThrowAsync<HttpRequestException>()
+            .WithMessage("*Server error persisted after 2 retries*");
+    }
+
+    [Fact]
+    public async Task GetAsync_Server_Error_Respects_Retry_After_Header()
+    {
+        // Arrange
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .SetupSequence<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(CreateHttpResponseFactory(
+                statusCode: HttpStatusCode.ServiceUnavailable,
+                content: "SERVER_ERROR",
+                headers: new[] { ("Retry-After", "0") }))
+            .ReturnsAsync(CreateHttpResponseFactory(content: EXPECTED_RESPONSE_CONTENT));
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN)
+        {
+            _serverErrorDefaultDelay = 0
+        };
+
+        // Act
+        var returnedContent = await githubClient.GetAsync(URL);
+
+        // Assert
+        returnedContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
+    }
+
+    [Fact]
+    public async Task GetAsync_Does_Not_Retry_4xx_Errors()
+    {
+        // Arrange
+        var handlerMock = MockHttpHandler(
+            req => req.Method == HttpMethod.Get,
+            CreateHttpResponseFactory(HttpStatusCode.BadRequest, content: "BAD_REQUEST"));
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act / Assert
+        await FluentActions
+            .Invoking(async () => await githubClient.GetAsync(URL))
+            .Should()
+            .ThrowExactlyAsync<HttpRequestException>();
+
+        // Verify only one attempt was made (no retries)
+        handlerMock
+            .Protected()
+            .Verify("SendAsync", Times.Once(),
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetAsync_500_Uses_Generic_Retry_Not_Dedicated_Handler()
+    {
+        // Arrange - 500 should NOT go through the dedicated server error handler
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .SetupSequence<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(CreateHttpResponseFactory(statusCode: HttpStatusCode.InternalServerError, content: "INTERNAL_ERROR"))
+            .ReturnsAsync(CreateHttpResponseFactory(content: EXPECTED_RESPONSE_CONTENT));
+
+        using var httpClient = new HttpClient(handlerMock.Object);
         var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
 
         // Act
@@ -102,6 +244,8 @@ public sealed class GithubClientTests
 
         // Assert
         returnedContent.Should().Be(EXPECTED_RESPONSE_CONTENT);
+        // Should NOT log "Server error detected" since 500 goes through generic retry
+        _mockOctoLogger.Verify(m => m.LogWarning(It.Is<string>(s => s.Contains("Server error detected"))), Times.Never);
     }
 
     [Fact]
