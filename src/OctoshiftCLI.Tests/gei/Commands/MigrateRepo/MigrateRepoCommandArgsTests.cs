@@ -435,6 +435,19 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             args.GetSourceApiUrl().Should().Be(GHES_API_URL);
         }
 
+        [Fact]
+        public void GetSourceApiUrl_Returns_Null_When_ArchivePaths_Are_Set()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                GhesApiUrl = GHES_API_URL,
+                GitArchivePath = GIT_ARCHIVE_PATH,
+                MetadataArchivePath = METADATA_ARCHIVE_PATH
+            };
+
+            args.GetSourceApiUrl().Should().BeNull();
+        }
+
         [Theory]
         [InlineData("https://api.example.com")]
         [InlineData("https://api.tenant.ghe.com/foo")]

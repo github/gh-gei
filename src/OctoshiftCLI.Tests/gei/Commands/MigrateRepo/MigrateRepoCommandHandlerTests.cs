@@ -555,6 +555,72 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         }
 
         [Fact]
+        public async Task With_Archive_Paths_And_GhesApiUrl_Prefers_Archive_Paths()
+        {
+            var gitArchivePath = $"/path/{GIT_ARCHIVE_FILE_NAME}";
+            var metadataArchivePath = $"/path/{METADATA_ARCHIVE_FILE_NAME}";
+
+            _mockAzureApi
+                .Setup(x => x.UploadToBlob(It.Is<string>(s => s.EndsWith(GIT_ARCHIVE_FILE_NAME)), It.IsAny<FileStream>()).Result)
+                .Returns(new Uri(GIT_ARCHIVE_URL));
+            _mockAzureApi
+                .Setup(x => x.UploadToBlob(It.Is<string>(s => s.EndsWith(METADATA_ARCHIVE_FILE_NAME)), It.IsAny<FileStream>()).Result)
+                .Returns(new Uri(METADATA_ARCHIVE_URL));
+
+            _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(GITHUB_ORG_ID);
+            _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
+            _mockTargetGithubApi
+                .Setup(x => x.StartMigration(
+                    MIGRATION_SOURCE_ID,
+                    GITHUB_REPO_URL,
+                    GITHUB_ORG_ID,
+                    TARGET_REPO,
+                    GITHUB_SOURCE_PAT,
+                    GITHUB_TARGET_PAT,
+                    GIT_ARCHIVE_URL,
+                    METADATA_ARCHIVE_URL,
+                    false,
+                    null,
+                    false).Result)
+                .Returns(MIGRATION_ID);
+            _mockTargetGithubApi.Setup(x => x.GetMigration(MIGRATION_ID).Result).Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, 0, null, null));
+
+            _mockEnvironmentVariableProvider.Setup(m => m.SourceGithubPersonalAccessToken(It.IsAny<bool>())).Returns(GITHUB_SOURCE_PAT);
+            _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(GITHUB_TARGET_PAT);
+
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                TargetApiUrl = TARGET_API_URL,
+                GhesApiUrl = GHES_API_URL,
+                GitArchivePath = gitArchivePath,
+                MetadataArchivePath = metadataArchivePath,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING
+            };
+            await _handler.Handle(args);
+
+            _mockTargetGithubApi.Verify(x => x.StartMigration(
+                MIGRATION_SOURCE_ID,
+                GITHUB_REPO_URL,
+                GITHUB_ORG_ID,
+                TARGET_REPO,
+                GITHUB_SOURCE_PAT,
+                GITHUB_TARGET_PAT,
+                GIT_ARCHIVE_URL,
+                METADATA_ARCHIVE_URL,
+                false,
+                null,
+                false));
+            _mockGhesVersionChecker.Verify(x => x.AreBlobCredentialsRequired(It.IsAny<string>()), Times.Never);
+            _mockSourceGithubApi.Verify(x => x.StartGitArchiveGeneration(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            _mockTargetGithubApi.Verify(x => x.DoesRepoExist(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            _mockTargetGithubApi.Verify(x => x.DoesOrgExist(It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
         public async Task With_Duplicate_Archive_Paths()
         {
             var gitArchivePath = $"/path/{GIT_ARCHIVE_FILE_NAME}";

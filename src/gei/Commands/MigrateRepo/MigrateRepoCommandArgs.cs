@@ -40,7 +40,9 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands.MigrateRepo
         public bool KeepArchive { get; set; }
         public bool UseGithubStorage { get; set; }
 
-        public string GetSourceApiUrl() => GithubSourceApiUrl.HasValue() ? GithubSourceApiUrl : GhesApiUrl;
+        public bool HasArchivePaths() => GitArchivePath.HasValue() && MetadataArchivePath.HasValue();
+
+        public string GetSourceApiUrl() => HasArchivePaths() ? null : GithubSourceApiUrl.HasValue() ? GithubSourceApiUrl : GhesApiUrl;
 
         public override void Validate(OctoLogger log)
         {
