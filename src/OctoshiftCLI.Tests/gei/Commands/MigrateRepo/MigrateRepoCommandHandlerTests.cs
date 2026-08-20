@@ -613,7 +613,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
                 METADATA_ARCHIVE_URL,
                 false,
                 null,
-                false));
+                false), Times.Once);
             _mockGhesVersionChecker.Verify(x => x.AreBlobCredentialsRequired(It.IsAny<string>()), Times.Never);
             _mockSourceGithubApi.Verify(x => x.StartGitArchiveGeneration(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
             _mockTargetGithubApi.Verify(x => x.DoesRepoExist(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
