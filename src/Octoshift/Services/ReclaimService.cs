@@ -327,7 +327,7 @@ public class ReclaimService
         return true; // Indiciates we should continue onto the next mannequin
     }
 
-    private static bool IsBotLogin(string login) =>
+    public static bool IsBotLogin(string login) =>
         login != null && login.EndsWith("[bot]", StringComparison.OrdinalIgnoreCase);
 
     private bool HandleBotReclaimationResult(string mannequinUser, string targetUser, Mannequin mannequin, string targetBotId, ReattributeMannequinToBotResult result)

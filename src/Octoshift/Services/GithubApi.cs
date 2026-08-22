@@ -1015,7 +1015,7 @@ public class GithubApi
         }
         catch (OctoshiftCliException ex) when (ex.Message.Contains("Field 'reattributeMannequinToBot' doesn't exist on type 'Mutation'"))
         {
-            throw new OctoshiftCliException("Reclaiming mannequins to a GitHub App / bot account is not enabled for your GitHub organization. For more details, contact GitHub Support.", ex);
+            throw new OctoshiftCliException("Reclaiming mannequins to a GitHub App / bot account is not enabled for your GitHub organization or enterprise. For more details, contact GitHub Support.", ex);
         }
     }
 
