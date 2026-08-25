@@ -984,6 +984,43 @@ public class GithubApiTests
     }
 
     [Fact]
+    public async Task CreateGhecMigrationSource_Uses_Provided_Source_Url()
+    {
+        // Arrange
+        const string url = "https://api.github.com/graphql";
+        const string orgId = "ORG_ID";
+        const string sourceUrl = "https://tenant.ghe.com";
+        var payload =
+            "{\"query\":\"mutation createMigrationSource($name: String!, $url: String!, $ownerId: ID!, $type: MigrationSourceType!) " +
+            "{ createMigrationSource(input: {name: $name, url: $url, ownerId: $ownerId, type: $type}) { migrationSource { id, name, url, type } } }\"" +
+            $",\"variables\":{{\"name\":\"GHEC Source\",\"url\":\"{sourceUrl}\",\"ownerId\":\"{orgId}\",\"type\":\"GITHUB_ARCHIVE\"}},\"operationName\":\"createMigrationSource\"}}";
+        const string actualMigrationSourceId = "MS_kgC4NjFhOTVjOTc4ZTRhZjEwMDA5NjNhOTdm";
+        var response = JObject.Parse($@"
+            {{
+                ""data"": {{
+                    ""createMigrationSource"": {{
+                        ""migrationSource"": {{
+                            ""id"": ""{actualMigrationSourceId}"",
+                            ""name"": ""GHEC Source"",
+                            ""url"": ""{sourceUrl}"",
+                            ""type"": ""GITHUB_ARCHIVE""
+                        }}
+                    }}
+                }}
+            }}");
+
+        _githubClientMock
+            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => x.ToJson() == payload), null))
+            .ReturnsAsync(response);
+
+        // Act
+        var expectedMigrationSourceId = await _githubApi.CreateGhecMigrationSource(orgId, sourceUrl);
+
+        // Assert
+        expectedMigrationSourceId.Should().Be(actualMigrationSourceId);
+    }
+
+    [Fact]
     public async Task StartMigration_Returns_New_Repository_Migration_Id()
     {
         // Arrange

@@ -45,5 +45,22 @@ namespace OctoshiftCLI.Extensions
                 && string.IsNullOrEmpty(uri.Fragment)
                 && string.IsNullOrEmpty(uri.UserInfo);
         }
+
+        // Extracts the base (web) URL from a GitHub API URL. Handles both the GHES template
+        // (http(s)://hostname/api/v3) and the GHE.com/Proxima template (http(s)://api.hostname).
+        // Falls back to returning the input unchanged when neither template matches.
+        public static string ExtractGitHubBaseUrl(this string apiUrl)
+        {
+            apiUrl = apiUrl.Trim().TrimEnd('/');
+
+            var baseUrl = Regex.Match(apiUrl, @"(?<baseUrl>https?:\/\/.+)\/api\/v3", RegexOptions.IgnoreCase).Groups["baseUrl"].Value;
+            if (baseUrl.HasValue())
+            {
+                return baseUrl;
+            }
+
+            var match = Regex.Match(apiUrl, @"(?<scheme>https?):\/\/api\.(?<host>.+)", RegexOptions.IgnoreCase);
+            return match.Success ? $"{match.Groups["scheme"]}://{match.Groups["host"]}" : apiUrl;
+        }
     }
 }

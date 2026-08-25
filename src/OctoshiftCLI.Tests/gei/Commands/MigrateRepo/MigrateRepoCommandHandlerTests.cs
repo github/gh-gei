@@ -51,6 +51,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
         private const string GITHUB_REPO_URL = $"https://github.com/{SOURCE_ORG}/{SOURCE_REPO}";
         private const string GHES_REPO_URL = $"https://myghes/{SOURCE_ORG}/{SOURCE_REPO}";
         private const string PROXIMA_API_URL = "https://api.tenant.ghe.com";
+        private const string PROXIMA_BASE_URL = "https://tenant.ghe.com";
         private const string PROXIMA_REPO_URL = $"https://tenant.ghe.com/{SOURCE_ORG}/{SOURCE_REPO}";
         private const string MIGRATION_ID = "069f660d-9201-47c5-95d4-f9b743cb89d9";
         private const int GIT_ARCHIVE_ID = 1;
@@ -434,7 +435,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
             _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(GITHUB_ORG_ID);
             _mockTargetGithubApi.Setup(x => x.GetOrganizationDatabaseId(TARGET_ORG).Result).Returns(githubOrgDatabaseId);
-            _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(GITHUB_ORG_ID).Result).Returns(MIGRATION_SOURCE_ID);
+            _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(GITHUB_ORG_ID, PROXIMA_BASE_URL).Result).Returns(MIGRATION_SOURCE_ID);
 
             _mockTargetGithubApi.Setup(x => x.StartMigration(
                 MIGRATION_SOURCE_ID,
@@ -489,6 +490,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
 
             await _handler.Handle(args);
 
+            _mockTargetGithubApi.Verify(x => x.CreateGhecMigrationSource(GITHUB_ORG_ID, PROXIMA_BASE_URL), Times.Once);
             _mockOctoLogger.Verify(m => m.LogWarning("The --use-github-storage flag is not required when migrating from GitHub Enterprise Cloud with data residency (ghe.com); the migration API handles storage. Only pass it if you are supplying your own archives via archive URLs or on-disk archive paths."), Times.Once);
             _mockOctoLogger.Verify(m => m.LogWarning("Providing the --use-github-storage flag will supersede any credentials you have configured in your GitHub Enterprise Server (GHES) Management Console."), Times.Never);
         }
