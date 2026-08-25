@@ -51,6 +51,11 @@ namespace OctoshiftCLI.Extensions
         // Falls back to returning the input unchanged when neither template matches.
         public static string ExtractGitHubBaseUrl(this string apiUrl)
         {
+            if (apiUrl.IsNullOrWhiteSpace())
+            {
+                return apiUrl;
+            }
+
             apiUrl = apiUrl.Trim().TrimEnd('/');
 
             var baseUrl = Regex.Match(apiUrl, @"(?<baseUrl>https?:\/\/.+)\/api\/v3", RegexOptions.IgnoreCase).Groups["baseUrl"].Value;
