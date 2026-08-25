@@ -417,24 +417,30 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (!cloudCredentialsRequired)
         {
+            var isProximaSource = args.GithubSourceApiUrl.IsProximaApiUrl();
+
             if (shouldUseAzureStorage)
             {
-                _log.LogWarning("Ignoring provided Azure Blob Storage credentials because you are running GitHub Enterprise Server (GHES) 3.8.0 or later. The blob storage credentials configured in your GHES Management Console will be used instead.");
+                _log.LogWarning(isProximaSource
+                    ? "Ignoring provided Azure Blob Storage credentials because migrations from GitHub Enterprise Cloud with data residency (ghe.com) use GitHub-owned storage."
+                    : "Ignoring provided Azure Blob Storage credentials because you are running GitHub Enterprise Server (GHES) 3.8.0 or later. The blob storage credentials configured in your GHES Management Console will be used instead.");
             }
 
             if (shouldUseAwsS3)
             {
-                _log.LogWarning("Ignoring provided AWS S3 credentials because you are running GitHub Enterprise Server (GHES) 3.8.0 or later. The blob storage credentials configured in your GHES Management Console will be used instead.");
+                _log.LogWarning(isProximaSource
+                    ? "Ignoring provided AWS S3 credentials because migrations from GitHub Enterprise Cloud with data residency (ghe.com) use GitHub-owned storage."
+                    : "Ignoring provided AWS S3 credentials because you are running GitHub Enterprise Server (GHES) 3.8.0 or later. The blob storage credentials configured in your GHES Management Console will be used instead.");
             }
 
-            if (args.UseGithubStorage && !args.GithubSourceApiUrl.IsProximaApiUrl())
+            if (args.UseGithubStorage && !isProximaSource)
             {
                 _log.LogWarning("Providing the --use-github-storage flag will supersede any credentials you have configured in your GitHub Enterprise Server (GHES) Management Console.");
             }
 
-            if (args.UseGithubStorage && args.GithubSourceApiUrl.IsProximaApiUrl())
+            if (args.UseGithubStorage && isProximaSource)
             {
-                _log.LogWarning("The --use-github-storage flag is not required when migrating from GitHub Enterprise Cloud with data residency (ghe.com); the migration API handles storage. Only pass it if you are supplying your own archives via archive URLs or on-disk archive paths.");
+                _log.LogWarning("The --use-github-storage flag is not required when migrating from GitHub Enterprise Cloud with data residency (ghe.com); the migration API handles storage. Only pass it if you are supplying your own on-disk archive paths.");
             }
 
             if (args.KeepArchive)

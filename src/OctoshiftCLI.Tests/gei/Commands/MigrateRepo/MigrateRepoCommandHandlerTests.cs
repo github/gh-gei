@@ -491,8 +491,60 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands.MigrateRepo
             await _handler.Handle(args);
 
             _mockTargetGithubApi.Verify(x => x.CreateGhecMigrationSource(GITHUB_ORG_ID, PROXIMA_BASE_URL), Times.Once);
-            _mockOctoLogger.Verify(m => m.LogWarning("The --use-github-storage flag is not required when migrating from GitHub Enterprise Cloud with data residency (ghe.com); the migration API handles storage. Only pass it if you are supplying your own archives via archive URLs or on-disk archive paths."), Times.Once);
+            _mockOctoLogger.Verify(m => m.LogWarning("The --use-github-storage flag is not required when migrating from GitHub Enterprise Cloud with data residency (ghe.com); the migration API handles storage. Only pass it if you are supplying your own on-disk archive paths."), Times.Once);
             _mockOctoLogger.Verify(m => m.LogWarning("Providing the --use-github-storage flag will supersede any credentials you have configured in your GitHub Enterprise Server (GHES) Management Console."), Times.Never);
+        }
+
+        [Fact]
+        public async Task Proxima_Source_With_Azure_Credentials_Warns_Ghe_Com_Specific_And_Skips_Ghes_Warning()
+        {
+            _mockGhesVersionChecker.Setup(m => m.AreBlobCredentialsRequired(PROXIMA_API_URL)).ReturnsAsync(false);
+
+            _mockTargetGithubApi.Setup(x => x.DoesOrgExist(TARGET_ORG).Result).Returns(true);
+            _mockTargetGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(GITHUB_ORG_ID);
+            _mockTargetGithubApi.Setup(x => x.CreateGhecMigrationSource(GITHUB_ORG_ID, PROXIMA_BASE_URL).Result).Returns(MIGRATION_SOURCE_ID);
+
+            _mockTargetGithubApi.Setup(x => x.StartMigration(
+                MIGRATION_SOURCE_ID,
+                PROXIMA_REPO_URL,
+                GITHUB_ORG_ID,
+                TARGET_REPO,
+                GITHUB_SOURCE_PAT,
+                GITHUB_TARGET_PAT,
+                GIT_ARCHIVE_URL,
+                METADATA_ARCHIVE_URL,
+                false,
+                null,
+                false).Result)
+                .Returns(MIGRATION_ID);
+
+            _mockTargetGithubApi.Setup(x => x.GetMigration(MIGRATION_ID).Result)
+                .Returns((State: RepositoryMigrationStatus.Succeeded, TARGET_REPO, 0, null, null));
+
+            _mockSourceGithubApi.Setup(x => x.StartGitArchiveGeneration(SOURCE_ORG, SOURCE_REPO).Result).Returns(GIT_ARCHIVE_ID);
+            _mockSourceGithubApi.Setup(x => x.StartMetadataArchiveGeneration(SOURCE_ORG, SOURCE_REPO, false, false).Result).Returns(METADATA_ARCHIVE_ID);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, GIT_ARCHIVE_ID).Result).Returns(ArchiveMigrationStatus.Exported);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationStatus(SOURCE_ORG, METADATA_ARCHIVE_ID).Result).Returns(ArchiveMigrationStatus.Exported);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, GIT_ARCHIVE_ID).Result).Returns(GIT_ARCHIVE_URL);
+            _mockSourceGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, METADATA_ARCHIVE_ID).Result).Returns(METADATA_ARCHIVE_URL);
+
+            var args = new MigrateRepoCommandArgs
+            {
+                GithubSourceOrg = SOURCE_ORG,
+                SourceRepo = SOURCE_REPO,
+                GithubTargetOrg = TARGET_ORG,
+                TargetRepo = TARGET_REPO,
+                GithubSourcePat = GITHUB_SOURCE_PAT,
+                GithubTargetPat = GITHUB_TARGET_PAT,
+                TargetApiUrl = TARGET_API_URL,
+                GithubSourceApiUrl = PROXIMA_API_URL,
+                AzureStorageConnectionString = AZURE_CONNECTION_STRING,
+            };
+
+            await _handler.Handle(args);
+
+            _mockOctoLogger.Verify(m => m.LogWarning("Ignoring provided Azure Blob Storage credentials because migrations from GitHub Enterprise Cloud with data residency (ghe.com) use GitHub-owned storage."), Times.Once);
+            _mockOctoLogger.Verify(m => m.LogWarning("Ignoring provided Azure Blob Storage credentials because you are running GitHub Enterprise Server (GHES) 3.8.0 or later. The blob storage credentials configured in your GHES Management Console will be used instead."), Times.Never);
         }
 
         [Fact]
