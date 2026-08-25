@@ -125,7 +125,7 @@ public class ReclaimMannequinCommandHandler : ICommandHandler<ReclaimMannequinCo
             .Where(l => !string.IsNullOrWhiteSpace(l))
             .Select(l => l.Split(','))
             .Where(c => c.Length == 3)
-            .Select(c => (c[0], c[2]))
+            .Select(c => (c[0].Trim(), c[2].Trim()))
             .ToArray();
     }
 }
