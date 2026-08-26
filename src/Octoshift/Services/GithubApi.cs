@@ -874,12 +874,9 @@ public class GithubApi
             var response = await _client.GetAsync(url);
             var data = JObject.Parse(response);
 
-            if (!string.Equals((string)data["type"], "Bot", StringComparison.OrdinalIgnoreCase))
-            {
-                throw new OctoshiftCliException($"{login} is not a GitHub App / bot account.");
-            }
-
-            return (string)data["node_id"];
+            return !string.Equals((string)data["type"], "Bot", StringComparison.OrdinalIgnoreCase)
+                ? throw new OctoshiftCliException($"{login} is not a GitHub App / bot account.")
+                : (string)data["node_id"];
         }
         catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
@@ -1007,11 +1004,11 @@ public class GithubApi
 
         try
         {
-            return await _retryPolicy.Retry(async () =>
-            {
-                var data = await _client.PostGraphQLAsync(url, payload);
-                return data.ToObject<ReattributeMannequinToBotResult>();
-            });
+            // Reattributing to a bot is irreversible and its failures (ineligible
+            // bot, insufficient ownership, feature disabled) are deterministic, so
+            // submit once rather than retrying and risking a duplicate mutation.
+            var data = await _client.PostGraphQLAsync(url, payload);
+            return data.ToObject<ReattributeMannequinToBotResult>();
         }
         catch (OctoshiftCliException ex) when (ex.Message.Contains("Field 'reattributeMannequinToBot' doesn't exist on type 'Mutation'"))
         {

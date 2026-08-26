@@ -2816,6 +2816,29 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
     }
 
     [Fact]
+    public async Task ReattributeMannequinToBot_Does_Not_Retry_On_Failure()
+    {
+        // Arrange
+        const string orgId = "ORG_ID";
+        const string mannequinId = "MANNEQUIN_ID";
+        const string targetBotId = "BOT_ID";
+        const string url = "https://api.github.com/graphql";
+
+        _githubClientMock
+            .Setup(m => m.PostGraphQLAsync(url, It.IsAny<object>(), null))
+            .ThrowsAsync(new OctoshiftCliException("Target is not eligible to be a mannequin claimant"));
+
+        // Act, Assert: the bot mutation is irreversible, so a deterministic failure
+        // must surface immediately instead of being resubmitted by the retry policy.
+        await _githubApi
+            .Invoking(api => api.ReattributeMannequinToBot(orgId, mannequinId, targetBotId))
+            .Should()
+            .ThrowAsync<OctoshiftCliException>();
+
+        _githubClientMock.Verify(m => m.PostGraphQLAsync(url, It.IsAny<object>(), null), Times.Once);
+    }
+
+    [Fact]
     public async Task StartMetadataArchiveGeneration_Returns_The_Initiated_Migration_Id()
     {
         // Arrange
