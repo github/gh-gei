@@ -115,17 +115,14 @@ public class ReclaimMannequinCommandHandler : ICommandHandler<ReclaimMannequinCo
 
     private static (string MannequinUser, string TargetUser)[] ParseReclaimTargets(string[] lines)
     {
-        if (lines == null || lines.Length == 0)
-        {
-            return Array.Empty<(string, string)>();
-        }
-
-        return lines
-            .Skip(1) // header
-            .Where(l => !string.IsNullOrWhiteSpace(l))
-            .Select(l => l.Split(','))
-            .Where(c => c.Length == 3)
-            .Select(c => (c[0].Trim(), c[2].Trim()))
-            .ToArray();
+        return lines == null || lines.Length == 0
+            ? Array.Empty<(string, string)>()
+            : lines
+                .Skip(1) // header
+                .Where(l => !string.IsNullOrWhiteSpace(l))
+                .Select(l => l.Split(','))
+                .Where(c => c.Length == 3)
+                .Select(c => (c[0].Trim(), c[2].Trim()))
+                .ToArray();
     }
 }
