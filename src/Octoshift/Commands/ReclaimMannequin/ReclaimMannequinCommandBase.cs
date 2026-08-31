@@ -34,7 +34,7 @@ public class ReclaimMannequinCommandBase : CommandBase<ReclaimMannequinCommandAr
 
     public virtual Option<string> MannequinUser { get; } = new("--mannequin-user")
     {
-        Description = "The login of the mannequin to be remapped."
+        Description = "The login of the mannequin to be remapped. When the target is a GitHub App / bot account, a mannequin whose own login does not end in \"[bot]\" triggers an advisory warning, since it may not be a bot."
     };
 
     public virtual Option<string> MannequinId { get; } = new("--mannequin-id")
@@ -44,7 +44,7 @@ public class ReclaimMannequinCommandBase : CommandBase<ReclaimMannequinCommandAr
 
     public virtual Option<string> TargetUser { get; } = new("--target-user")
     {
-        Description = "The login of the target user to be mapped."
+        Description = "The login of the target user to map the mannequin's content to. A regular user is sent an invitation they must accept; a login ending in \"[bot]\" instead maps to a GitHub App / bot account and is reattributed immediately and irreversibly (bot accounts cannot accept an invitation). You are asked to confirm a bot reclaim unless --no-prompt is set."
     };
 
     public virtual Option<bool> Force { get; } = new("--force")
@@ -54,7 +54,7 @@ public class ReclaimMannequinCommandBase : CommandBase<ReclaimMannequinCommandAr
 
     public virtual Option<bool> NoPrompt { get; } = new("--no-prompt")
     {
-        Description = "Overrides all prompts and warnings with 'Y' value."
+        Description = "Overrides all prompts and warnings with 'Y' value. This includes the confirmation shown before an immediate, irreversible reclaim to a GitHub App / bot account."
     };
 
     public virtual Option<string> GithubPat { get; } = new("--github-pat")
