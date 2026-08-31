@@ -34,7 +34,7 @@ public class ReclaimMannequinCommandBase : CommandBase<ReclaimMannequinCommandAr
 
     public virtual Option<string> MannequinUser { get; } = new("--mannequin-user")
     {
-        Description = "The login of the mannequin to be remapped. When the target is a GitHub App / bot account, a mannequin whose own login does not end in \"[bot]\" triggers an advisory warning, since it may not be a bot."
+        Description = "The login of the mannequin to be remapped. When the target is a GitHub App / bot account, a mannequin whose own login does not end in \"[bot]\" triggers an advisory warning but the reclaim still proceeds, since a bot migrated from a non-GitHub source (e.g. Azure DevOps, Bitbucket, GitLab) may not use the \"[bot]\" suffix."
     };
 
     public virtual Option<string> MannequinId { get; } = new("--mannequin-id")
