@@ -718,6 +718,84 @@ public class ReclaimServiceTests
     }
 
     [Fact]
+    public async Task ReclaimMannequin_Bot_Target_Uses_Bot_Mutation()
+    {
+        const string targetBotLogin = "example-ci[bot]";
+        var targetBotId = Guid.NewGuid().ToString();
+
+        var mannequinsResponse = new Mannequin[] {
+            new Mannequin { Id = MANNEQUIN_ID, Login = MANNEQUIN_LOGIN }
+        };
+
+        var reclaimResponse = new ReattributeMannequinToBotResult()
+        {
+            Data = new ReattributeMannequinToBotData()
+            {
+                ReattributeMannequinToBot = new ReattributeMannequinToBot()
+                {
+                    Source = new UserInfo() { Id = MANNEQUIN_ID, Login = MANNEQUIN_LOGIN },
+                    Target = new UserInfo() { Id = targetBotId, Login = targetBotLogin }
+                }
+            }
+        };
+
+        _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
+        _mockGithubApi.Setup(x => x.GetMannequinsByLogin(ORG_ID, MANNEQUIN_LOGIN).Result).Returns(mannequinsResponse);
+        _mockGithubApi.Setup(x => x.GetBotId(targetBotLogin).Result).Returns(targetBotId);
+        _mockGithubApi.Setup(x => x.ReattributeMannequinToBot(ORG_ID, MANNEQUIN_ID, targetBotId).Result).Returns(reclaimResponse);
+
+        // Act
+        await _service.ReclaimMannequin(MANNEQUIN_LOGIN, null, targetBotLogin, TARGET_ORG, false, false);
+
+        _mockGithubApi.Verify(x => x.GetBotId(targetBotLogin), Times.Once);
+        _mockGithubApi.Verify(x => x.ReattributeMannequinToBot(ORG_ID, MANNEQUIN_ID, targetBotId), Times.Once);
+        _mockGithubApi.Verify(x => x.GetUserId(It.IsAny<string>()), Times.Never);
+        _mockGithubApi.Verify(x => x.CreateAttributionInvitation(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ReclaimMannequins_Bot_Target_Uses_Bot_Mutation()
+    {
+        const string targetBotLogin = "example-ci[bot]";
+        var targetBotId = Guid.NewGuid().ToString();
+
+        var mannequinsResponse = new Mannequin[] {
+            new Mannequin { Id = MANNEQUIN_ID, Login = MANNEQUIN_LOGIN }
+        };
+
+        var reclaimResponse = new ReattributeMannequinToBotResult()
+        {
+            Data = new ReattributeMannequinToBotData()
+            {
+                ReattributeMannequinToBot = new ReattributeMannequinToBot()
+                {
+                    Source = new UserInfo() { Id = MANNEQUIN_ID, Login = MANNEQUIN_LOGIN },
+                    Target = new UserInfo() { Id = targetBotId, Login = targetBotLogin }
+                }
+            }
+        };
+
+        _mockGithubApi.Setup(x => x.GetOrganizationId(TARGET_ORG).Result).Returns(ORG_ID);
+        _mockGithubApi.Setup(x => x.GetMannequins(ORG_ID).Result).Returns(mannequinsResponse);
+        _mockGithubApi.Setup(x => x.GetBotId(targetBotLogin).Result).Returns(targetBotId);
+        _mockGithubApi.Setup(x => x.ReattributeMannequinToBot(ORG_ID, MANNEQUIN_ID, targetBotId).Result).Returns(reclaimResponse);
+
+        var csvContent = new string[] {
+            HEADER,
+            $"{MANNEQUIN_LOGIN},{MANNEQUIN_ID},{targetBotLogin}"
+        };
+
+        // Act
+        await _service.ReclaimMannequins(csvContent, TARGET_ORG, false, false);
+
+        _mockGithubApi.Verify(x => x.GetBotId(targetBotLogin), Times.Once);
+        _mockGithubApi.Verify(x => x.ReattributeMannequinToBot(ORG_ID, MANNEQUIN_ID, targetBotId), Times.Once);
+        _mockGithubApi.Verify(x => x.GetUserId(It.IsAny<string>()), Times.Never);
+        _mockGithubApi.Verify(x => x.CreateAttributionInvitation(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockGithubApi.Verify(x => x.ReclaimMannequinSkipInvitation(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
     public async Task ReclaimMannequin_Duplicates_ReclaimOnlyOnce()
     {
         var mannequinsResponse = new Mannequin[] {

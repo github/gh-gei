@@ -279,7 +279,7 @@ public class GithubApiTests
                     ""id"": 1
                 }},
                 {{
-                    ""login"": ""{teamMember2}"", 
+                    ""login"": ""{teamMember2}"",
                     ""id"": 2
                 }}
             ]";
@@ -293,7 +293,7 @@ public class GithubApiTests
                     ""id"": 3
                 }},
                 {{
-                    ""login"": ""{teamMember4}"", 
+                    ""login"": ""{teamMember4}"",
                     ""id"": 4
                 }}
             ]";
@@ -562,7 +562,7 @@ public class GithubApiTests
         var role = "admin";
         var response = $@"
             {{
-                ""role"": ""{role}"" 
+                ""role"": ""{role}""
             }}";
 
         _githubClientMock
@@ -645,15 +645,15 @@ public class GithubApiTests
             $"{{\"query\":\"query($login: String!) {{organization(login: $login) {{ login, id, name }} }}\",\"variables\":{{\"login\":\"{GITHUB_ORG}\"}}}}";
         var response = JObject.Parse($@"
             {{
-                ""data"": 
+                ""data"":
                     {{
-                        ""organization"": 
+                        ""organization"":
                             {{
                                 ""login"": ""{GITHUB_ORG}"",
                                 ""id"": ""{orgId}"",
-                                ""name"": ""github"" 
-                            }} 
-                    }} 
+                                ""name"": ""github""
+                            }}
+                    }}
             }}");
 
         _githubClientMock
@@ -679,15 +679,15 @@ public class GithubApiTests
 
         var response = JObject.Parse($@"
             {{
-                ""data"": 
+                ""data"":
                     {{
-                        ""organization"": 
+                        ""organization"":
                             {{
                                 ""login"": ""{GITHUB_ORG}"",
                                 ""id"": ""{orgId}"",
-                                ""name"": ""github"" 
-                            }} 
-                    }} 
+                                ""name"": ""github""
+                            }}
+                    }}
             }}");
 
         _githubClientMock
@@ -746,15 +746,15 @@ public class GithubApiTests
 
         var response = JObject.Parse($@"
            {{
-                ""data"": 
+                ""data"":
                     {{
-                        ""organization"": 
+                        ""organization"":
                             {{
                                 ""login"": ""{GITHUB_ORG}"",
                                 ""databaseId"": ""{databaseId}"",
-                                ""name"": ""github"" 
-                            }} 
-                    }} 
+                                ""name"": ""github""
+                            }}
+                    }}
             }}");
 
         _githubClientMock
@@ -782,14 +782,14 @@ public class GithubApiTests
             $"{{\"query\":\"query($slug: String!) {{enterprise (slug: $slug) {{ slug, id }} }}\",\"variables\":{{\"slug\":\"{GITHUB_ENTERPRISE}\"}}}}";
         var response = JObject.Parse($@"
             {{
-                ""data"": 
+                ""data"":
                     {{
-                        ""enterprise"": 
+                        ""enterprise"":
                             {{
                                 ""slug"": ""{GITHUB_ENTERPRISE}"",
                                 ""id"": ""{enterpriseId}""
-                            }} 
-                    }} 
+                            }}
+                    }}
             }}");
 
         _githubClientMock
@@ -815,14 +815,14 @@ public class GithubApiTests
 
         var response = JObject.Parse($@"
             {{
-                ""data"": 
+                ""data"":
                     {{
-                        ""enterprise"": 
+                        ""enterprise"":
                             {{
                                 ""slug"": ""{GITHUB_ENTERPRISE}"",
                                 ""id"": ""{enterpriseId}""
-                            }} 
-                    }} 
+                            }}
+                    }}
             }}");
 
         _githubClientMock
@@ -1049,7 +1049,7 @@ public class GithubApiTests
                     $lockSource: Boolean)";
         const string gql = @"
                 startRepositoryMigration(
-                    input: { 
+                    input: {
                         sourceId: $sourceId,
                         ownerId: $ownerId,
                         sourceRepositoryUrl: $sourceRepositoryUrl,
@@ -1159,7 +1159,7 @@ public class GithubApiTests
                     $lockSource: Boolean)";
         const string gql = @"
                 startRepositoryMigration(
-                    input: { 
+                    input: {
                         sourceId: $sourceId,
                         ownerId: $ownerId,
                         sourceRepositoryUrl: $sourceRepositoryUrl,
@@ -1270,7 +1270,7 @@ public class GithubApiTests
                     $lockSource: Boolean)";
         const string gql = @"
                 startRepositoryMigration(
-                    input: { 
+                    input: {
                         sourceId: $sourceId,
                         ownerId: $ownerId,
                         sourceRepositoryUrl: $sourceRepositoryUrl,
@@ -1356,7 +1356,7 @@ public class GithubApiTests
         // Arrange
         var response = JObject.Parse(@"
             {
-                ""data"": { 
+                ""data"": {
                     ""startRepositoryMigration"": {
                         ""repositoryMigration"": {
                             ""id"": ""RM_kgC4NjFhNmE2NGU2ZWE1YTQwMDA5ODliZjhi""
@@ -2173,14 +2173,14 @@ public class GithubApiTests
 
         var response = JObject.Parse($@"
             {{
-                ""data"": 
+                ""data"":
                     {{
-                        ""user"": 
+                        ""user"":
                             {{
                                 ""id"": ""{userId}"",
-                                ""name"": ""{login}"" 
-                            }} 
-                    }} 
+                                ""name"": ""{login}""
+                            }}
+                    }}
             }}");
 
         _githubClientMock
@@ -2192,6 +2192,44 @@ public class GithubApiTests
 
         // Assert
         result.Should().Be(userId);
+    }
+
+    [Fact]
+    public async Task GetBotId_Returns_The_Bot_Node_Id()
+    {
+        // Arrange
+        const string login = "example-ci[bot]";
+        const string nodeId = "BOT_kgDNAbc";
+        var url = "https://api.github.com/users/example-ci%5Bbot%5D";
+
+        var response = $@"{{ ""login"": ""{login}"", ""type"": ""Bot"", ""node_id"": ""{nodeId}"" }}";
+
+        _githubClientMock.Setup(m => m.GetAsync(url, null)).ReturnsAsync(response);
+
+        // Act
+        var result = await _githubApi.GetBotId(login);
+
+        // Assert
+        result.Should().Be(nodeId);
+    }
+
+    [Fact]
+    public async Task GetBotId_Throws_When_Account_Is_Not_A_Bot()
+    {
+        // Arrange
+        const string login = "mona";
+        var url = "https://api.github.com/users/mona";
+
+        var response = $@"{{ ""login"": ""{login}"", ""type"": ""User"", ""node_id"": ""U_abc"" }}";
+
+        _githubClientMock.Setup(m => m.GetAsync(url, null)).ReturnsAsync(response);
+
+        // Act, Assert
+        await _githubApi
+            .Invoking(api => api.GetBotId(login))
+            .Should()
+            .ThrowAsync<OctoshiftCliException>()
+            .WithMessage("*is not a GitHub App / bot account*");
     }
 
     [Fact]
@@ -2280,7 +2318,7 @@ public class GithubApiTests
         var url = $"https://api.github.com/graphql";
 
         var payload =
-@"{""query"":""query($id: ID!, $first: Int, $after: String) { 
+@"{""query"":""query($id: ID!, $first: Int, $after: String) {
                 node(id: $id) {
                     ... on Organization {
                         mannequins(first: $first, after: $after) {
@@ -2331,7 +2369,7 @@ $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
         var url = $"https://api.github.com/graphql";
 
         var payload =
-@"{""query"":""query($id: ID!, $first: Int, $after: String) { 
+@"{""query"":""query($id: ID!, $first: Int, $after: String) {
                 node(id: $id) {
                     ... on Organization {
                         mannequins(first: $first, after: $after) {
@@ -2414,7 +2452,7 @@ $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
         var url = $"https://api.github.com/graphql";
 
         var payload =
-@"{""query"":""query($id: ID!, $first: Int, $after: String) { 
+@"{""query"":""query($id: ID!, $first: Int, $after: String) {
                 node(id: $id) {
                     ... on Organization {
                         mannequins(first: $first, after: $after) {
@@ -2498,7 +2536,7 @@ $",\"variables\":{{\"id\":\"{orgId}\"}}}}";
         var url = $"https://api.github.com/graphql";
 
         var payload =
-@"{""query"":""query($id: ID!, $first: Int, $after: String, $login: String) { 
+@"{""query"":""query($id: ID!, $first: Int, $after: String, $login: String) {
                 node(id: $id) {
                     ... on Organization {
                         mannequins(first: $first, after: $after, login: $login) {
@@ -2548,7 +2586,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         var url = $"https://api.github.com/graphql";
 
         var payload =
-@"{""query"":""query($id: ID!, $first: Int, $after: String, $login: String) { 
+@"{""query"":""query($id: ID!, $first: Int, $after: String, $login: String) {
                 node(id: $id) {
                     ... on Organization {
                         mannequins(first: $first, after: $after, login: $login) {
@@ -2723,6 +2761,118 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         result.Errors.Should().NotBeNull();
         result.Errors.Should().ContainSingle();
         result.Errors.First().Message.Should().Be(errorMessage);
+    }
+
+    [Fact]
+    public async Task ReattributeMannequinToBot_Reattributes_Data_To_The_Bot()
+    {
+        // Arrange
+        const string orgId = "ORG_ID";
+        const string mannequinId = "MANNEQUIN_ID";
+        const string mannequinUser = "mona";
+        const string targetBotId = "BOT_ID";
+        const string targetBot = "example-ci[bot]";
+        const string url = "https://api.github.com/graphql";
+
+        var payload = @"{""query"":""mutation($orgId: ID!,$sourceId: ID!,$targetId: ID!) { reattributeMannequinToBot(
+                    input: { ownerId: $orgId, sourceId: $sourceId, targetId: $targetId }
+                ) {
+                    source {
+                        ... on Mannequin {
+                            id
+                            login
+                        }
+                    }
+
+                    target {
+                        ... on Bot {
+                            id
+                            login
+                        }
+                    }
+                }
+            }""" + $",\"variables\":{{\"orgId\":\"{orgId}\", \"sourceId\":\"{mannequinId}\", \"targetId\":\"{targetBotId}\"}}}}";
+
+        var response = JObject.Parse($@"{{
+                ""data"": {{
+                    ""reattributeMannequinToBot"": {{
+                        ""source"": {{
+                            ""id"": ""{mannequinId}"",
+                            ""login"": ""{mannequinUser}""
+                        }},
+                        ""target"": {{
+                            ""id"": ""{targetBotId}"",
+                            ""login"": ""{targetBot}""
+                        }}
+                    }}
+                }}
+            }}");
+
+        var expectedResult = new ReattributeMannequinToBotResult()
+        {
+            Data = new ReattributeMannequinToBotData()
+            {
+                ReattributeMannequinToBot = new ReattributeMannequinToBot()
+                {
+                    Source = new UserInfo() { Id = mannequinId, Login = mannequinUser },
+                    Target = new UserInfo() { Id = targetBotId, Login = targetBot }
+                }
+            }
+        };
+
+        _githubClientMock
+            .Setup(m => m.PostGraphQLAsync(url, It.Is<object>(x => Compact(x.ToJson()) == Compact(payload)), null))
+            .ReturnsAsync(response);
+
+        // Act
+        var result = await _githubApi.ReattributeMannequinToBot(orgId, mannequinId, targetBotId);
+
+        // Assert
+        result.Should().BeEquivalentTo(expectedResult);
+    }
+
+    [Fact]
+    public async Task ReattributeMannequinToBot_Throws_When_Feature_Not_Enabled()
+    {
+        // Arrange
+        const string orgId = "ORG_ID";
+        const string mannequinId = "MANNEQUIN_ID";
+        const string targetBotId = "BOT_ID";
+        const string url = "https://api.github.com/graphql";
+
+        _githubClientMock
+            .Setup(m => m.PostGraphQLAsync(url, It.IsAny<object>(), null))
+            .ThrowsAsync(new OctoshiftCliException("Field 'reattributeMannequinToBot' doesn't exist on type 'Mutation'"));
+
+        // Act, Assert
+        await _githubApi
+            .Invoking(api => api.ReattributeMannequinToBot(orgId, mannequinId, targetBotId))
+            .Should()
+            .ThrowAsync<OctoshiftCliException>()
+            .WithMessage("Reclaiming mannequins to a GitHub App / bot account is not enabled*");
+    }
+
+    [Fact]
+    public async Task ReattributeMannequinToBot_Does_Not_Retry_On_Failure()
+    {
+        // Arrange
+        const string orgId = "ORG_ID";
+        const string mannequinId = "MANNEQUIN_ID";
+        const string targetBotId = "BOT_ID";
+        const string url = "https://api.github.com/graphql";
+
+        _githubClientMock
+            .Setup(m => m.PostGraphQLAsync(url, It.IsAny<object>(), null))
+            .ThrowsAsync(new OctoshiftCliException("Target is not eligible to be a mannequin claimant"));
+
+        // Act, Assert: the bot mutation is irreversible, so a deterministic failure
+        // must surface immediately instead of being resubmitted by the retry policy.
+        await _githubApi
+            .Invoking(api => api.ReattributeMannequinToBot(orgId, mannequinId, targetBotId))
+            .Should()
+            .ThrowAsync<OctoshiftCliException>();
+
+        _githubClientMock.Verify(m => m.PostGraphQLAsync(url, It.IsAny<object>(), null), Times.Once);
     }
 
     [Fact]
@@ -3140,7 +3290,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
 
         var response = $@"
             {{
-                ""default_branch"": ""main"" 
+                ""default_branch"": ""main""
             }}";
 
         _githubClientMock
@@ -3566,7 +3716,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         var response = $@"
                 {{
                     ""id"": ""sarif-id"",
-                }}  
+                }}
             ";
         _githubClientMock
             .Setup(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == expectedPayload.ToJson()), null))
@@ -3599,7 +3749,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         var response = $@"
                 {{
                     ""id"": ""sarif-id"",
-                }}  
+                }}
             ";
         _githubClientMock
             .SetupSequence(m => m.PostAsync(url, It.Is<object>(x => x.ToJson() == expectedPayload.ToJson()), null))
@@ -3624,7 +3774,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
                 {{
                     ""analyses_url"": ""https://api.,github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/sarifs/sarif-id"",
                     ""processing_status"": ""pending""
-                }}  
+                }}
             ";
         _githubClientMock
             .Setup(m => m.GetAsync(url, null))
@@ -3651,7 +3801,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
                         ""error1"",
                         ""error2""
                     ]
-                }}  
+                }}
             ";
         _githubClientMock
             .Setup(m => m.GetAsync(url, null))
@@ -3730,7 +3880,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
                 )";
         const string gql = @"
                 abortRepositoryMigration(
-                    input: { 
+                    input: {
                         migrationId: $migrationId
                     })
                    { success }";
@@ -3748,9 +3898,9 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         const bool actualBooleanResponse = true;
         var response = JObject.Parse($@"
             {{
-                ""data"": 
+                ""data"":
                     {{
-                        ""abortRepositoryMigration"": 
+                        ""abortRepositoryMigration"":
                             {{
                                 ""success"": ""{actualBooleanResponse}""
                             }}
@@ -3789,7 +3939,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
     [Fact]
     public async Task UploadArchiveToGithubStorage_Should_Upload_The_Content()
     {
-        //Arange 
+        //Arange
         const string orgDatabaseId = "1234";
         const string archiveName = "archiveName";
 
