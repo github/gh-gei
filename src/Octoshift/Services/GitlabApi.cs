@@ -65,6 +65,41 @@ public class GitlabApi
         );
     }
 
+    public virtual async Task<GitlabExportDetails> GetExportDetails(string groupPath, string projectPath)
+    {
+        var encodedProjectPath = GetEncodedProjectPath(groupPath, projectPath);
+        var url = $"{_gitlabBaseUrl}/api/v4/projects/{encodedProjectPath}/export";
+
+        var exportResponse = await _client.GetAsync(url);
+        var exportData = JObject.Parse(exportResponse);
+
+        return new GitlabExportDetails(
+            (long?)exportData["id"],
+            (string)exportData["export_status"],
+            (string)exportData["_links"]?["api_url"],
+            exportData.ToString());
+    }
+
+    public virtual async Task<GitlabProjectDetails> GetProjectDetails(string groupPath, string projectPath)
+    {
+        var encodedProjectPath = GetEncodedProjectPath(groupPath, projectPath);
+        var url = $"{_gitlabBaseUrl}/api/v4/projects/{encodedProjectPath}?statistics=true";
+
+        var projectResponse = await _client.GetAsync(url);
+        var projectData = JObject.Parse(projectResponse);
+        var projectStatistics = (JObject)projectData["statistics"];
+
+        return new GitlabProjectDetails(
+            (long?)projectData["id"],
+            (string)projectData["path_with_namespace"],
+            (string)projectData["web_url"],
+            (bool?)projectData["archived"],
+            (string)projectData["visibility"],
+            (long?)projectStatistics?["repository_size"],
+            (long?)projectStatistics?["uploads_size"],
+            (long?)projectStatistics?["job_artifacts_size"]);
+    }
+
     public virtual async Task DownloadExportArchive(string groupPath, string projectPath, string file)
     {
         var encodedProjectPath = GetEncodedProjectPath(groupPath, projectPath);
@@ -168,3 +203,15 @@ public class GitlabApi
         return pathWithNamespace.EscapeDataString();
     }
 }
+
+public record GitlabExportDetails(long? Id, string ExportStatus, string DownloadUrl, string RawJson);
+
+public record GitlabProjectDetails(
+    long? Id,
+    string PathWithNamespace,
+    string WebUrl,
+    bool? Archived,
+    string Visibility,
+    long? RepositorySize,
+    long? UploadsSize,
+    long? JobArtifactsSize);
