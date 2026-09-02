@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Extensions;
@@ -97,7 +96,9 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         try
         {
-            migrationSourceId = await _targetGithubApi.CreateGhecMigrationSource(githubOrgId);
+            migrationSourceId = args.GithubSourceApiUrl.IsProximaApiUrl()
+                ? await _targetGithubApi.CreateGhecMigrationSource(githubOrgId, args.GithubSourceApiUrl.ExtractGitHubBaseUrl())
+                : await _targetGithubApi.CreateGhecMigrationSource(githubOrgId);
         }
         catch (OctoshiftCliException ex) when (ex.Message.Contains("not have the correct permissions to execute"))
         {
@@ -217,25 +218,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
     private string GetSourceToken(MigrateRepoCommandArgs args) => args.GithubSourcePat ?? _environmentVariableProvider.SourceGithubPersonalAccessToken();
 
-    private string GetSourceRepoUrl(MigrateRepoCommandArgs args) => GetGithubRepoUrl(args.GithubSourceOrg, args.SourceRepo, args.GetSourceApiUrl().HasValue() ? ExtractGhesBaseUrl(args.GetSourceApiUrl()) : null);
-
-    private string ExtractGhesBaseUrl(string ghesApiUrl)
-    {
-        // We expect the GHES url template to be either http(s)://hostname/api/v3 or http(s)://api.hostname.com.
-        // We are either going to be able to extract and return the base url based on the above templates or
-        // will fallback to ghesApiUrl and return it as the base url.
-
-        ghesApiUrl = ghesApiUrl.Trim().TrimEnd('/');
-
-        var baseUrl = Regex.Match(ghesApiUrl, @"(?<baseUrl>https?:\/\/.+)\/api\/v3", RegexOptions.IgnoreCase).Groups["baseUrl"].Value;
-        if (baseUrl.HasValue())
-        {
-            return baseUrl;
-        }
-
-        var match = Regex.Match(ghesApiUrl, @"(?<scheme>https?):\/\/api\.(?<host>.+)", RegexOptions.IgnoreCase);
-        return match.Success ? $"{match.Groups["scheme"]}://{match.Groups["host"]}" : ghesApiUrl;
-    }
+    private string GetSourceRepoUrl(MigrateRepoCommandArgs args) => GetGithubRepoUrl(args.GithubSourceOrg, args.SourceRepo, args.GetSourceApiUrl().HasValue() ? args.GetSourceApiUrl().ExtractGitHubBaseUrl() : null);
 
     private async Task<(string GitArchiveUrl, string MetadataArchiveUrl)> GenerateAndUploadArchive(
       string githubSourceOrg,
@@ -434,19 +417,30 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (!cloudCredentialsRequired)
         {
+            var isProximaSource = args.GithubSourceApiUrl.IsProximaApiUrl();
+
             if (shouldUseAzureStorage)
             {
-                _log.LogWarning("Ignoring provided Azure Blob Storage credentials because you are running GitHub Enterprise Server (GHES) 3.8.0 or later. The blob storage credentials configured in your GHES Management Console will be used instead.");
+                _log.LogWarning(isProximaSource
+                    ? "Ignoring provided Azure Blob Storage credentials because migrations from GitHub Enterprise Cloud with data residency (ghe.com) use GitHub-owned storage."
+                    : "Ignoring provided Azure Blob Storage credentials because you are running GitHub Enterprise Server (GHES) 3.8.0 or later. The blob storage credentials configured in your GHES Management Console will be used instead.");
             }
 
             if (shouldUseAwsS3)
             {
-                _log.LogWarning("Ignoring provided AWS S3 credentials because you are running GitHub Enterprise Server (GHES) 3.8.0 or later. The blob storage credentials configured in your GHES Management Console will be used instead.");
+                _log.LogWarning(isProximaSource
+                    ? "Ignoring provided AWS S3 credentials because migrations from GitHub Enterprise Cloud with data residency (ghe.com) use GitHub-owned storage."
+                    : "Ignoring provided AWS S3 credentials because you are running GitHub Enterprise Server (GHES) 3.8.0 or later. The blob storage credentials configured in your GHES Management Console will be used instead.");
             }
 
-            if (args.UseGithubStorage)
+            if (args.UseGithubStorage && !isProximaSource)
             {
                 _log.LogWarning("Providing the --use-github-storage flag will supersede any credentials you have configured in your GitHub Enterprise Server (GHES) Management Console.");
+            }
+
+            if (args.UseGithubStorage && isProximaSource)
+            {
+                _log.LogWarning("The --use-github-storage flag is not required when migrating from GitHub Enterprise Cloud with data residency (ghe.com); the migration API handles storage. Only pass it if you are supplying your own on-disk archive paths.");
             }
 
             if (args.KeepArchive)

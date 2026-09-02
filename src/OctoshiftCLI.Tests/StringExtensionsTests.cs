@@ -65,5 +65,21 @@ namespace OctoshiftCLI.Tests
 
             result.Should().Be(expectedResult);
         }
+
+        [Theory]
+        [InlineData("https://ghes.contoso.com/api/v3", "https://ghes.contoso.com")]
+        [InlineData("http://ghes.contoso.com/api/v3", "http://ghes.contoso.com")]
+        [InlineData("https://ghes.contoso.com/api/v3/", "https://ghes.contoso.com")]
+        [InlineData("  https://ghes.contoso.com/api/v3  ", "https://ghes.contoso.com")]
+        [InlineData("https://api.tenant.ghe.com", "https://tenant.ghe.com")]
+        [InlineData("http://api.tenant.ghe.com", "http://tenant.ghe.com")]
+        [InlineData("https://api.tenant.ghe.com/", "https://tenant.ghe.com")]
+        [InlineData("https://api.foo.bar.ghe.com", "https://foo.bar.ghe.com")]
+        public void ExtractGitHubBaseUrl_Returns_Base_Url_For_Ghes_And_Proxima(string value, string expectedResult)
+        {
+            var result = value.ExtractGitHubBaseUrl();
+
+            result.Should().Be(expectedResult);
+        }
     }
 }

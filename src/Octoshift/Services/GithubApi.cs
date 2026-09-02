@@ -370,7 +370,9 @@ public class GithubApi
         return (string)data["data"]["createMigrationSource"]["migrationSource"]["id"];
     }
 
-    public virtual async Task<string> CreateGhecMigrationSource(string orgId)
+    public virtual async Task<string> CreateGhecMigrationSource(string orgId) => await CreateGhecMigrationSource(orgId, "https://github.com");
+
+    public virtual async Task<string> CreateGhecMigrationSource(string orgId, string sourceUrl)
     {
         var url = $"{_apiUrl}/graphql";
 
@@ -383,7 +385,7 @@ public class GithubApi
             variables = new
             {
                 name = "GHEC Source",
-                url = "https://github.com",
+                url = sourceUrl,
                 ownerId = orgId,
                 type = "GITHUB_ARCHIVE"
             },
