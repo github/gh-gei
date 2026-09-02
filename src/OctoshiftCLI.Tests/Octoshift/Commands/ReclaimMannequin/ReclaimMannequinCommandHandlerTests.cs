@@ -188,4 +188,120 @@ public class ReclaimMannequinCommandHandlerTests
         _mockGithubApi.Verify(x => x.GetOrgMembershipForUser(GITHUB_ORG, TARGET_USER_LOGIN), Times.Once);
         _mockGithubApi.VerifyNoOtherCalls();
     }
+
+    [Fact]
+    public async Task SingleReclaiming_Bot_Target_Prompts_For_Confirmation()
+    {
+        // Arrange
+        const string mannequinUser = "example-ci[bot]";
+        const string targetBot = "example-ci[bot]";
+
+        _mockConfirmationService.Setup(x => x.AskForConfirmation(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
+
+        var args = new ReclaimMannequinCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            MannequinUser = mannequinUser,
+            TargetUser = targetBot,
+        };
+
+        // Act
+        await _handler.Handle(args);
+
+        // Assert
+        _mockConfirmationService.Verify(x => x.AskForConfirmation(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _mockReclaimService.Verify(x => x.ReclaimMannequin(mannequinUser, null, targetBot, GITHUB_ORG, false, false), Times.Once);
+    }
+
+    [Fact]
+    public async Task SingleReclaiming_Bot_Target_With_NoPrompt_Skips_Confirmation()
+    {
+        // Arrange
+        const string mannequinUser = "example-ci[bot]";
+        const string targetBot = "example-ci[bot]";
+
+        var args = new ReclaimMannequinCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            MannequinUser = mannequinUser,
+            TargetUser = targetBot,
+            NoPrompt = true,
+        };
+
+        // Act
+        await _handler.Handle(args);
+
+        // Assert
+        _mockConfirmationService.Verify(x => x.AskForConfirmation(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockReclaimService.Verify(x => x.ReclaimMannequin(mannequinUser, null, targetBot, GITHUB_ORG, false, false), Times.Once);
+    }
+
+    [Fact]
+    public async Task SingleReclaiming_Human_Target_Does_Not_Prompt()
+    {
+        // Arrange
+        var args = new ReclaimMannequinCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            MannequinUser = MANNEQUIN_USER,
+            TargetUser = TARGET_USER,
+        };
+
+        // Act
+        await _handler.Handle(args);
+
+        // Assert
+        _mockConfirmationService.Verify(x => x.AskForConfirmation(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SingleReclaiming_Bot_Target_With_Non_Bot_Source_Logs_Advisory_Warning()
+    {
+        // Arrange
+        const string mannequinUser = "octocat"; // does not look like a bot
+        const string targetBot = "example-ci[bot]";
+
+        _mockConfirmationService.Setup(x => x.AskForConfirmation(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
+
+        var args = new ReclaimMannequinCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            MannequinUser = mannequinUser,
+            TargetUser = targetBot,
+        };
+
+        // Act
+        await _handler.Handle(args);
+
+        // Assert
+        _mockOctoLogger.Verify(x => x.LogWarning(It.Is<string>(m => m.Contains("does not look like a bot mannequin"))), Times.Once);
+    }
+
+    [Fact]
+    public async Task CSVReclaiming_Bot_Target_Prompts_Once()
+    {
+        // Arrange
+        var lines = new[]
+        {
+            ReclaimService.CSVHEADER,
+            "example-ci[bot],mannequin-id-1,example-ci[bot]",
+            "octocat,mannequin-id-2,mona_gh",
+        };
+
+        _handler.GetFileContent = _ => lines;
+        _mockConfirmationService.Setup(x => x.AskForConfirmation(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
+
+        var args = new ReclaimMannequinCommandArgs
+        {
+            GithubOrg = GITHUB_ORG,
+            Csv = "file.csv",
+        };
+
+        // Act
+        await _handler.Handle(args);
+
+        // Assert
+        _mockConfirmationService.Verify(x => x.AskForConfirmation(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _mockReclaimService.Verify(x => x.ReclaimMannequins(lines, GITHUB_ORG, false, false), Times.Once);
+    }
 }
