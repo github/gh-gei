@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,6 +20,9 @@ import (
 	"github.com/github/gh-gei/pkg/github"
 	"github.com/github/gh-gei/pkg/logger"
 	"github.com/github/gh-gei/pkg/migration"
+	awsStorage "github.com/github/gh-gei/pkg/storage/aws"
+	azureStorage "github.com/github/gh-gei/pkg/storage/azure"
+	"github.com/github/gh-gei/pkg/storage/ghowned"
 	"github.com/spf13/cobra"
 )
 
@@ -964,6 +969,24 @@ func (a *envProviderAdapter) AWSSecretAccessKey() string { return a.prov.AWSSecr
 func (a *envProviderAdapter) AWSSessionToken() string    { return a.prov.AWSSessionToken() }
 func (a *envProviderAdapter) AWSRegion() string          { return a.prov.AWSRegion() }
 
+// tokenRoundTripper is an http.RoundTripper that injects a Bearer token.
+type tokenRoundTripper struct {
+	token string
+}
+
+func (t *tokenRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	req = req.Clone(req.Context())
+	req.Header.Set("Authorization", "Bearer "+t.token)
+	return http.DefaultTransport.RoundTrip(req)
+}
+
+// geiAwsLogAdapter adapts *logger.Logger to awsStorage.ProgressLogger (LogInfo method).
+type geiAwsLogAdapter struct {
+	log *logger.Logger
+}
+
+func (a *geiAwsLogAdapter) LogInfo(format string, args ...interface{}) { a.log.Info(format, args...) }
+
 // ---------------------------------------------------------------------------
 // Production command constructor (used by main.go)
 // ---------------------------------------------------------------------------
@@ -1075,15 +1098,80 @@ func newMigrateRepoCmdLive() *cobra.Command {
 
 			// Build archive uploader with resolved credentials
 			uploaderOpts := []archive.UploaderOption{archive.WithLogger(log)}
-			// NOTE: Azure and AWS storage backends require their respective client
-			// packages. When those packages are fully integrated, add:
-			//   if connStr != "" { uploaderOpts = append(uploaderOpts, archive.WithAzure(...)) }
-			//   if awsBucketName != "" { uploaderOpts = append(uploaderOpts, archive.WithAWS(...)) }
-			if a.useGithubStorage {
-				// TODO: GitHub-owned storage requires Upload method on github.Client
-				// which has not been implemented yet. This is a hidden flag.
-				log.Warning("GitHub-owned storage is not yet fully implemented in the Go port")
+
+			// Azure Storage backend
+			azureConnStr := a.azureStorageConnectionString
+			if azureConnStr == "" {
+				azureConnStr = envProv.AzureStorageConnectionString()
 			}
+			if azureConnStr != "" {
+				azClient, err := azureStorage.NewClient(azureConnStr, log)
+				if err != nil {
+					return fmt.Errorf("initializing Azure storage client: %w", err)
+				}
+				uploaderOpts = append(uploaderOpts, archive.WithAzure(azClient))
+			}
+
+			// AWS S3 backend
+			if a.awsBucketName != "" {
+				awsAccessKey := a.awsAccessKey
+				if awsAccessKey == "" {
+					awsAccessKey = envProv.AWSAccessKeyID()
+				}
+				awsSecretKey := a.awsSecretKey
+				if awsSecretKey == "" {
+					awsSecretKey = envProv.AWSSecretAccessKey()
+				}
+
+				var awsOpts []awsStorage.Option
+				awsRegion := a.awsRegion
+				if awsRegion == "" {
+					awsRegion = envProv.AWSRegion()
+				}
+				if awsRegion != "" {
+					awsOpts = append(awsOpts, awsStorage.WithRegion(awsRegion))
+				}
+				awsSessionToken := a.awsSessionToken
+				if awsSessionToken == "" {
+					awsSessionToken = envProv.AWSSessionToken()
+				}
+				if awsSessionToken != "" {
+					awsOpts = append(awsOpts, awsStorage.WithSessionToken(awsSessionToken))
+				}
+				awsOpts = append(awsOpts, awsStorage.WithLogger(&geiAwsLogAdapter{log: log}))
+
+				awsClient, err := awsStorage.NewClient(awsAccessKey, awsSecretKey, awsOpts...)
+				if err != nil {
+					return fmt.Errorf("initializing AWS S3 client: %w", err)
+				}
+				uploaderOpts = append(uploaderOpts, archive.WithAWS(awsClient, a.awsBucketName))
+			}
+
+			// GitHub-owned storage backend
+			if a.useGithubStorage {
+				uploadsURL := a.targetUploadsURL
+				if uploadsURL == "" {
+					uploadsURL = "https://uploads.github.com"
+				}
+
+				ghHTTPClient := &http.Client{
+					Transport: &tokenRoundTripper{token: targetToken},
+				}
+
+				var ghOwnedOpts []ghowned.Option
+				ghOwnedOpts = append(ghOwnedOpts, ghowned.WithLogger(log))
+
+				envReal := env.New()
+				if mebiStr := envReal.GitHubOwnedStorageMultipartMebibytes(); mebiStr != "" {
+					if mebi, err := strconv.ParseInt(mebiStr, 10, 64); err == nil {
+						ghOwnedOpts = append(ghOwnedOpts, ghowned.WithPartSizeMebibytes(mebi))
+					}
+				}
+
+				ghOwnedClient := ghowned.NewClient(uploadsURL, ghHTTPClient, ghOwnedOpts...)
+				uploaderOpts = append(uploaderOpts, archive.WithGitHub(ghOwnedClient, targetGH))
+			}
+
 			uploader := archive.NewUploader(uploaderOpts...)
 
 			downloader := download.New(nil) // default HTTP client

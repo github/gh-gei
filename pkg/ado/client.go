@@ -19,6 +19,25 @@ import (
 
 const nullStr = "null"
 
+// jsonValueToString converts a JSON value (which may be a string, boolean,
+// number, or null) to its lowercase string representation.  The ADO API
+// sometimes returns boolean literals (e.g. `false`) for fields that are
+// conceptually strings (like checkoutSubmodules and clean).  The C# JToken
+// cast `(string)value` handles this transparently; this helper replicates
+// that behavior for Go's strict JSON unmarshalling.
+func jsonValueToString(raw json.RawMessage) string {
+	if len(raw) == 0 || string(raw) == "null" {
+		return nullStr
+	}
+	// Try string first (most common case).
+	var s string
+	if err := json.Unmarshal(raw, &s); err == nil {
+		return strings.ToLower(s)
+	}
+	// Fall back: booleans, numbers, etc. — use the raw literal.
+	return strings.ToLower(strings.Trim(string(raw), `"`))
+}
+
 // Client is a complete Azure DevOps API client.
 // It corresponds to the combination of C# AdoClient + AdoApi.
 type Client struct {
@@ -1314,9 +1333,9 @@ func (c *Client) GetPipeline(ctx context.Context, org, teamProject string, pipel
 
 	var data struct {
 		Repository struct {
-			DefaultBranch      string  `json:"defaultBranch"`
-			Clean              *string `json:"clean"`
-			CheckoutSubmodules *string `json:"checkoutSubmodules"`
+			DefaultBranch      string          `json:"defaultBranch"`
+			Clean              json.RawMessage `json:"clean"`
+			CheckoutSubmodules json.RawMessage `json:"checkoutSubmodules"`
 		} `json:"repository"`
 		Triggers json.RawMessage `json:"triggers"`
 	}
@@ -1329,14 +1348,8 @@ func (c *Client) GetPipeline(ctx context.Context, org, teamProject string, pipel
 		defaultBranch = defaultBranch[len("refs/heads/"):]
 	}
 
-	clean := nullStr
-	if data.Repository.Clean != nil {
-		clean = strings.ToLower(*data.Repository.Clean)
-	}
-	checkout := nullStr
-	if data.Repository.CheckoutSubmodules != nil {
-		checkout = strings.ToLower(*data.Repository.CheckoutSubmodules)
-	}
+	clean := jsonValueToString(data.Repository.Clean)
+	checkout := jsonValueToString(data.Repository.CheckoutSubmodules)
 
 	return PipelineInfo{
 		DefaultBranch:      defaultBranch,
@@ -1378,11 +1391,11 @@ func (c *Client) GetPipelineRepository(ctx context.Context, org, teamProject str
 
 	var data struct {
 		Repository struct {
-			Name               string  `json:"name"`
-			ID                 string  `json:"id"`
-			DefaultBranch      string  `json:"defaultBranch"`
-			Clean              *string `json:"clean"`
-			CheckoutSubmodules *string `json:"checkoutSubmodules"`
+			Name               string          `json:"name"`
+			ID                 string          `json:"id"`
+			DefaultBranch      string          `json:"defaultBranch"`
+			Clean              json.RawMessage `json:"clean"`
+			CheckoutSubmodules json.RawMessage `json:"checkoutSubmodules"`
 		} `json:"repository"`
 	}
 	if err := json.Unmarshal([]byte(body), &data); err != nil {
@@ -1394,14 +1407,8 @@ func (c *Client) GetPipelineRepository(ctx context.Context, org, teamProject str
 		defaultBranch = defaultBranch[len("refs/heads/"):]
 	}
 
-	clean := nullStr
-	if data.Repository.Clean != nil {
-		clean = strings.ToLower(*data.Repository.Clean)
-	}
-	checkout := nullStr
-	if data.Repository.CheckoutSubmodules != nil {
-		checkout = strings.ToLower(*data.Repository.CheckoutSubmodules)
-	}
+	clean := jsonValueToString(data.Repository.Clean)
+	checkout := jsonValueToString(data.Repository.CheckoutSubmodules)
 
 	return PipelineRepository{
 		RepoName:           data.Repository.Name,
