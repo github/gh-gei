@@ -36,6 +36,11 @@ func (p *Provider) BBSPassword() string {
 	return os.Getenv("BBS_PASSWORD")
 }
 
+// SmbPassword returns the SMB_PASSWORD environment variable
+func (p *Provider) SmbPassword() string {
+	return os.Getenv("SMB_PASSWORD")
+}
+
 // AzureStorageConnectionString returns the AZURE_STORAGE_CONNECTION_STRING environment variable
 func (p *Provider) AzureStorageConnectionString() string {
 	return os.Getenv("AZURE_STORAGE_CONNECTION_STRING")
