@@ -23,7 +23,7 @@ jobs:
         target-os: [windows-latest, ubuntu-latest, macos-latest]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
       with:
         ref: 'refs/pull/${{ github.event.inputs.pr_number }}/merge'
         fetch-depth: 0
@@ -42,7 +42,7 @@ jobs:
         fi
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v2
+      uses: actions/setup-dotnet@8e6bd2905eef86446227f003dda1deb3916c4aaf # v2.2.1
       with:
         global-json-file: global.json
 
@@ -71,7 +71,7 @@ jobs:
         SKIP_LINUX: "true"
 
     - name: Upload Binaries
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       with:
         name: binaries-${{ matrix.target-os }}
         path: |
@@ -98,7 +98,7 @@ jobs:
     runs-on: ${{ matrix.runner-os }}
     concurrency: integration-test-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
       with:
         ref: 'refs/pull/${{ github.event.inputs.pr_number }}/merge'
         fetch-depth: 0
@@ -111,12 +111,12 @@ jobs:
         echo "PR_SHA=$(echo $prsha)" >> $GITHUB_ENV
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v2
+      uses: actions/setup-dotnet@8e6bd2905eef86446227f003dda1deb3916c4aaf # v2.2.1
       with:
         global-json-file: global.json
 
     - name: Download Binaries
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
       with:
         name: binaries-${{ matrix.runner-os }}
         path: dist
@@ -233,7 +233,7 @@ jobs:
         commit: ${{ env.PR_SHA }}
 
     - name: Upload test logs
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       if: always()
       with:
         name: integration-test-logs-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
