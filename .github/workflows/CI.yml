@@ -29,21 +29,21 @@ jobs:
     runs-on: ${{ matrix.runner-os }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
       # e33e0265a09d6d736e2ee1e0eb685ef1de4669ff is tag v3, pinned to avoid supply chain attacks
       - uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
       - name: Initialize CodeQL
         if: matrix.runner-os == 'ubuntu-latest'
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
         with:
           languages: ${{ matrix.language }}
           queries: +security-and-quality
           config-file: ./.github/codeql/codeql-config.yml
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
         with:
           global-json-file: global.json
 
@@ -76,7 +76,7 @@ jobs:
       # This is used by the subsequent publish-test-results.yml
       - name: Upload Unit Test Results
         if: always() && matrix.runner-os == 'ubuntu-latest' && matrix.language == 'csharp'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: Unit Test Results
           path: src/OctoshiftCLI.Tests/unit-tests.xml
@@ -84,13 +84,13 @@ jobs:
       # This is used by the subsequent publish-test-results.yml
       - name: Upload Code Coverage Report
         if: always() && matrix.runner-os == 'ubuntu-latest' && matrix.language == 'csharp'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: Code Coverage Report
           path: code-coverage-results.md
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
         if: matrix.runner-os == 'ubuntu-latest'
 
   upload-event-file:
@@ -101,7 +101,7 @@ jobs:
     steps:
       # This is used by the subsequent publish-test-results.yaml
       - name: Upload Event File
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: Event File
           path: ${{ github.event_path }}
@@ -117,14 +117,14 @@ jobs:
         target-os: [windows-latest, ubuntu-latest, macos-latest]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
       # e33e0265a09d6d736e2ee1e0eb685ef1de4669ff is tag v3, pinned to avoid supply chain attacks
       - uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
         with:
           global-json-file: global.json
 
@@ -141,7 +141,7 @@ jobs:
         run: just publish-macos
 
       - name: Upload Binaries
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: binaries-${{ matrix.target-os }}
           path: |
@@ -173,17 +173,17 @@ jobs:
     runs-on: ${{ matrix.runner-os }}
     concurrency: integration-test-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
         with:
           global-json-file: global.json
 
       - name: Download Binaries
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: binaries-${{ matrix.runner-os }}
           path: dist
@@ -298,7 +298,7 @@ jobs:
           comment_mode: off
 
       - name: Upload test logs
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         if: always()
         with:
           name: integration-test-logs-${{ matrix.source-vcs }}-${{ matrix.runner-os }}
@@ -325,7 +325,7 @@ jobs:
     environment: PUBLISH_RELEASE
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           token: ${{ secrets.RELEASE_NOTES_PAT }}
           fetch-depth: 0
@@ -346,7 +346,7 @@ jobs:
           }
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
         with:
           global-json-file: global.json
 
