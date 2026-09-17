@@ -1020,10 +1020,25 @@ public class GithubApi
 
     public virtual async Task<IEnumerable<GithubSecretScanningAlert>> GetSecretScanningAlertsForRepository(string org, string repo)
     {
-        var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/secret-scanning/alerts?per_page=100";
-        return await _client.GetAllAsync(url)
+        // Without a secret_type filter the endpoint returns default (provider) + custom
+        // patterns only; generic and AI-detected alerts are silently omitted.
+        var baseUrl = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/secret-scanning/alerts?per_page=100";
+
+        // 1) Default + custom patterns.
+        var defaultAlerts = await _client.GetAllAsync(baseUrl).ToListAsync();
+
+        // 2) Non-default patterns (generic + AI-detected) must be named explicitly.
+        var nonDefaultUrl = $"{baseUrl}&secret_type={string.Join(",", NonDefaultSecretTypes)}";
+        var nonDefaultAlerts = await _client.GetAllAsync(nonDefaultUrl).ToListAsync();
+
+        // The default call never returns the non-default types, so there is no overlap.
+        // DistinctBy(Number) is a cheap safety net in case GitHub ever changes the default
+        // response to include these types (which would otherwise double-migrate them).
+        return defaultAlerts
+            .Concat(nonDefaultAlerts)
             .Select(secretAlert => BuildSecretScanningAlert(secretAlert))
-            .ToListAsync();
+            .DistinctBy(alert => alert.Number)
+            .ToList();
     }
 
     public virtual async Task<IEnumerable<GithubSecretScanningAlertLocation>> GetSecretScanningAlertsLocations(string org, string repo, int alertNumber)
@@ -1298,6 +1313,36 @@ public class GithubApi
                                 : null
         };
     }
+
+    // Non-default secret scanning patterns (Generic + AI-detected). The "list alerts"
+    // endpoint returns ONLY default (provider) and custom patterns unless these slugs
+    // are requested explicitly via the `secret_type` filter. There is deliberately no
+    // slug for "everything": `exclude_secret_types` still only returns the *default*
+    // set, so these types must be enumerated to be migrated.
+    //
+    // Keep in sync with GitHub's published patterns. Last verified: 2026-09-17.
+    //   Generic patterns:     https://docs.github.com/en/code-security/reference/secret-security/supported-secret-scanning-patterns#supported-generic-patterns
+    //   AI-detected patterns: https://docs.github.com/en/code-security/reference/secret-security/supported-secret-scanning-patterns#supported-ai-detected-patterns
+    //
+    // NOTE (GHES targets): some slugs are version-gated on GitHub Enterprise Server.
+    // Requesting a slug the target does not support simply returns no rows for that slug.
+    private static readonly string[] NonDefaultSecretTypes =
+    {
+        // Generic patterns
+        "ec_private_key",
+        "generic_private_key",
+        "http_basic_authentication_header",
+        "http_bearer_authentication_header",
+        "mongodb_connection_string",
+        "mysql_connection_url",
+        "openssh_private_key",
+        "pgp_private_key",
+        "postgres_connection_string",
+        "rsa_private_key",
+
+        // AI-detected patterns
+        "password",
+    };
 
     private static GithubSecretScanningAlert BuildSecretScanningAlert(JToken secretAlert) =>
         new()

@@ -1,1 +1,1 @@
-
+- Fixed `migrate-secret-alerts` so that generic and AI-detected secret scanning alerts (e.g. private keys, connection strings, and AI-detected passwords) are now migrated in addition to default and custom pattern alerts.

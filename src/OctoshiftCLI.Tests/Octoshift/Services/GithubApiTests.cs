@@ -3082,7 +3082,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
 
         var secretScanningAlert_4 = $@"
                 {{
-                    ""number"": 1,
+                    ""number"": 20,
 		            ""created_at"": ""2022-08-10T07:58:30Z"",
                     ""updated_at"": ""2022-08-15T13:53:42Z"",
                     ""url"": ""https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts/1"",
@@ -3150,6 +3150,10 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         _githubClientMock
             .Setup(m => m.GetAllAsync(url, null))
             .Returns(GetAllPages);
+
+        _githubClientMock
+            .Setup(m => m.GetAllAsync(It.Is<string>(u => u.Contains("secret_type=")), null))
+            .Returns(EmptyAsyncEnumerable);
 
         // Act
         var scanResults = await _githubApi.GetSecretScanningAlertsForRepository(GITHUB_ORG, GITHUB_REPO);
@@ -4272,6 +4276,10 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
             .Setup(m => m.GetAllAsync(url, null))
             .Returns(alerts);
 
+        _githubClientMock
+            .Setup(m => m.GetAllAsync(It.Is<string>(u => u.Contains("secret_type=")), null))
+            .Returns(EmptyAsyncEnumerable);
+
         // Act
         var results = await _githubApi.GetSecretScanningAlertsForRepository(GITHUB_ORG, GITHUB_REPO);
         var array = results.ToArray();
@@ -4301,6 +4309,10 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         .Setup(m => m.GetAllAsync(url, null))
         .Returns(new[] { JToken.Parse(json) }.ToAsyncEnumerable());
 
+        _githubClientMock
+            .Setup(m => m.GetAllAsync(It.Is<string>(u => u.Contains("secret_type=")), null))
+            .Returns(EmptyAsyncEnumerable);
+
         // Act
         var results = await _githubApi.GetSecretScanningAlertsForRepository(GITHUB_ORG, GITHUB_REPO);
         var array = results.ToArray();
@@ -4309,6 +4321,55 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         array.Should().HaveCount(1);
         array[0].ResolutionComment.Should().Be("This is a test");
         array[0].ResolverName.Should().Be("actor");
+    }
+
+    private const string NON_DEFAULT_SECRET_TYPES =
+        "ec_private_key,generic_private_key,http_basic_authentication_header," +
+        "http_bearer_authentication_header,mongodb_connection_string,mysql_connection_url," +
+        "openssh_private_key,pgp_private_key,postgres_connection_string,rsa_private_key,password";
+
+    private static async IAsyncEnumerable<JToken> EmptyAsyncEnumerable()
+    {
+        await Task.CompletedTask;
+        yield break;
+    }
+
+    [Fact]
+    public async Task GetSecretScanningAlertsForRepository_Includes_Generic_And_AiDetected_Alerts()
+    {
+        // Arrange
+        var baseUrl = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts?per_page=100";
+        var nonDefaultUrl = $"{baseUrl}&secret_type={NON_DEFAULT_SECRET_TYPES}";
+
+        var defaultResponse = @"[ { ""number"": 1, ""state"": ""resolved"", ""resolution"": ""false_positive"", ""secret_type"": ""google_api_key"", ""secret"": ""default-secret"", ""resolved_by"": null } ]";
+        var nonDefaultResponse = @"[
+            { ""number"": 2, ""state"": ""resolved"", ""resolution"": ""used_in_tests"", ""secret_type"": ""rsa_private_key"", ""secret"": ""rsa-secret"", ""resolved_by"": null },
+            { ""number"": 3, ""state"": ""open"", ""secret_type"": ""password"", ""secret"": ""p4ssw0rd"", ""resolved_by"": null }
+        ]";
+
+        async IAsyncEnumerable<JToken> DefaultPage()
+        {
+            foreach (var t in JArray.Parse(defaultResponse)) { yield return t; }
+            await Task.CompletedTask;
+        }
+
+        async IAsyncEnumerable<JToken> NonDefaultPage()
+        {
+            foreach (var t in JArray.Parse(nonDefaultResponse)) { yield return t; }
+            await Task.CompletedTask;
+        }
+
+        _githubClientMock.Setup(m => m.GetAllAsync(baseUrl, null)).Returns(DefaultPage);
+        _githubClientMock.Setup(m => m.GetAllAsync(nonDefaultUrl, null)).Returns(NonDefaultPage);
+
+        // Act
+        var results = (await _githubApi.GetSecretScanningAlertsForRepository(GITHUB_ORG, GITHUB_REPO)).ToList();
+
+        // Assert
+        results.Should().HaveCount(3);
+        results.Select(r => r.SecretType).Should().Contain(new[] { "google_api_key", "rsa_private_key", "password" });
+        _githubClientMock.Verify(m => m.GetAllAsync(baseUrl, null), Times.Once);
+        _githubClientMock.Verify(m => m.GetAllAsync(nonDefaultUrl, null), Times.Once);
     }
 
     private string Compact(string source) =>
