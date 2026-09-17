@@ -54,7 +54,7 @@ public class GithubApiTests
             _logMock.Object,
             _retryPolicy,
             TestHelpers.CreateMock<EnvironmentVariableProvider>().Object);
-        _githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy, _archiveUploader.Object);
+        _githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy, _archiveUploader.Object, _logMock.Object);
     }
 
     [Fact]
@@ -4370,6 +4370,112 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         results.Select(r => r.SecretType).Should().Contain(new[] { "google_api_key", "rsa_private_key", "password" });
         _githubClientMock.Verify(m => m.GetAllAsync(baseUrl, null), Times.Once);
         _githubClientMock.Verify(m => m.GetAllAsync(nonDefaultUrl, null), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetSecretScanningAlertsForRepository_Deduplicates_Alerts_Present_In_Both_Responses()
+    {
+        // Arrange
+        var baseUrl = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts?per_page=100";
+        var nonDefaultUrl = $"{baseUrl}&secret_type={NON_DEFAULT_SECRET_TYPES}";
+
+        // Alert number 2 appears in BOTH responses; the merged result must contain it once.
+        var defaultResponse = @"[
+            { ""number"": 1, ""state"": ""open"", ""secret_type"": ""google_api_key"", ""secret"": ""default-secret"", ""resolved_by"": null },
+            { ""number"": 2, ""state"": ""resolved"", ""resolution"": ""used_in_tests"", ""secret_type"": ""rsa_private_key"", ""secret"": ""rsa-secret"", ""resolved_by"": null }
+        ]";
+        var nonDefaultResponse = @"[
+            { ""number"": 2, ""state"": ""resolved"", ""resolution"": ""used_in_tests"", ""secret_type"": ""rsa_private_key"", ""secret"": ""rsa-secret"", ""resolved_by"": null },
+            { ""number"": 3, ""state"": ""open"", ""secret_type"": ""password"", ""secret"": ""p4ssw0rd"", ""resolved_by"": null }
+        ]";
+
+        async IAsyncEnumerable<JToken> DefaultPage()
+        {
+            foreach (var t in JArray.Parse(defaultResponse)) { yield return t; }
+            await Task.CompletedTask;
+        }
+
+        async IAsyncEnumerable<JToken> NonDefaultPage()
+        {
+            foreach (var t in JArray.Parse(nonDefaultResponse)) { yield return t; }
+            await Task.CompletedTask;
+        }
+
+        _githubClientMock.Setup(m => m.GetAllAsync(baseUrl, null)).Returns(DefaultPage);
+        _githubClientMock.Setup(m => m.GetAllAsync(nonDefaultUrl, null)).Returns(NonDefaultPage);
+
+        // Act
+        var results = (await _githubApi.GetSecretScanningAlertsForRepository(GITHUB_ORG, GITHUB_REPO)).ToList();
+
+        // Assert
+        // Four raw alerts (2 + 2) collapse to three distinct alert numbers.
+        results.Should().HaveCount(3);
+        results.Select(r => r.Number).Should().BeEquivalentTo(new[] { 1, 2, 3 });
+        results.Count(r => r.Number == 2).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GetSecretScanningAlertsForRepository_Skips_NonDefault_Alerts_When_Target_Returns_422_Unsupported()
+    {
+        // Arrange
+        var baseUrl = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts?per_page=100";
+        var nonDefaultUrl = $"{baseUrl}&secret_type={NON_DEFAULT_SECRET_TYPES}";
+
+        var defaultResponse = @"[ { ""number"": 1, ""state"": ""open"", ""secret_type"": ""google_api_key"", ""secret"": ""default-secret"", ""resolved_by"": null } ]";
+
+        async IAsyncEnumerable<JToken> DefaultPage()
+        {
+            foreach (var t in JArray.Parse(defaultResponse)) { yield return t; }
+            await Task.CompletedTask;
+        }
+
+        // Same shape GithubClient throws for an unsupported secret_type on older targets.
+        var unsupported = new HttpRequestException(
+            @"GitHub API error: {""message"":""Validation Failed"",""errors"":[{""resource"":""SecretScanningAlert"",""field"":""secret_type"",""code"":""unsupported""}]}",
+            null,
+            HttpStatusCode.UnprocessableEntity);
+
+        _githubClientMock.Setup(m => m.GetAllAsync(baseUrl, null)).Returns(DefaultPage);
+        _githubClientMock.Setup(m => m.GetAllAsync(nonDefaultUrl, null)).Throws(unsupported);
+
+        // Act
+        var results = (await _githubApi.GetSecretScanningAlertsForRepository(GITHUB_ORG, GITHUB_REPO)).ToList();
+
+        // Assert
+        results.Should().HaveCount(1);
+        results.Single().SecretType.Should().Be("google_api_key");
+        _logMock.Verify(m => m.LogWarning(It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetSecretScanningAlertsForRepository_Propagates_NonUnsupported_Errors_From_NonDefault_Call()
+    {
+        // Arrange
+        var baseUrl = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts?per_page=100";
+        var nonDefaultUrl = $"{baseUrl}&secret_type={NON_DEFAULT_SECRET_TYPES}";
+
+        var defaultResponse = @"[ { ""number"": 1, ""state"": ""open"", ""secret_type"": ""google_api_key"", ""secret"": ""default-secret"", ""resolved_by"": null } ]";
+
+        async IAsyncEnumerable<JToken> DefaultPage()
+        {
+            foreach (var t in JArray.Parse(defaultResponse)) { yield return t; }
+            await Task.CompletedTask;
+        }
+
+        // A server error must not be swallowed.
+        var serverError = new HttpRequestException(
+            "GitHub API error: internal server error",
+            null,
+            HttpStatusCode.InternalServerError);
+
+        _githubClientMock.Setup(m => m.GetAllAsync(baseUrl, null)).Returns(DefaultPage);
+        _githubClientMock.Setup(m => m.GetAllAsync(nonDefaultUrl, null)).Throws(serverError);
+
+        // Act
+        var act = async () => await _githubApi.GetSecretScanningAlertsForRepository(GITHUB_ORG, GITHUB_REPO);
+
+        // Assert
+        await act.Should().ThrowAsync<HttpRequestException>();
     }
 
     private string Compact(string source) =>

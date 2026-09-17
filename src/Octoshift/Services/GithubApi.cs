@@ -18,13 +18,15 @@ public class GithubApi
     private readonly string _apiUrl;
     private readonly RetryPolicy _retryPolicy;
     private readonly ArchiveUploader _multipartUploader;
+    private readonly OctoLogger _log;
 
-    public GithubApi(GithubClient client, string apiUrl, RetryPolicy retryPolicy, ArchiveUploader multipartUploader)
+    public GithubApi(GithubClient client, string apiUrl, RetryPolicy retryPolicy, ArchiveUploader multipartUploader, OctoLogger log = null)
     {
         _client = client;
         _apiUrl = apiUrl;
         _retryPolicy = retryPolicy;
         _multipartUploader = multipartUploader;
+        _log = log;
     }
 
     public virtual async Task AddAutoLink(string org, string repo, string keyPrefix, string urlTemplate)
@@ -1024,16 +1026,35 @@ public class GithubApi
         // patterns only; generic and AI-detected alerts are silently omitted.
         var baseUrl = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/secret-scanning/alerts?per_page=100";
 
-        // 1) Default + custom patterns.
+        // 1) Default + custom patterns. This must always run first; its result must
+        // survive even when the non-default call below fails on older targets.
         var defaultAlerts = await _client.GetAllAsync(baseUrl).ToListAsync();
 
         // 2) Non-default patterns (generic + AI-detected) must be named explicitly.
+        // Some slugs are version-gated on GitHub Enterprise Server. When the target
+        // does not support one of the requested slugs the list API responds with HTTP
+        // 422 "Validation Failed" (code "unsupported") for the whole request rather
+        // than omitting that slug, so we degrade gracefully: skip the non-default
+        // alerts and continue migrating the default/custom ones. Any other failure
+        // (auth, 5xx, unrelated 422s, network) is left to propagate.
         var nonDefaultUrl = $"{baseUrl}&secret_type={string.Join(",", NonDefaultSecretTypes)}";
-        var nonDefaultAlerts = await _client.GetAllAsync(nonDefaultUrl).ToListAsync();
+        var nonDefaultAlerts = new List<JToken>();
+        try
+        {
+            nonDefaultAlerts = await _client.GetAllAsync(nonDefaultUrl).ToListAsync();
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.UnprocessableEntity && ex.Message.Contains("secret_type"))
+        {
+            _log?.LogWarning(
+                "The target does not support one or more of the generic or AI-detected secret scanning types, " +
+                "so alerts of those types will not be migrated. This is expected on older GitHub Enterprise Server " +
+                "versions where some of these secret types are not available.");
+        }
 
-        // The default call never returns the non-default types, so there is no overlap.
-        // DistinctBy(Number) is a cheap safety net in case GitHub ever changes the default
-        // response to include these types (which would otherwise double-migrate them).
+        // The default call never returns the non-default types, so there is normally no
+        // overlap. DistinctBy(Number) is a cheap safety net in case GitHub ever changes
+        // the default response to include these types (which would otherwise double-migrate
+        // them).
         return defaultAlerts
             .Concat(nonDefaultAlerts)
             .Select(secretAlert => BuildSecretScanningAlert(secretAlert))
@@ -1325,7 +1346,10 @@ public class GithubApi
     //   AI-detected patterns: https://docs.github.com/en/code-security/reference/secret-security/supported-secret-scanning-patterns#supported-ai-detected-patterns
     //
     // NOTE (GHES targets): some slugs are version-gated on GitHub Enterprise Server.
-    // Requesting a slug the target does not support simply returns no rows for that slug.
+    // Requesting a slug the target does not support causes the list API to return an
+    // HTTP 422 "Validation Failed" (code "unsupported") response for the whole request.
+    // GetSecretScanningAlertsForRepository catches that specific case and degrades
+    // gracefully (see there).
     private static readonly string[] NonDefaultSecretTypes =
     {
         // Generic patterns
