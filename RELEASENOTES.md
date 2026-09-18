@@ -1,1 +1,1 @@
-
+- Updated GitLab-to-GitHub insufficient-permissions errors to link to GitLab-specific access documentation.
