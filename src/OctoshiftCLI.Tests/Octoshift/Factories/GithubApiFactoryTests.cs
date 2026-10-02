@@ -325,4 +325,28 @@ public class GithubApiFactoryTests
 
         environmentVariableProviderMock.Verify(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>()), Times.Never);
     }
+
+    [Fact]
+    public void Target_Create_Uses_The_Provided_Target_Api_Client_Name()
+    {
+        // Arrange
+        var environmentVariableProviderMock = TestHelpers.CreateMock<EnvironmentVariableProvider>();
+        environmentVariableProviderMock.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(TARGET_GH_PAT);
+
+        using var httpClient = new HttpClient();
+
+        var mockHttpClientFactory = new Mock<IHttpClientFactory>();
+        mockHttpClientFactory
+            .Setup(x => x.CreateClient("GithubTarget"))
+            .Returns(httpClient);
+
+        // Act
+        var factory = new GithubApiFactory(null, mockHttpClientFactory.Object, environmentVariableProviderMock.Object, null, null, null, "GithubTarget");
+        var targetFactory = (ITargetGithubApiFactory)factory;
+        var result = targetFactory.Create();
+
+        // Assert
+        result.Should().NotBeNull();
+        mockHttpClientFactory.Verify(x => x.CreateClient("GithubTarget"), Times.Once);
+    }
 }
