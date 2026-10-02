@@ -31,7 +31,7 @@ namespace OctoshiftCLI.GitlabToGithub
                 .AddSingleton(Logger)
                 .AddSingleton<EnvironmentVariableProvider>()
                 .AddSingleton<GitlabApiFactory>()
-                .AddSingleton<ITargetGithubApiFactory, GithubApiFactory>()
+                .AddSingleton<ITargetGithubApiFactory>(sp => ActivatorUtilities.CreateInstance<GithubApiFactory>(sp, "GithubTarget"))
                 .AddSingleton<RetryPolicy>()
                 .AddSingleton<IAzureApiFactory, AzureApiFactory>()
                 .AddSingleton<IBlobServiceClientFactory, BlobServiceClientFactory>()
@@ -50,7 +50,8 @@ namespace OctoshiftCLI.GitlabToGithub
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
                 .AddSingleton<ConfirmationService>()
                 .AddHttpClient("NoSSL", noSsl: true)
-                .AddHttpClient("Default");
+                .AddHttpClient("Default")
+                .AddHttpClient("GithubTarget", allowAutoRedirect: false);
 
             var serviceProvider = serviceCollection.BuildServiceProvider();
             var rootCommand = new RootCommand("Automate end-to-end GitLab to GitHub migrations.")
@@ -138,11 +139,11 @@ namespace OctoshiftCLI.GitlabToGithub
             }
         }
 
-        private static IServiceCollection AddHttpClient(this IServiceCollection serviceCollection, string name, bool noSsl = false) => serviceCollection
+        private static IServiceCollection AddHttpClient(this IServiceCollection serviceCollection, string name, bool noSsl = false, bool allowAutoRedirect = true) => serviceCollection
             .AddHttpClient(name, _ => { })
             .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {
-                AllowAutoRedirect = false,
+                AllowAutoRedirect = allowAutoRedirect,
                 ServerCertificateCustomValidationCallback = noSsl ? delegate { return true; } : null
             })
             .Services;

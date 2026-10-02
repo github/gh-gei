@@ -15,8 +15,9 @@ public sealed class GithubApiFactory : ISourceGithubApiFactory, ITargetGithubApi
     private readonly DateTimeProvider _dateTimeProvider;
     private readonly RetryPolicy _retryPolicy;
     private readonly IVersionProvider _versionProvider;
+    private readonly string _targetApiClientName;
 
-    public GithubApiFactory(OctoLogger octoLogger, IHttpClientFactory clientFactory, EnvironmentVariableProvider environmentVariableProvider, DateTimeProvider dateTimeProvider, RetryPolicy retryPolicy, IVersionProvider versionProvider)
+    public GithubApiFactory(OctoLogger octoLogger, IHttpClientFactory clientFactory, EnvironmentVariableProvider environmentVariableProvider, DateTimeProvider dateTimeProvider, RetryPolicy retryPolicy, IVersionProvider versionProvider, string targetApiClientName = "Default")
     {
         _octoLogger = octoLogger;
         _clientFactory = clientFactory;
@@ -24,6 +25,7 @@ public sealed class GithubApiFactory : ISourceGithubApiFactory, ITargetGithubApi
         _dateTimeProvider = dateTimeProvider;
         _retryPolicy = retryPolicy;
         _versionProvider = versionProvider;
+        _targetApiClientName = targetApiClientName;
     }
 
     GithubApi ISourceGithubApiFactory.Create(string apiUrl, string uploadsUrl, string sourcePersonalAccessToken)
@@ -54,7 +56,7 @@ public sealed class GithubApiFactory : ISourceGithubApiFactory, ITargetGithubApi
         uploadsUrl ??= DEFAULT_UPLOADS_URL;
         targetPersonalAccessToken ??= _environmentVariableProvider.TargetGithubPersonalAccessToken();
         var clientRetryPolicy = (_retryPolicy ?? new RetryPolicy(_octoLogger)).WithServiceName("GitHub");
-        var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient("Default"), _versionProvider, clientRetryPolicy, _dateTimeProvider, targetPersonalAccessToken);
+        var githubClient = new GithubClient(_octoLogger, _clientFactory.CreateClient(_targetApiClientName), _versionProvider, clientRetryPolicy, _dateTimeProvider, targetPersonalAccessToken);
         var multipartUploader = new ArchiveUploader(githubClient, uploadsUrl, _octoLogger, _retryPolicy, _environmentVariableProvider);
         return new GithubApi(githubClient, apiUrl, _retryPolicy, multipartUploader);
     }

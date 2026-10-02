@@ -32,7 +32,7 @@ namespace OctoshiftCLI.BbsToGithub
                 .AddSingleton(Logger)
                 .AddSingleton<EnvironmentVariableProvider>()
                 .AddSingleton<BbsApiFactory>()
-                .AddSingleton<ITargetGithubApiFactory, GithubApiFactory>()
+                .AddSingleton<ITargetGithubApiFactory>(sp => ActivatorUtilities.CreateInstance<GithubApiFactory>(sp, "GithubTarget"))
                 .AddSingleton<RetryPolicy>()
                 .AddSingleton<IAzureApiFactory, AzureApiFactory>()
                 .AddSingleton<IBlobServiceClientFactory, BlobServiceClientFactory>()
@@ -54,6 +54,7 @@ namespace OctoshiftCLI.BbsToGithub
                 .AddHttpClient("Kerberos", kerberos: true, noSsl: false)
                 .AddHttpClient("NoSSL", kerberos: false, noSsl: true)
                 .AddHttpClient("KerberosNoSSL", kerberos: true, noSsl: true)
+                .AddHttpClient("GithubTarget", kerberos: false, noSsl: false, allowAutoRedirect: false)
                 .AddHttpClient("Default");
 
             var serviceProvider = serviceCollection.BuildServiceProvider();
@@ -142,11 +143,11 @@ namespace OctoshiftCLI.BbsToGithub
             }
         }
 
-        private static IServiceCollection AddHttpClient(this IServiceCollection serviceCollection, string name, bool kerberos, bool noSsl) => serviceCollection
+        private static IServiceCollection AddHttpClient(this IServiceCollection serviceCollection, string name, bool kerberos, bool noSsl, bool allowAutoRedirect = true) => serviceCollection
             .AddHttpClient(name)
             .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {
-                AllowAutoRedirect = false,
+                AllowAutoRedirect = allowAutoRedirect,
                 UseDefaultCredentials = kerberos,
                 ServerCertificateCustomValidationCallback = noSsl ? delegate { return true; } : null
             })
