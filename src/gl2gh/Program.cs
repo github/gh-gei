@@ -142,6 +142,7 @@ namespace OctoshiftCLI.GitlabToGithub
             .AddHttpClient(name, _ => { })
             .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {
+                AllowAutoRedirect = false,
                 ServerCertificateCustomValidationCallback = noSsl ? delegate { return true; } : null
             })
             .Services;

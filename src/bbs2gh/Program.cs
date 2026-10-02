@@ -146,6 +146,7 @@ namespace OctoshiftCLI.BbsToGithub
             .AddHttpClient(name)
             .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {
+                AllowAutoRedirect = false,
                 UseDefaultCredentials = kerberos,
                 ServerCertificateCustomValidationCallback = noSsl ? delegate { return true; } : null
             })
