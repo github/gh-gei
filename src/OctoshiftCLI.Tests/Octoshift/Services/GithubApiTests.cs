@@ -446,7 +446,7 @@ public class GithubApiTests
         // Arrange
         var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}";
 
-        _githubClientMock.Setup(m => m.GetNonSuccessAsync(url, HttpStatusCode.MovedPermanently)).ReturnsAsync("Moved Permanently");
+        _githubClientMock.Setup(m => m.GetNonSuccessAsync(url, HttpStatusCode.NotFound)).ThrowsAsync(new HttpRequestException(null, null, HttpStatusCode.MovedPermanently));
 
         // Act
         var result = await _githubApi.DoesRepoExist(GITHUB_ORG, GITHUB_REPO);

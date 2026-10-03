@@ -1,1 +1,3 @@
 - The `gl2gh migrate-repo` GitLab export failure error message now links to GitLab's export log documentation to help users self-diagnose export failures.
+- Fixed a bug in `gl2gh` and `bbs2gh` where migrating to a target repository name that was previously used and renamed away (leaving a redirect behind) failed with a misleading "Unauthorized - check your token" error. The pre-migration target-exists check no longer follows the redirect (which caused the `Authorization` header to be dropped and produce a spurious 401), so these migrations now proceed correctly.
+
