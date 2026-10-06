@@ -148,7 +148,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (ExportState.IsError(exportState))
         {
-            throw new OctoshiftCliException($"GitLab archive export failed!");
+            throw new OctoshiftCliException($"GitLab archive export failed! For GitLab Self-Managed check your GitLab export logs for more details: https://docs.gitlab.com/administration/logs/#exporterlog");
         }
 
         _log.LogInformation($"Archive export completed.");
