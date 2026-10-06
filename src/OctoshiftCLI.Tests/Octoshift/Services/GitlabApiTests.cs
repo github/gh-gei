@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
@@ -80,5 +81,37 @@ public class GitlabApiTests
         await _sut.LogServerVersion();
 
         _mockOctoLogger.Verify(m => m.LogInformation($"GitLab version: {version} (Community Edition)"), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetProjects_Excludes_Projects_Shared_Into_The_Group()
+    {
+        const string groupPath = "my-group";
+        var endpoint = $"{GITLAB_SERVER_URL}/api/v4/groups/{Uri.EscapeDataString(groupPath)}/projects?per_page=100";
+
+        var ownedProject = new
+        {
+            id = 1,
+            path = "owned-repo",
+            name = "Owned Repo",
+            archived = false,
+            @namespace = new { full_path = groupPath }
+        };
+        var sharedInProject = new
+        {
+            id = 2,
+            path = "shared-repo",
+            name = "Shared Repo",
+            archived = false,
+            @namespace = new { full_path = "some-other-group" }
+        };
+
+        var response = new object[] { ownedProject, sharedInProject }.ToAsyncJTokenEnumerable();
+        _mockGitlabClient.Setup(m => m.GetAllAsync(endpoint)).Returns(response);
+
+        var result = await _sut.GetProjects(groupPath);
+
+        result.Should().BeEquivalentTo(new[] { (Id: 1L, Path: "owned-repo", Name: "Owned Repo", Archived: false) });
+        _mockOctoLogger.Verify(m => m.LogWarning(It.IsAny<string>()), Times.Once);
     }
 }
