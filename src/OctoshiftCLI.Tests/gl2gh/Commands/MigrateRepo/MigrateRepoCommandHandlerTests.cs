@@ -142,6 +142,30 @@ public class MigrateRepoCommandHandlerTests
     }
 
     [Fact]
+    public async Task Throws_Decorated_Error_With_Gitlab_Access_Documentation_When_Create_Migration_Source_Fails_With_Permissions_Error()
+    {
+        _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(GITHUB_PAT);
+        _mockGithubApi.Setup(x => x.DoesRepoExist(GITHUB_ORG, GITHUB_REPO)).ReturnsAsync(false);
+        _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG)).ReturnsAsync(GITHUB_ORG_ID);
+        _mockGithubApi
+            .Setup(x => x.CreateGitlabMigrationSource(GITHUB_ORG_ID))
+            .ThrowsAsync(new OctoshiftCliException("monalisa does not have the correct permissions to execute `CreateMigrationSource`"));
+
+        var args = new MigrateRepoCommandArgs
+        {
+            ArchiveUrl = ARCHIVE_URL,
+            GithubOrg = GITHUB_ORG,
+            GithubRepo = GITHUB_REPO,
+            QueueOnly = true,
+        };
+
+        await _handler.Invoking(x => x.Handle(args))
+            .Should()
+            .ThrowAsync<OctoshiftCliException>()
+            .WithMessage($"monalisa does not have the correct permissions to execute `CreateMigrationSource`. Please check that:\n  (a) you are a member of the `{GITHUB_ORG}` organization,\n  (b) you are an organization owner or you have been granted the migrator role and\n  (c) your personal access token has the correct scopes.\nFor more information, see https://docs.github.com/en/enterprise-cloud@latest/migrations/using-github-enterprise-importer/migrate-from-gitlab/manage-access.");
+    }
+
+    [Fact]
     public async Task Passes_Gitlab_Project_Url_When_All_Gitlab_Args_Provided()
     {
         _mockEnvironmentVariableProvider.Setup(m => m.TargetGithubPersonalAccessToken(It.IsAny<bool>())).Returns(GITHUB_PAT);

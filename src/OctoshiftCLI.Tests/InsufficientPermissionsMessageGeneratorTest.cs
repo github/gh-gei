@@ -10,5 +10,11 @@ namespace OctoshiftCLI.Tests
         {
             InsufficientPermissionsMessageGenerator.Generate("monalisa-corp").Should().Be(". Please check that:\n  (a) you are a member of the `monalisa-corp` organization,\n  (b) you are an organization owner or you have been granted the migrator role and\n  (c) your personal access token has the correct scopes.\nFor more information, see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer.");
         }
+
+        [Fact]
+        public void GenerateForGitlab_Returns_Message_With_Gitlab_Access_Documentation()
+        {
+            InsufficientPermissionsMessageGenerator.GenerateForGitlab("monalisa-corp").Should().Be(". Please check that:\n  (a) you are a member of the `monalisa-corp` organization,\n  (b) you are an organization owner or you have been granted the migrator role and\n  (c) your personal access token has the correct scopes.\nFor more information, see https://docs.github.com/en/enterprise-cloud@latest/migrations/using-github-enterprise-importer/migrate-from-gitlab/manage-access.");
+        }
     }
 }
