@@ -251,7 +251,8 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             (migrationState, _, warningsCount, failureReason, migrationLogUrl) = await _githubApi.GetMigration(migrationId);
         }
 
-        var migrationLogAvailableMessage = $"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs --github-org {args.GithubOrg} --github-repo {args.GithubRepo}`";
+        var targetApiUrlOption = args.TargetApiUrl.HasValue() ? $" --target-api-url \"{args.TargetApiUrl}\"" : "";
+        var migrationLogAvailableMessage = $"Migration log available at {migrationLogUrl} or by running `gh {CliContext.RootCommand} download-logs --github-org {args.GithubOrg} --github-repo {args.GithubRepo}{targetApiUrlOption}`";
 
         if (RepositoryMigrationStatus.IsFailed(migrationState))
         {
