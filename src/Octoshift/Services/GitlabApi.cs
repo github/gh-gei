@@ -76,7 +76,9 @@ public class GitlabApi
     public virtual async Task<IEnumerable<(long Id, string Path, string Name, bool Archived)>> GetProjects(string groupPath)
     {
         var encodedGroupPath = Uri.EscapeDataString(groupPath);
-        var url = $"{_gitlabBaseUrl}/api/v4/groups/{encodedGroupPath}/projects?per_page=100";
+        // with_shared=false excludes projects merely shared into the group (not owned by it),
+        // whose path can't be resolved relative to groupPath for subsequent per-project calls.
+        var url = $"{_gitlabBaseUrl}/api/v4/groups/{encodedGroupPath}/projects?per_page=100&with_shared=false";
 
         return await _client.GetAllAsync(url)
             .Select(x => ((long)x["id"], (string)x["path"], (string)x["name"], (bool)x["archived"]))
