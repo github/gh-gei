@@ -76,27 +76,13 @@ public class GitlabApi
     public virtual async Task<IEnumerable<(long Id, string Path, string Name, bool Archived)>> GetProjects(string groupPath)
     {
         var encodedGroupPath = Uri.EscapeDataString(groupPath);
-        var url = $"{_gitlabBaseUrl}/api/v4/groups/{encodedGroupPath}/projects?per_page=100";
+        // with_shared=false excludes projects merely shared into the group (not owned by it),
+        // whose path can't be resolved relative to groupPath for subsequent per-project calls.
+        var url = $"{_gitlabBaseUrl}/api/v4/groups/{encodedGroupPath}/projects?per_page=100&with_shared=false";
 
-        var projects = new List<(long Id, string Path, string Name, bool Archived)>();
-
-        await foreach (var project in _client.GetAllAsync(url))
-        {
-            // GitLab's groups/:id/projects endpoint also returns projects merely shared into the
-            // group (not owned by it). Their path can't be resolved relative to groupPath, so
-            // including them breaks subsequent per-project calls. Skip them here; they'll still
-            // be picked up when their owning group is scanned.
-            var namespaceFullPath = (string)project["namespace"]?["full_path"];
-            if (namespaceFullPath != groupPath)
-            {
-                _log?.LogWarning($"Project '{(string)project["path"]}' is shared into group '{groupPath}' from '{namespaceFullPath}' and will be skipped.");
-                continue;
-            }
-
-            projects.Add(((long)project["id"], (string)project["path"], (string)project["name"], (bool)project["archived"]));
-        }
-
-        return projects;
+        return await _client.GetAllAsync(url)
+            .Select(x => ((long)x["id"], (string)x["path"], (string)x["name"], (bool)x["archived"]))
+            .ToListAsync();
     }
 
     public virtual async Task<(long Id, string Path, string Name)> GetGroup(string groupPath)
