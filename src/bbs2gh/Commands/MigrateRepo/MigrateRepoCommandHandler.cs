@@ -306,12 +306,12 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             {
                 await _githubApi.SetRepositoryCustomProperties(args.GithubOrg, args.GithubRepo, customProperties);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException or OctoshiftCliException)
             {
                 throw new OctoshiftCliException(
                     $"Migration completed (ID: {migrationId}), but custom properties could not be applied to {args.GithubOrg}/{args.GithubRepo}. " +
-                    "The migrated repository already exists; do not rerun the migration. Check the property definitions and your permission to edit custom property values, " +
-                    $"then apply the properties manually. {ex.Message}", ex);
+                    "The migrated repository already exists; do not rerun the migration. Check the error, network connectivity, property definitions, and your permission to edit custom property values, " +
+                    $"then verify and apply the properties manually. {ex.Message}", ex);
             }
             _log.LogSuccess("Custom properties applied successfully.");
         }

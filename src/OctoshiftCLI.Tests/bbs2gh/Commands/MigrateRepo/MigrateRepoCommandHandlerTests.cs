@@ -214,17 +214,45 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         [InlineData(HttpStatusCode.NotFound)]
         [InlineData(HttpStatusCode.UnprocessableEntity)]
         [InlineData(HttpStatusCode.InternalServerError)]
-        public async Task It_Reports_A_Property_Update_Failure_Without_Hiding_The_Successful_Migration(HttpStatusCode statusCode)
+        public async Task It_Reports_A_Property_Update_Failure_Without_Hiding_The_Successful_Migration(HttpStatusCode statusCode) =>
+            await AssertPropertyUpdateFailure(new HttpRequestException("API error", null, statusCode));
+
+        [Fact]
+        public async Task It_Reports_A_Property_Update_Timeout_Without_Hiding_The_Successful_Migration() =>
+            await AssertPropertyUpdateFailure(new TaskCanceledException("The request timed out."));
+
+        [Fact]
+        public async Task It_Reports_A_Property_Update_Cancellation_Without_Hiding_The_Successful_Migration() =>
+            await AssertPropertyUpdateFailure(new OperationCanceledException("The request was canceled."));
+
+        [Fact]
+        public async Task It_Reports_A_Property_Update_Rate_Limit_Without_Hiding_The_Successful_Migration() =>
+            await AssertPropertyUpdateFailure(new OctoshiftCliException("Secondary rate limit exceeded. Maximum retries reached."));
+
+        private async Task AssertPropertyUpdateFailure(Exception apiException)
         {
             var args = CreateCustomPropertiesMigration();
-            var apiException = new HttpRequestException("API error", null, statusCode);
             _mockGithubApi.Setup(x => x.SetRepositoryCustomProperties(GITHUB_ORG, GITHUB_REPO, It.IsAny<JObject>()))
                 .ThrowsAsync(apiException);
 
             var exception = await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>()
-                .WithMessage($"Migration completed (ID: {MIGRATION_ID}), but custom properties could not be applied to {GITHUB_ORG}/{GITHUB_REPO}.*do not rerun the migration*API error");
+                .WithMessage($"Migration completed (ID: {MIGRATION_ID}), but custom properties could not be applied to {GITHUB_ORG}/{GITHUB_REPO}.*do not rerun the migration*{apiException.Message}");
 
             exception.Which.InnerException.Should().BeSameAs(apiException);
+            _mockOctoLogger.Verify(x => x.LogSuccess("Custom properties applied successfully."), Times.Never);
+        }
+
+        [Fact]
+        public async Task It_Does_Not_Wrap_Unexpected_Property_Update_Errors()
+        {
+            var args = CreateCustomPropertiesMigration();
+            var unexpectedException = new InvalidOperationException("Unexpected error");
+            _mockGithubApi.Setup(x => x.SetRepositoryCustomProperties(GITHUB_ORG, GITHUB_REPO, It.IsAny<JObject>()))
+                .ThrowsAsync(unexpectedException);
+
+            var exception = await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<InvalidOperationException>();
+
+            exception.Which.Should().BeSameAs(unexpectedException);
             _mockOctoLogger.Verify(x => x.LogSuccess("Custom properties applied successfully."), Times.Never);
         }
 
