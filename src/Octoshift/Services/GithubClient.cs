@@ -24,9 +24,13 @@ public class GithubClient
     private const int MILLISECONDS_PER_SECOND = 1000;
     private const int SECONDARY_RATE_LIMIT_MAX_RETRIES = 3;
     private const int SECONDARY_RATE_LIMIT_DEFAULT_DELAY = 60; // 60 seconds default delay
+    private const int SERVER_ERROR_MAX_RETRIES = 5;
+    private const int SERVER_ERROR_DEFAULT_DELAY = 5; // 5 seconds default delay
 
     internal int _secondaryRateLimitMaxRetries = SECONDARY_RATE_LIMIT_MAX_RETRIES; // Exposed for testing purposes
     internal int _secondaryRateLimitDefaultDelay = SECONDARY_RATE_LIMIT_DEFAULT_DELAY; // Exposed for testing purposes
+    internal int _serverErrorMaxRetries = SERVER_ERROR_MAX_RETRIES; // Exposed for testing purposes
+    internal int _serverErrorDefaultDelay = SERVER_ERROR_DEFAULT_DELAY; // Exposed for testing purposes
 
     public GithubClient(OctoLogger log, HttpClient httpClient, IVersionProvider versionProvider, RetryPolicy retryPolicy, DateTimeProvider dateTimeProvider, string personalAccessToken)
     {
@@ -202,7 +206,8 @@ public class GithubClient
         object body = null,
         HttpStatusCode expectedStatus = HttpStatusCode.OK,
         Dictionary<string, string> customHeaders = null,
-        int retryCount = 0)
+        int retryCount = 0,
+        int serverErrorRetryCount = 0)
     {
         await ApplyRetryDelayAsync();
         _log.LogVerbose($"HTTP {httpMethod}: {url}");
@@ -245,12 +250,18 @@ public class GithubClient
         // Check for secondary rate limits before handling primary rate limits
         if (IsSecondaryRateLimit(response.StatusCode, content))
         {
-            return await HandleSecondaryRateLimit(httpMethod, url, body, expectedStatus, customHeaders, headers, retryCount);
+            return await HandleSecondaryRateLimit(httpMethod, url, body, expectedStatus, customHeaders, headers, retryCount, serverErrorRetryCount);
+        }
+
+        // Check for transient server errors (502, 503, 504)
+        if (IsTransientServerError(response.StatusCode))
+        {
+            return await HandleServerError(httpMethod, url, body, expectedStatus, customHeaders, headers, retryCount, serverErrorRetryCount);
         }
 
         if (response.StatusCode == HttpStatusCode.Forbidden && _retryDelay > 0)
         {
-            (content, headers) = await SendAsync(httpMethod, url, body, expectedStatus, customHeaders, retryCount);
+            (content, headers) = await SendAsync(httpMethod, url, body, expectedStatus, customHeaders, retryCount, serverErrorRetryCount);
         }
         else if (expectedStatus == HttpStatusCode.OK)
         {
@@ -375,20 +386,21 @@ public class GithubClient
         HttpStatusCode expectedStatus,
         Dictionary<string, string> customHeaders,
         KeyValuePair<string, IEnumerable<string>>[] headers,
-        int retryCount = 0)
+        int retryCount = 0,
+        int serverErrorRetryCount = 0)
     {
         if (retryCount >= _secondaryRateLimitMaxRetries)
         {
-            throw new OctoshiftCliException($"Secondary rate limit exceeded. Maximum retries ({SECONDARY_RATE_LIMIT_MAX_RETRIES}) reached. Please wait before retrying your request.");
+            throw new OctoshiftCliException($"Secondary rate limit exceeded. Maximum retries ({_secondaryRateLimitMaxRetries}) reached. Please wait before retrying your request.");
         }
 
         var delaySeconds = GetSecondaryRateLimitDelay(headers, retryCount);
 
-        _log.LogWarning($"Secondary rate limit detected (attempt {retryCount + 1}/{SECONDARY_RATE_LIMIT_MAX_RETRIES}). Waiting {delaySeconds} seconds before retrying...");
+        _log.LogWarning($"Secondary rate limit detected (attempt {retryCount + 1}/{_secondaryRateLimitMaxRetries}). Waiting {delaySeconds} seconds before retrying...");
 
         await Task.Delay(delaySeconds * MILLISECONDS_PER_SECOND);
 
-        return await SendAsync(httpMethod, url, body, expectedStatus, customHeaders, retryCount + 1);
+        return await SendAsync(httpMethod, url, body, expectedStatus, customHeaders, retryCount + 1, serverErrorRetryCount);
     }
 
     private int GetSecondaryRateLimitDelay(KeyValuePair<string, IEnumerable<string>>[] headers, int retryCount)
@@ -416,5 +428,46 @@ public class GithubClient
 
         // Otherwise use exponential backoff: 1m → 2m → 4m
         return _secondaryRateLimitDefaultDelay * (int)Math.Pow(2, retryCount);
+    }
+
+    private static bool IsTransientServerError(HttpStatusCode statusCode) =>
+        statusCode is HttpStatusCode.BadGateway
+            or HttpStatusCode.ServiceUnavailable
+            or HttpStatusCode.GatewayTimeout;
+
+    private async Task<(string Content, KeyValuePair<string, IEnumerable<string>>[] ResponseHeaders)> HandleServerError(
+        HttpMethod httpMethod,
+        string url,
+        object body,
+        HttpStatusCode expectedStatus,
+        Dictionary<string, string> customHeaders,
+        KeyValuePair<string, IEnumerable<string>>[] headers,
+        int retryCount,
+        int serverErrorRetryCount)
+    {
+        if (serverErrorRetryCount >= _serverErrorMaxRetries)
+        {
+            throw new HttpRequestException($"Server error persisted after {_serverErrorMaxRetries} retries. Please try again later.");
+        }
+
+        var delaySeconds = GetServerErrorDelay(headers, serverErrorRetryCount);
+
+        _log.LogWarning($"Server error detected (attempt {serverErrorRetryCount + 1}/{_serverErrorMaxRetries}). Waiting {delaySeconds} seconds before retrying...");
+
+        await Task.Delay(delaySeconds * MILLISECONDS_PER_SECOND);
+
+        return await SendAsync(httpMethod, url, body, expectedStatus, customHeaders, retryCount, serverErrorRetryCount + 1);
+    }
+
+    private int GetServerErrorDelay(KeyValuePair<string, IEnumerable<string>>[] headers, int serverErrorRetryCount)
+    {
+        var retryAfterHeader = ExtractHeaderValue("Retry-After", headers);
+        if (!string.IsNullOrEmpty(retryAfterHeader) && int.TryParse(retryAfterHeader, out var retryAfterSeconds))
+        {
+            return retryAfterSeconds;
+        }
+
+        // Exponential backoff: 5s → 10s → 20s → 40s → 80s
+        return _serverErrorDefaultDelay * (int)Math.Pow(2, serverErrorRetryCount);
     }
 }
