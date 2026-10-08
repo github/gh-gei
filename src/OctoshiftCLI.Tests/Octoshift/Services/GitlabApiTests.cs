@@ -134,8 +134,7 @@ public class GitlabApiTests
 
             var result = await _sut.GetRepositoryLatestCommitDate(groupPath, projectPath);
 
-            result.Should().Be(new DateTimeOffset(year, month, day, 12, 58, 25, TimeSpan.FromHours(offsetHours)));
-            result.Value.Offset.Should().Be(TimeSpan.FromHours(offsetHours));
+            result.Should().BeExactly(new DateTimeOffset(year, month, day, 12, 58, 25, TimeSpan.FromHours(offsetHours)));
         }
         finally
         {
