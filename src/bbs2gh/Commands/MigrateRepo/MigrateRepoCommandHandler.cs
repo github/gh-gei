@@ -306,7 +306,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             {
                 await _githubApi.SetRepositoryCustomProperties(args.GithubOrg, args.GithubRepo, customProperties);
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
                 throw new OctoshiftCliException(
                     $"Migration completed (ID: {migrationId}), but custom properties could not be applied to {args.GithubOrg}/{args.GithubRepo}. " +
