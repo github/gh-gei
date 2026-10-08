@@ -185,6 +185,26 @@ public class GithubApi
         }
     }
 
+    public virtual async Task SetRepositoryCustomProperties(string org, string repo, JObject customProperties)
+    {
+        if (customProperties is null)
+        {
+            throw new ArgumentNullException(nameof(customProperties));
+        }
+
+        var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/properties/values";
+        var payload = new
+        {
+            properties = customProperties.Properties().Select(property => new
+            {
+                property_name = property.Name,
+                value = property.Value
+            })
+        };
+
+        await _client.PatchAsync(url, payload);
+    }
+
     public virtual async Task<bool> DoesOrgExist(string org)
     {
         var url = $"{_apiUrl}/orgs/{org.EscapeDataString()}";
