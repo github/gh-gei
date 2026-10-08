@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using OctoshiftCLI.BbsToGithub.Services;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Extensions;
@@ -51,6 +53,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
             throw new ArgumentNullException(nameof(args));
         }
 
+        var customProperties = args.ParseCustomProperties();
         ValidateOptions(args);
 
         var exportId = 0L;
@@ -122,7 +125,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
 
         if (args.ShouldImportArchive())
         {
-            await ImportArchive(args, migrationSourceId, args.ArchiveUrl);
+            await ImportArchive(args, migrationSourceId, customProperties, args.ArchiveUrl);
         }
     }
 
@@ -244,7 +247,7 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         }
     }
 
-    private async Task ImportArchive(MigrateRepoCommandArgs args, string migrationSourceId, string archiveUrl = null)
+    private async Task ImportArchive(MigrateRepoCommandArgs args, string migrationSourceId, JObject customProperties, string archiveUrl = null)
     {
         _log.LogInformation("Importing Archive...");
 
@@ -295,6 +298,23 @@ public class MigrateRepoCommandHandler : ICommandHandler<MigrateRepoCommandArgs>
         _log.LogSuccess($"Migration completed (ID: {migrationId})! State: {migrationState}");
         _warningsCountLogger.LogWarningsCount(warningsCount);
         _log.LogInformation(migrationLogAvailableMessage);
+
+        if (customProperties?.Count > 0)
+        {
+            _log.LogInformation($"Applying custom properties to {args.GithubOrg}/{args.GithubRepo}...");
+            try
+            {
+                await _githubApi.SetRepositoryCustomProperties(args.GithubOrg, args.GithubRepo, customProperties);
+            }
+            catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException or OctoshiftCliException)
+            {
+                throw new OctoshiftCliException(
+                    $"Migration completed (ID: {migrationId}), but custom properties could not be applied to {args.GithubOrg}/{args.GithubRepo}. " +
+                    "The migrated repository already exists; do not rerun the migration. Check the error, network connectivity, property definitions, and your permission to edit custom property values, " +
+                    $"then verify and apply the properties manually. {ex.Message}", ex);
+            }
+            _log.LogSuccess("Custom properties applied successfully.");
+        }
     }
 
     private string GetAwsAccessKey(MigrateRepoCommandArgs args) => args.AwsAccessKey.HasValue() ? args.AwsAccessKey : _environmentVariableProvider.AwsAccessKeyId(false);

@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Moq;
+using Newtonsoft.Json.Linq;
 using OctoshiftCLI.BbsToGithub.Commands.MigrateRepo;
 using OctoshiftCLI.Services;
 using Xunit;
@@ -31,6 +32,118 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
         private const string PRIVATE_KEY = "private-key";
         private const string SMB_USER = "smb-user";
         private const string SMB_PASSWORD = "smb-password";
+
+        [Fact]
+        public void Custom_Properties_Are_Optional()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                ArchiveUrl = ARCHIVE_URL,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                QueueOnly = true
+            };
+
+            args.Invoking(x => x.Validate(_mockOctoLogger.Object)).Should().NotThrow();
+            args.ParseCustomProperties().Should().BeNull();
+        }
+
+        [Theory]
+        [InlineData("{}")]
+        [InlineData("{\"environment\":\"production\",\"teams\":[\"platform\",\"security\"],\"reviewed\":\"true\",\"unset\":null}")]
+        [InlineData("{\"empty\":\"\",\"teams\":[]}")]
+        [InlineData("{\"date\":\"2026-10-08T10:00:00Z\",\"text\":\"quotes: \\\" and newline: \\n\"}")]
+        public void Custom_Properties_Accepts_Valid_Values(string customProperties)
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                ArchiveUrl = ARCHIVE_URL,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                CustomProperties = customProperties
+            };
+
+            args.Invoking(x => x.Validate(_mockOctoLogger.Object)).Should().NotThrow();
+            var properties = args.ParseCustomProperties();
+            properties.Should().NotBeNull();
+            if (properties["date"] is { } date)
+            {
+                date.Type.Should().Be(JTokenType.String);
+                date.Value<string>().Should().Be("2026-10-08T10:00:00Z");
+            }
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData(" ")]
+        [InlineData("not-json")]
+        [InlineData("null")]
+        [InlineData("[]")]
+        [InlineData("\"production\"")]
+        [InlineData("{\"environment\":")]
+        [InlineData("{\"environment\":\"production\",\"environment\":\"test\"}")]
+        [InlineData("{} {}")]
+        [InlineData("{} trailing-content")]
+        [InlineData("{\"\": \"production\"}")]
+        [InlineData("{\" \": \"production\"}")]
+        [InlineData("{\"environment\":true}")]
+        [InlineData("{\"environment\":42}")]
+        [InlineData("{\"environment\":1.5}")]
+        [InlineData("{\"environment\":{\"nested\":\"value\"}}")]
+        [InlineData("{\"environment\":[\"production\",42]}")]
+        [InlineData("{\"environment\":[null]}")]
+        [InlineData("{\"environment\":[[\"production\"]]}")]
+        public void Custom_Properties_Rejects_Invalid_Values(string customProperties)
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                ArchiveUrl = ARCHIVE_URL,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                CustomProperties = customProperties
+            };
+
+            args.Invoking(x => x.Validate(_mockOctoLogger.Object))
+                .Should().ThrowExactly<OctoshiftCliException>();
+        }
+
+        [Fact]
+        public void Custom_Properties_Rejects_Queue_Only()
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                ArchiveUrl = ARCHIVE_URL,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                CustomProperties = "{\"environment\":\"production\"}",
+                QueueOnly = true
+            };
+
+            args.Invoking(x => x.Validate(_mockOctoLogger.Object))
+                .Should().ThrowExactly<OctoshiftCliException>()
+                .WithMessage("*--custom-properties*--queue-only*");
+        }
+
+        [Theory]
+        [InlineData(null, null)]
+        [InlineData(GITHUB_ORG, null)]
+        [InlineData(null, GITHUB_REPO)]
+        public void Custom_Properties_Requires_A_Destination_Repository(string githubOrg, string githubRepo)
+        {
+            var args = new MigrateRepoCommandArgs
+            {
+                BbsServerUrl = BBS_SERVER_URL,
+                BbsProject = BBS_PROJECT,
+                BbsRepo = BBS_REPO,
+                GithubOrg = githubOrg,
+                GithubRepo = githubRepo,
+                CustomProperties = "{\"environment\":\"production\"}"
+            };
+
+            args.Invoking(x => x.Validate(_mockOctoLogger.Object))
+                .Should().ThrowExactly<OctoshiftCliException>()
+                .WithMessage("*--custom-properties*--github-org*--github-repo*export-only*");
+        }
 
         [Fact]
         public void It_Throws_When_Kerberos_Is_Set_And_Bbs_Password_Is_Provided()

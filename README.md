@@ -101,6 +101,27 @@ Refer to the [official documentation](https://docs.github.com/en/migrations/usin
 
 Refer to the [official documentation](https://docs.github.com/en/migrations/using-github-enterprise-importer/migrating-repositories-with-github-enterprise-importer/migrating-repositories-from-bitbucket-server-to-github-enterprise-cloud) for more details.
 
+#### Setting custom properties during a Bitbucket migration
+
+Use `--custom-properties` with `gh bbs2gh migrate-repo` to set custom property values on the destination repository. Pass a JSON object mapping property names to strings, arrays of strings (for multi-select properties), or `null` (to unset a value). Boolean properties use the strings `"true"` and `"false"`, not JSON booleans.
+
+For example, when importing an archive that you have already uploaded:
+
+```bash
+gh bbs2gh migrate-repo \
+  --bbs-server-url https://bitbucket.example.com \
+  --bbs-project PROJECT --bbs-repo source-repo \
+  --archive-url "https://example.com/migration-archive.tar" \
+  --github-org DESTINATION --github-repo target-repo \
+  --custom-properties '{"environment":"production","teams":["platform","security"],"reviewed":"true"}'
+```
+
+The option also works when `migrate-repo` generates and uploads the archive. The properties must already be defined in the destination organization, and the target GitHub token must have permission to edit their values, in addition to the usual migration permissions. See the [custom property API documentation](https://docs.github.com/en/rest/repos/custom-properties#create-or-update-custom-property-values-for-a-repository).
+
+Properties are applied **after the migration succeeds**, not atomically when the repository is created. This option cannot satisfy policies that require property values at repository creation time. It cannot be combined with `--queue-only` or used for export-only operations. If you edit a generated migration script, add the option to the relevant `migrate-repo` calls and remove `--queue-only` from those calls; `generate-script` does not accept this option.
+
+If applying the properties fails, the command returns an error, but the migrated repository remains in place. Check the reported error, network connectivity, property definitions, and permissions, then verify and set the values through GitHub's UI or API instead of rerunning the migration. A timeout or cancellation may occur after GitHub has applied the values, so check the current values first. This option is available only in `bbs2gh migrate-repo`.
+
 ### GitLab to GitHub Usage
 1. Create a Personal Access Token for the source GitLab instance (with `api` and `read_repository` scopes) and one for the target GitHub org (for more details on scopes needed refer to our [official documentation](https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer)).
 
