@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OctoshiftCLI.Extensions;
 
@@ -132,10 +135,13 @@ public class GitlabApi
             return null;
         }
 
-        var commitsData = JArray.Parse(commitsResponse);
+        // Keep the ISO 8601 value as a string so parsing does not depend on the current culture.
+        using var reader = new JsonTextReader(new StringReader(commitsResponse));
+        reader.DateParseHandling = DateParseHandling.None;
+        var commitsData = JArray.Load(reader);
         var lastCommittedDate = (string)commitsData.First?["committed_date"];
 
-        return string.IsNullOrWhiteSpace(lastCommittedDate) ? null : DateTimeOffset.Parse(lastCommittedDate);
+        return string.IsNullOrWhiteSpace(lastCommittedDate) ? null : DateTimeOffset.Parse(lastCommittedDate, CultureInfo.InvariantCulture);
     }
 
     public virtual async Task<(long RepositorySize, long AttachmentsSize)> GetRepositoryAndAttachmentsSize(string groupPath, string projectPath)

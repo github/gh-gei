@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
@@ -103,5 +104,42 @@ public class GitlabApiTests
         var result = await _sut.GetProjects(groupPath);
 
         result.Should().BeEquivalentTo(new[] { (Id: 1L, Path: "owned-repo", Name: "Owned Repo", Archived: false) });
+    }
+
+    [Theory]
+    [InlineData("en-SG", "2026-09-24T12:58:25.000+08:00", 2026, 9, 24, 8)]
+    [InlineData("en-GB", "2026-05-09T12:58:25.000+08:00", 2026, 5, 9, 8)]
+    [InlineData("de-DE", "2026-09-24T12:58:25.000+00:00", 2026, 9, 24, 0)]
+    [InlineData("en-US", "2016-09-20T12:58:25.000-07:00", 2016, 9, 20, -7)]
+    public async Task GetRepositoryLatestCommitDate_Parses_Iso8601_Regardless_Of_Current_Culture(
+        string culture,
+        string committedDate,
+        int year,
+        int month,
+        int day,
+        int offsetHours)
+    {
+        var originalCulture = CultureInfo.CurrentCulture;
+        try
+        {
+            CultureInfo.CurrentCulture = new CultureInfo(culture);
+
+            const string groupPath = "my-group";
+            const string projectPath = "my-project";
+            var encodedProjectPath = Uri.EscapeDataString($"{groupPath}/{projectPath}");
+            var endpoint = $"{GITLAB_SERVER_URL}/api/v4/projects/{encodedProjectPath}/repository/commits?per_page=1";
+            _mockGitlabClient
+                .Setup(m => m.GetOrNullForNotFoundAsync(endpoint))
+                .ReturnsAsync($"[{{\"committed_date\":\"{committedDate}\"}}]");
+
+            var result = await _sut.GetRepositoryLatestCommitDate(groupPath, projectPath);
+
+            result.Should().Be(new DateTimeOffset(year, month, day, 12, 58, 25, TimeSpan.FromHours(offsetHours)));
+            result.Value.Offset.Should().Be(TimeSpan.FromHours(offsetHours));
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = originalCulture;
+        }
     }
 }
