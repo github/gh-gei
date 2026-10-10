@@ -540,7 +540,7 @@ func runMigrateRepo(
 // ---------------------------------------------------------------------------
 
 func insufficientPermissionsMessage(org string) string {
-	return fmt.Sprintf(". Please check that:\n  (a) you are a member of the '%s' organization,\n  (b) you are an organization owner or you have been granted the migrator role and\n  (c) your personal access token has the correct scopes.\nFor more information, see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer.", org)
+	return fmt.Sprintf(". Please check that:\n  (a) you are a member of the `%s` organization,\n  (b) you are an organization owner or you have been granted the migrator role and\n  (c) your personal access token has the correct scopes.\nFor more information, see https://docs.github.com/en/migrations/using-github-enterprise-importer/preparing-to-migrate-with-github-enterprise-importer/managing-access-for-github-enterprise-importer.", org)
 }
 
 func areBlobCredentialsRequired(ctx context.Context, vf migrateRepoVersionFetcher, ghesAPIURL string, log *logger.Logger) (bool, error) {

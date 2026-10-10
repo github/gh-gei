@@ -79,7 +79,7 @@ func TestDownloadLogs_ByMigrationID_Success(t *testing.T) {
 	dl := &mockFileDownloader{}
 	fc := &mockFileChecker{exists: false}
 
-	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{maxRetries: 0, retryDelay: 0})
+	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{MaxRetries: 0, RetryDelay: 0})
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
 	cmd.SetArgs([]string{"--migration-id", "RM_123"})
@@ -111,7 +111,7 @@ func TestDownloadLogs_ByOrgRepo_Success(t *testing.T) {
 	dl := &mockFileDownloader{}
 	fc := &mockFileChecker{exists: false}
 
-	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{maxRetries: 0, retryDelay: 0})
+	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{MaxRetries: 0, RetryDelay: 0})
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
 	cmd.SetArgs([]string{"--github-target-org", "my-org", "--target-repo", "my-repo"})
@@ -139,7 +139,7 @@ func TestDownloadLogs_ByMigrationID_LogURLEmpty_Error(t *testing.T) {
 	dl := &mockFileDownloader{}
 	fc := &mockFileChecker{exists: false}
 
-	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{maxRetries: 0, retryDelay: 0})
+	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{MaxRetries: 0, RetryDelay: 0})
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
 	cmd.SetArgs([]string{"--migration-id", "RM_789"})
@@ -160,7 +160,7 @@ func TestDownloadLogs_ByOrgRepo_MigrationNotFound_Error(t *testing.T) {
 	dl := &mockFileDownloader{}
 	fc := &mockFileChecker{exists: false}
 
-	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{maxRetries: 0, retryDelay: 0})
+	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{MaxRetries: 0, RetryDelay: 0})
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
 	cmd.SetArgs([]string{"--github-target-org", "my-org", "--target-repo", "my-repo"})
@@ -185,7 +185,7 @@ func TestDownloadLogs_FileExists_NoOverwrite_Error(t *testing.T) {
 	dl := &mockFileDownloader{}
 	fc := &mockFileChecker{exists: true}
 
-	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{maxRetries: 0, retryDelay: 0})
+	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{MaxRetries: 0, RetryDelay: 0})
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
 	cmd.SetArgs([]string{"--migration-id", "RM_123"})
@@ -210,7 +210,7 @@ func TestDownloadLogs_FileExists_WithOverwrite_Success(t *testing.T) {
 	dl := &mockFileDownloader{}
 	fc := &mockFileChecker{exists: true}
 
-	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{maxRetries: 0, retryDelay: 0})
+	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{MaxRetries: 0, RetryDelay: 0})
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
 	cmd.SetArgs([]string{"--migration-id", "RM_123", "--overwrite"})
@@ -231,7 +231,7 @@ func TestDownloadLogs_NeitherMigrationIDNorOrgRepo_Error(t *testing.T) {
 	dl := &mockFileDownloader{}
 	fc := &mockFileChecker{exists: false}
 
-	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{maxRetries: 0, retryDelay: 0})
+	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{MaxRetries: 0, RetryDelay: 0})
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
 	cmd.SetArgs([]string{})
@@ -255,7 +255,7 @@ func TestDownloadLogs_MigrationIDWithOrgRepo_WarnsAndUsesMigrationID(t *testing.
 	dl := &mockFileDownloader{}
 	fc := &mockFileChecker{exists: false}
 
-	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{maxRetries: 0, retryDelay: 0})
+	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{MaxRetries: 0, RetryDelay: 0})
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
 	cmd.SetArgs([]string{"--migration-id", "RM_123", "--github-target-org", "my-org", "--target-repo", "my-repo"})
@@ -285,7 +285,7 @@ func TestDownloadLogs_CustomFilename(t *testing.T) {
 	dl := &mockFileDownloader{}
 	fc := &mockFileChecker{exists: false}
 
-	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{maxRetries: 0, retryDelay: 0})
+	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{MaxRetries: 0, RetryDelay: 0})
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
 	cmd.SetArgs([]string{"--migration-id", "RM_123", "--migration-log-file", "custom.log"})
@@ -309,7 +309,7 @@ func TestDownloadLogs_ByOrgRepo_LogURLEmpty_Error(t *testing.T) {
 	dl := &mockFileDownloader{}
 	fc := &mockFileChecker{exists: false}
 
-	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{maxRetries: 0, retryDelay: 0})
+	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{MaxRetries: 0, RetryDelay: 0})
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
 	cmd.SetArgs([]string{"--github-target-org", "my-org", "--target-repo", "my-repo"})
@@ -334,7 +334,7 @@ func TestDownloadLogs_DownloadError_PropagatesError(t *testing.T) {
 	dl := &mockFileDownloader{err: fmt.Errorf("download failed: network error")}
 	fc := &mockFileChecker{exists: false}
 
-	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{maxRetries: 0, retryDelay: 0})
+	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{MaxRetries: 0, RetryDelay: 0})
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
 	cmd.SetArgs([]string{"--migration-id", "RM_123"})
@@ -357,7 +357,7 @@ func TestDownloadLogs_ByMigrationID_RetrySucceedsOnSecondAttempt(t *testing.T) {
 	dl := &mockFileDownloader{}
 	fc := &mockFileChecker{exists: false}
 
-	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{maxRetries: 1, retryDelay: 0})
+	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{MaxRetries: 1, RetryDelay: 0})
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
 	cmd.SetArgs([]string{"--migration-id", "RM_123"})
@@ -379,7 +379,7 @@ func TestDownloadLogs_PartialOrgRepo_Error(t *testing.T) {
 	fc := &mockFileChecker{exists: false}
 
 	// Only --github-target-org, missing --target-repo
-	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{maxRetries: 0, retryDelay: 0})
+	cmd := newDownloadLogsCmd(gh, dl, fc, log, downloadLogsOptions{MaxRetries: 0, RetryDelay: 0})
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
 	cmd.SetArgs([]string{"--github-target-org", "my-org"})
