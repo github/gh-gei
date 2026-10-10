@@ -1,0 +1,17 @@
+[
+  {
+    "name": "repo1",
+    "visibility": "public",
+    "full_name": "test-org/repo1"
+  },
+  {
+    "name": "repo2",
+    "visibility": "private",
+    "full_name": "test-org/repo2"
+  },
+  {
+    "name": "repo3",
+    "visibility": "internal",
+    "full_name": "test-org/repo3"
+  }
+]

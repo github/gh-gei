@@ -1,0 +1,22 @@
+{
+  "value": [
+    {
+      "id": "repo-111",
+      "name": "TestRepo1",
+      "size": "1024",
+      "isDisabled": "false"
+    },
+    {
+      "id": "repo-222",
+      "name": "TestRepo2",
+      "size": "2048",
+      "isDisabled": "false"
+    },
+    {
+      "id": "repo-333",
+      "name": "DisabledRepo",
+      "size": "512",
+      "isDisabled": "true"
+    }
+  ]
+}
