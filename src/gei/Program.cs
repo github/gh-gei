@@ -44,6 +44,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
                 .AddSingleton<SecretScanningAlertServiceFactory>()
                 .AddSingleton<CodeScanningAlertServiceFactory>()
+                .AddSingleton<DependabotAlertServiceFactory>()
                 .AddSingleton<GhesVersionCheckerFactory>()
                 .AddSingleton<ConfirmationService>()
                 .AddHttpClient("NoSSL")
