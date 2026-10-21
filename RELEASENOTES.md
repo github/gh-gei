@@ -1,1 +1,1 @@
-
+- Fixed `gl2gh inventory-report` failing to parse GitLab commit dates under some regional cultures.
