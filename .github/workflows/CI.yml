@@ -357,7 +357,7 @@ jobs:
           CLI_VERSION: ${{ github.ref }}
 
       - name: Create gh-gei Release
-        # a06a81a03ee405af7f2048a818ed3f03bbf83c7b is tag v2, pinned to avoid supply chain attacks
+        # efb35369e0ad2afab669f228072c1b0d510eae64 is tag v3, pinned to avoid supply chain attacks
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
         with:
           body_path: ./RELEASENOTES.md
