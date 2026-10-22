@@ -64,6 +64,29 @@ public class ArchiveUploaderHttpRetryTests
         Assert.DoesNotContain(ExceptionChain(error), exception => exception is ObjectDisposedException);
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    public async Task Upload_SinglePart_Retries_With_Fresh_Content_After_Http_Timeout(int timeouts)
+    {
+        using var handler = new SingleUploadHandler(timeouts);
+        using var httpClient = new HttpClient(handler) { Timeout = TimeSpan.FromMilliseconds(200) };
+        var uploader = CreateUploader(httpClient);
+        var payload = Enumerable.Range(1, 8).Select(value => (byte)value).ToArray();
+        uploader._streamSizeLimit = payload.Length;
+        using var archive = new MemoryStream(payload);
+
+        var result = await uploader.Upload(archive, "synthetic.tar", "1");
+
+        Assert.Equal(ArchiveUri, result);
+        Assert.Equal(timeouts + 1, handler.Contents.Count);
+        Assert.Equal(timeouts, handler.TimeoutCount);
+        Assert.Equal(0, handler.DisposedCount);
+        Assert.All(handler.Bodies, body => Assert.Equal(payload, body));
+        Assert.Equal(handler.Contents.Count, handler.Contents.Distinct(ReferenceEqualityComparer.Instance).Count());
+    }
+
     private static ArchiveUploader CreateUploader(HttpClient httpClient)
     {
         var logger = TestHelpers.CreateMock<OctoLogger>().Object;
@@ -146,6 +169,43 @@ public class ArchiveUploaderHttpRetryTests
             };
             response.Headers.Location = new Uri(UploadsUrl + path);
             return response;
+        }
+    }
+
+    private sealed class SingleUploadHandler(int remainingTimeouts) : HttpMessageHandler
+    {
+        public List<HttpContent> Contents { get; } = [];
+        public List<byte[]> Bodies { get; } = [];
+        public int TimeoutCount { get; private set; }
+        public int DisposedCount { get; private set; }
+
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Contents.Add(request.Content);
+            using var body = new MemoryStream();
+            try
+            {
+                await request.Content.CopyToAsync(body, cancellationToken);
+            }
+            catch (ObjectDisposedException)
+            {
+                DisposedCount++;
+                throw;
+            }
+
+            Bodies.Add(body.ToArray());
+            if (remainingTimeouts > 0)
+            {
+                remainingTimeouts--;
+                TimeoutCount++;
+                await Task.Delay(Timeout.Infinite, cancellationToken);
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent($"{{\"uri\":\"{ArchiveUri}\"}}")
+            };
         }
     }
 }

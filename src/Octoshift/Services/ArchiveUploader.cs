@@ -56,8 +56,14 @@ public class ArchiveUploader
         else
         {
             var url = $"{_uploadsUrl}/organizations/{orgDatabaseId.EscapeDataString()}/gei/archive?name={archiveName.EscapeDataString()}";
+            var body = await streamContent.ReadAsByteArrayAsync();
 
-            response = await _retryPolicy.Retry(async () => await _client.PostAsync(url, streamContent));
+            response = await _retryPolicy.Retry(async () =>
+            {
+                using var content = new ByteArrayContent(body);
+                content.Headers.ContentType = new("application/octet-stream");
+                return await _client.PostAsync(url, content);
+            });
             var data = JObject.Parse(response);
             return (string)data["uri"];
         }
