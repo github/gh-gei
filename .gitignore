@@ -359,3 +359,8 @@ MigrationBackup/
 /src/gei/Properties/launchSettings.json
 /src/OctoshiftCLI.IntegrationTests/Properties/launchSettings.json
 /src/ado2gh/Properties/launchSettings.json
+
+# Local secrets for live testing
+.env
+.env.*
+
