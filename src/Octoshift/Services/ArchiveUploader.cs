@@ -56,8 +56,17 @@ public class ArchiveUploader
         else
         {
             var url = $"{_uploadsUrl}/organizations/{orgDatabaseId.EscapeDataString()}/gei/archive?name={archiveName.EscapeDataString()}";
+            using var bufferedContent = new MemoryStream(checked((int)archiveContent.Length));
+            await archiveContent.CopyToAsync(bufferedContent);
+            var body = bufferedContent.GetBuffer();
+            var bytesRead = checked((int)bufferedContent.Length);
 
-            response = await _retryPolicy.Retry(async () => await _client.PostAsync(url, streamContent));
+            response = await _retryPolicy.Retry(async () =>
+            {
+                using var content = new ByteArrayContent(body, 0, bytesRead);
+                content.Headers.ContentType = new("application/octet-stream");
+                return await _client.PostAsync(url, content);
+            });
             var data = JObject.Parse(response);
             return (string)data["uri"];
         }
@@ -119,13 +128,15 @@ public class ArchiveUploader
     private async Task<Uri> UploadPart(byte[] body, int bytesRead, string nextUrl, int partsRead, long totalParts)
     {
         _log.LogInformation($"Uploading part {partsRead + 1}/{totalParts}...");
-        using var content = new ByteArrayContent(body, 0, bytesRead);
-        content.Headers.ContentType = new("application/octet-stream");
-
         try
         {
             // Make the PATCH request and retrieve headers
-            var (_, headers) = await _retryPolicy.Retry(async () => await _client.PatchWithFullResponseAsync(nextUrl, content));
+            var (_, headers) = await _retryPolicy.Retry(async () =>
+            {
+                using var content = new ByteArrayContent(body, 0, bytesRead);
+                content.Headers.ContentType = new("application/octet-stream");
+                return await _client.PatchWithFullResponseAsync(nextUrl, content);
+            });
 
             // Retrieve the next URL from the response headers
             return GetNextUrl(headers.ToList());
