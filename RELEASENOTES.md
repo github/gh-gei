@@ -1,2 +1,1 @@
-- Fixed `gl2gh inventory-report` failing to parse GitLab commit dates under some regional cultures.
-- Fixed archive uploads failing on retry after an HTTP timeout because the request content had already been disposed.
+
