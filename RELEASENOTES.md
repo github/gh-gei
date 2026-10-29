@@ -1,1 +1,1 @@
-
+- Improved retry resilience for transient 5xx server errors (502 Bad Gateway, 503 Service Unavailable, 504 Gateway Timeout) from the GitHub API, with dedicated exponential backoff and Retry-After header support. Non-transient 4xx client errors are no longer needlessly retried.
