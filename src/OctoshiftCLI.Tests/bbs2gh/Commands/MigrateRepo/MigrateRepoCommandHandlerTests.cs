@@ -1,9 +1,12 @@
 using System;
 using System.IO;
+using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
+using Newtonsoft.Json.Linq;
 using OctoshiftCLI.BbsToGithub.Commands.MigrateRepo;
 using OctoshiftCLI.BbsToGithub.Services;
 using OctoshiftCLI.Extensions;
@@ -75,6 +78,199 @@ namespace OctoshiftCLI.Tests.BbsToGithub.Commands.MigrateRepo
             // Default setup for file system operations
             _mockFileSystemProvider.Setup(m => m.FileExists(It.IsAny<string>())).Returns(true);
             _mockFileSystemProvider.Setup(m => m.DirectoryExists(It.IsAny<string>())).Returns(true);
+        }
+
+        private MigrateRepoCommandArgs CreateCustomPropertiesMigration(string state = RepositoryMigrationStatus.Succeeded)
+        {
+            _mockGithubApi.Setup(x => x.GetOrganizationId(GITHUB_ORG)).ReturnsAsync(GITHUB_ORG_ID);
+            _mockGithubApi.Setup(x => x.CreateBbsMigrationSource(GITHUB_ORG_ID)).ReturnsAsync(MIGRATION_SOURCE_ID);
+            _mockGithubApi.Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, UNUSED_REPO_URL, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL, null))
+                .ReturnsAsync(MIGRATION_ID);
+            _mockGithubApi.Setup(x => x.GetMigration(MIGRATION_ID))
+                .ReturnsAsync((state, GITHUB_REPO, 0, "Migration failed", "https://example.com/migration.log"));
+
+            return new MigrateRepoCommandArgs
+            {
+                ArchiveUrl = ARCHIVE_URL,
+                GithubOrg = GITHUB_ORG,
+                GithubRepo = GITHUB_REPO,
+                GithubPat = GITHUB_PAT,
+                CustomProperties = "{\"environment\":\"production\",\"teams\":[\"platform\",\"security\"],\"unset\":null}"
+            };
+        }
+
+        [Fact]
+        public async Task It_Applies_Custom_Properties_Only_After_Migration_Succeeds()
+        {
+            var args = CreateCustomPropertiesMigration();
+            var sequence = new MockSequence();
+            _mockGithubApi.InSequence(sequence).Setup(x => x.GetMigration(MIGRATION_ID))
+                .ReturnsAsync((RepositoryMigrationStatus.Succeeded, GITHUB_REPO, 0, null, "https://example.com/migration.log"));
+            _mockGithubApi.InSequence(sequence)
+                .Setup(x => x.SetRepositoryCustomProperties(GITHUB_ORG, GITHUB_REPO, It.IsAny<JObject>()))
+                .Returns(Task.CompletedTask)
+                .Verifiable();
+
+            await _handler.Handle(args);
+
+            _mockGithubApi.Verify(x => x.SetRepositoryCustomProperties(GITHUB_ORG, GITHUB_REPO,
+                It.Is<JObject>(properties => JToken.DeepEquals(properties, JObject.Parse(args.CustomProperties)))), Times.Once);
+            _mockGithubApi.Verify();
+            _mockOctoLogger.Verify(x => x.LogSuccess("Custom properties applied successfully."), Times.Once);
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task It_Applies_Custom_Properties_When_Uploading_An_Archive(bool generateArchive)
+        {
+            var args = CreateCustomPropertiesMigration();
+            args.ArchiveUrl = null;
+            args.AwsBucketName = AWS_BUCKET_NAME;
+            args.AwsAccessKey = AWS_ACCESS_KEY_ID;
+            args.AwsSecretKey = AWS_SECRET_ACCESS_KEY;
+            args.AwsRegion = AWS_REGION;
+            _mockAwsApi.Setup(x => x.UploadToBucket(AWS_BUCKET_NAME, ARCHIVE_PATH, It.IsAny<string>())).ReturnsAsync(ARCHIVE_URL);
+
+            if (generateArchive)
+            {
+                args.BbsServerUrl = BBS_SERVER_URL;
+                args.BbsProject = BBS_PROJECT;
+                args.BbsRepo = BBS_REPO;
+                args.BbsUsername = BBS_USERNAME;
+                args.BbsPassword = BBS_PASSWORD;
+                args.SshUser = SSH_USER;
+                args.SshPrivateKey = PRIVATE_KEY;
+                _mockBbsApi.Setup(x => x.StartExport(BBS_PROJECT, BBS_REPO)).ReturnsAsync(BBS_EXPORT_ID);
+                _mockBbsApi.Setup(x => x.GetExport(BBS_EXPORT_ID)).ReturnsAsync(("COMPLETED", "The export is complete", 100));
+                _mockBbsArchiveDownloader.Setup(x => x.Download(BBS_EXPORT_ID, It.IsAny<string>())).ReturnsAsync(ARCHIVE_PATH);
+                _mockGithubApi.Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, BBS_REPO_URL, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL, null))
+                    .ReturnsAsync(MIGRATION_ID);
+            }
+            else
+            {
+                args.ArchivePath = ARCHIVE_PATH;
+            }
+
+            args.Validate(_mockOctoLogger.Object);
+            await _handler.Handle(args);
+
+            _mockAwsApi.Verify(x => x.UploadToBucket(AWS_BUCKET_NAME, ARCHIVE_PATH, It.IsAny<string>()), Times.Once);
+            _mockGithubApi.Verify(x => x.SetRepositoryCustomProperties(GITHUB_ORG, GITHUB_REPO,
+                It.Is<JObject>(properties => JToken.DeepEquals(properties, JObject.Parse(args.CustomProperties)))), Times.Once);
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("{}")]
+        public async Task It_Does_Not_Update_Custom_Properties_When_None_Are_Requested(string customProperties)
+        {
+            var args = CreateCustomPropertiesMigration();
+            args.CustomProperties = customProperties;
+
+            await _handler.Handle(args);
+
+            _mockGithubApi.Verify(x => x.SetRepositoryCustomProperties(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<JObject>()), Times.Never);
+        }
+
+        [Theory]
+        [InlineData(RepositoryMigrationStatus.Failed)]
+        [InlineData(RepositoryMigrationStatus.FailedValidation)]
+        [InlineData("UNKNOWN")]
+        public async Task It_Does_Not_Update_Custom_Properties_When_Migration_Fails(string state)
+        {
+            var args = CreateCustomPropertiesMigration(state);
+
+            await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>()
+                .WithMessage("Migration failed");
+
+            _mockGithubApi.Verify(x => x.SetRepositoryCustomProperties(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<JObject>()), Times.Never);
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task It_Does_Not_Update_Custom_Properties_When_Target_Repository_Already_Exists(bool existsBeforeMigration)
+        {
+            var args = CreateCustomPropertiesMigration();
+            _mockGithubApi.Setup(x => x.DoesRepoExist(GITHUB_ORG, GITHUB_REPO)).ReturnsAsync(existsBeforeMigration);
+            _mockGithubApi.Setup(x => x.StartBbsMigration(MIGRATION_SOURCE_ID, UNUSED_REPO_URL, GITHUB_ORG_ID, GITHUB_REPO, GITHUB_PAT, ARCHIVE_URL, null))
+                .ThrowsAsync(new OctoshiftCliException($"A repository called {GITHUB_ORG}/{GITHUB_REPO} already exists"));
+
+            if (existsBeforeMigration)
+            {
+                await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+            }
+            else
+            {
+                await _handler.Handle(args);
+            }
+
+            _mockGithubApi.Verify(x => x.SetRepositoryCustomProperties(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<JObject>()), Times.Never);
+        }
+
+        [Theory]
+        [InlineData(HttpStatusCode.Forbidden)]
+        [InlineData(HttpStatusCode.NotFound)]
+        [InlineData(HttpStatusCode.UnprocessableEntity)]
+        [InlineData(HttpStatusCode.InternalServerError)]
+        public async Task It_Reports_A_Property_Update_Failure_Without_Hiding_The_Successful_Migration(HttpStatusCode statusCode) =>
+            await AssertPropertyUpdateFailure(new HttpRequestException("API error", null, statusCode));
+
+        [Fact]
+        public async Task It_Reports_A_Property_Update_Timeout_Without_Hiding_The_Successful_Migration() =>
+            await AssertPropertyUpdateFailure(new TaskCanceledException("The request timed out."));
+
+        [Fact]
+        public async Task It_Reports_A_Property_Update_Cancellation_Without_Hiding_The_Successful_Migration() =>
+            await AssertPropertyUpdateFailure(new OperationCanceledException("The request was canceled."));
+
+        [Fact]
+        public async Task It_Reports_A_Property_Update_Rate_Limit_Without_Hiding_The_Successful_Migration() =>
+            await AssertPropertyUpdateFailure(new OctoshiftCliException("Secondary rate limit exceeded. Maximum retries reached."));
+
+        private async Task AssertPropertyUpdateFailure(Exception apiException)
+        {
+            var args = CreateCustomPropertiesMigration();
+            _mockGithubApi.Setup(x => x.SetRepositoryCustomProperties(GITHUB_ORG, GITHUB_REPO, It.IsAny<JObject>()))
+                .ThrowsAsync(apiException);
+
+            var exception = await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>()
+                .WithMessage($"Migration completed (ID: {MIGRATION_ID}), but custom properties could not be applied to {GITHUB_ORG}/{GITHUB_REPO}.*do not rerun the migration*{apiException.Message}");
+
+            exception.Which.InnerException.Should().BeSameAs(apiException);
+            _mockOctoLogger.Verify(x => x.LogSuccess("Custom properties applied successfully."), Times.Never);
+        }
+
+        [Fact]
+        public async Task It_Does_Not_Wrap_Unexpected_Property_Update_Errors()
+        {
+            var args = CreateCustomPropertiesMigration();
+            var unexpectedException = new InvalidOperationException("Unexpected error");
+            _mockGithubApi.Setup(x => x.SetRepositoryCustomProperties(GITHUB_ORG, GITHUB_REPO, It.IsAny<JObject>()))
+                .ThrowsAsync(unexpectedException);
+
+            var exception = await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<InvalidOperationException>();
+
+            exception.Which.Should().BeSameAs(unexpectedException);
+            _mockOctoLogger.Verify(x => x.LogSuccess("Custom properties applied successfully."), Times.Never);
+        }
+
+        [Theory]
+        [InlineData("invalid-json", false)]
+        [InlineData("{\"environment\":\"production\"}", true)]
+        public async Task It_Rejects_Invalid_Custom_Property_Options_Before_Any_Api_Calls(string customProperties, bool queueOnly)
+        {
+            var args = CreateCustomPropertiesMigration();
+            args.CustomProperties = customProperties;
+            args.QueueOnly = queueOnly;
+
+            await _handler.Invoking(x => x.Handle(args)).Should().ThrowExactlyAsync<OctoshiftCliException>();
+
+            _mockGithubApi.VerifyNoOtherCalls();
+            _mockBbsApi.VerifyNoOtherCalls();
+            _mockAzureApi.VerifyNoOtherCalls();
+            _mockAwsApi.VerifyNoOtherCalls();
         }
 
         [Fact]
