@@ -20,16 +20,15 @@ public class SecretScanningAlertService
         _log = logger;
     }
 
-    // Iterate over all source alerts by looping through the dictionary with each key (SecretType, Secret) and 
-    // try to find a matching alert in the target repository based on the same key
-    // If potential match is found we compare the locations of the alerts and if they match a matching AlertWithLocations is returned
+    // Match resolved source alerts to target alerts by secret type, secret, and locations.
     public virtual async Task MigrateSecretScanningAlerts(string sourceOrg, string sourceRepo, string targetOrg,
     string targetRepo, bool dryRun)
     {
         _log.LogInformation($"Migrating Secret Scanning Alerts from '{sourceOrg}/{sourceRepo}' to '{targetOrg}/{targetRepo}'");
 
-        var sourceAlertsDict = await GetAlertsWithLocations(_sourceGithubApi, sourceOrg, sourceRepo);
-        var targetAlertsDict = await GetAlertsWithLocations(_targetGithubApi, targetOrg, targetRepo);
+        var sourceAlertsDict = await GetAlertsBySecret(_sourceGithubApi, sourceOrg, sourceRepo);
+        var targetAlertsDict = await GetAlertsBySecret(_targetGithubApi, targetOrg, targetRepo);
+        var targetLocations = new Dictionary<int, GithubSecretScanningAlertLocation[]>();
 
         _log.LogInformation($"Source {sourceOrg}/{sourceRepo} secret alerts found: {sourceAlertsDict.Count}");
         _log.LogInformation($"Target {targetOrg}/{targetRepo} secret alerts found: {targetAlertsDict.Count}");
@@ -43,9 +42,9 @@ public class SecretScanningAlertService
 
             foreach (var sourceAlert in sourceAlerts)
             {
-                _log.LogInformation($"Processing source secret {sourceAlert.Alert.Number}");
+                _log.LogInformation($"Processing source secret {sourceAlert.Number}");
 
-                if (SecretScanningAlert.IsOpen(sourceAlert.Alert.State))
+                if (SecretScanningAlert.IsOpen(sourceAlert.State))
                 {
                     _log.LogInformation("  secret alert is still open, nothing to do");
                     continue;
@@ -55,13 +54,30 @@ public class SecretScanningAlertService
 
                 if (targetAlertsDict.TryGetValue(sourceKey, out var potentialTargets))
                 {
-                    var targetAlert = potentialTargets.FirstOrDefault(target => DoAllLocationsMatch(sourceAlert.Locations, target.Locations));
+                    var sourceLocations = (await _sourceGithubApi.GetSecretScanningAlertsLocations(
+                        sourceOrg, sourceRepo, sourceAlert.Number)).ToArray();
+                    GithubSecretScanningAlert targetAlert = null;
+                    foreach (var potentialTarget in potentialTargets)
+                    {
+                        if (!targetLocations.TryGetValue(potentialTarget.Number, out var locations))
+                        {
+                            locations = (await _targetGithubApi.GetSecretScanningAlertsLocations(
+                                targetOrg, targetRepo, potentialTarget.Number)).ToArray();
+                            targetLocations.Add(potentialTarget.Number, locations);
+                        }
+
+                        if (DoAllLocationsMatch(sourceLocations, locations))
+                        {
+                            targetAlert = potentialTarget;
+                            break;
+                        }
+                    }
 
                     if (targetAlert != null)
                     {
-                        _log.LogInformation($"  source secret alert matched to {targetAlert.Alert.Number} in {targetOrg}/{targetRepo}.");
+                        _log.LogInformation($"  source secret alert matched to {targetAlert.Number} in {targetOrg}/{targetRepo}.");
 
-                        if (sourceAlert.Alert.Resolution == targetAlert.Alert.Resolution && sourceAlert.Alert.State == targetAlert.Alert.State)
+                        if (sourceAlert.Resolution == targetAlert.Resolution && sourceAlert.State == targetAlert.State)
                         {
                             _log.LogInformation("  source and target alerts are already aligned.");
                             continue;
@@ -69,32 +85,32 @@ public class SecretScanningAlertService
 
                         if (dryRun)
                         {
-                            _log.LogInformation($"  executing in dry run mode! Target alert {targetAlert.Alert.Number} would have been updated to state:{sourceAlert.Alert.State} and resolution:{sourceAlert.Alert.Resolution}");
+                            _log.LogInformation($"  executing in dry run mode! Target alert {targetAlert.Number} would have been updated to state:{sourceAlert.State} and resolution:{sourceAlert.Resolution}");
                             continue;
                         }
 
-                        _log.LogInformation($"  updating target alert:{targetAlert.Alert.Number} to state:{sourceAlert.Alert.State} and resolution:{sourceAlert.Alert.Resolution}");
+                        _log.LogInformation($"  updating target alert:{targetAlert.Number} to state:{sourceAlert.State} and resolution:{sourceAlert.Resolution}");
 
-                        var prefix = $"[@{sourceAlert.Alert.ResolverName}] ";
-                        var originalComment = sourceAlert.Alert.ResolutionComment ?? string.Empty;
+                        var prefix = $"[@{sourceAlert.ResolverName}] ";
+                        var originalComment = sourceAlert.ResolutionComment ?? string.Empty;
                         var prefixedComment = prefix + originalComment;
 
                         var targetResolutionComment = prefixedComment.Length <= 270
                             ? prefixedComment
                             : prefix + originalComment[..Math.Max(0, 270 - prefix.Length)];
 
-                        await _targetGithubApi.UpdateSecretScanningAlert(targetOrg, targetRepo, targetAlert.Alert.Number, sourceAlert.Alert.State,
-                            sourceAlert.Alert.Resolution, targetResolutionComment);
-                        _log.LogSuccess($"  target alert successfully updated to {sourceAlert.Alert.Resolution} with comment {targetResolutionComment}.");
+                        await _targetGithubApi.UpdateSecretScanningAlert(targetOrg, targetRepo, targetAlert.Number, sourceAlert.State,
+                            sourceAlert.Resolution, targetResolutionComment);
+                        _log.LogSuccess($"  target alert successfully updated to {sourceAlert.Resolution}.");
                     }
                     else
                     {
-                        _log.LogWarning($"  failed to locate a matching secret to source secret {sourceAlert.Alert.Number} in {targetOrg}/{targetRepo}");
+                        _log.LogWarning($"  failed to locate a matching secret to source secret {sourceAlert.Number} in {targetOrg}/{targetRepo}");
                     }
                 }
                 else
                 {
-                    _log.LogWarning($"  Failed to locate a matching secret to source secret {sourceAlert.Alert.Number} in {targetOrg}/{targetRepo}");
+                    _log.LogWarning($"  Failed to locate a matching secret to source secret {sourceAlert.Number} in {targetOrg}/{targetRepo}");
                 }
             }
         }
@@ -138,23 +154,13 @@ public class SecretScanningAlertService
             };
     }
 
-    // Getting alerts with locations from a repository and building a dictionary with a key (SecretType, Secret)
-    // and value List of AlertWithLocations
-    // This method is used to get alerts from both source and target repositories
-    private async Task<Dictionary<(string SecretType, string Secret), List<AlertWithLocations>>>
-       GetAlertsWithLocations(GithubApi api, string org, string repo)
+    // Grouping alerts by secret keeps location requests limited to resolved alerts and matching candidates.
+    private async Task<Dictionary<(string SecretType, string Secret), List<GithubSecretScanningAlert>>>
+       GetAlertsBySecret(GithubApi api, string org, string repo)
     {
         var alerts = await api.GetSecretScanningAlertsForRepository(org, repo);
-        var alertsWithLocations = new List<AlertWithLocations>();
-        foreach (var alert in alerts)
-        {
-            var locations = await api.GetSecretScanningAlertsLocations(org, repo, alert.Number);
-            alertsWithLocations.Add(new AlertWithLocations { Alert = alert, Locations = locations.ToArray() });
-        }
-
-        // Build the dictionary keyed by SecretType and Secret
-        return alertsWithLocations
-            .GroupBy(alert => (alert.Alert.SecretType, alert.Alert.Secret))
+        return alerts
+            .GroupBy(alert => (alert.SecretType, alert.Secret))
             .ToDictionary(group => group.Key, group => group.ToList());
     }
 
@@ -181,11 +187,4 @@ public class SecretScanningAlertService
             _ => null
         };
     }
-}
-
-internal class AlertWithLocations
-{
-    public GithubSecretScanningAlert Alert { get; set; }
-
-    public GithubSecretScanningAlertLocation[] Locations { get; set; }
 }

@@ -24,6 +24,7 @@ public class GithubClient
     private const int MILLISECONDS_PER_SECOND = 1000;
     private const int SECONDARY_RATE_LIMIT_MAX_RETRIES = 3;
     private const int SECONDARY_RATE_LIMIT_DEFAULT_DELAY = 60; // 60 seconds default delay
+    private const string SECRET_SCANNING_ALERTS_PATH = "/secret-scanning/alerts";
 
     internal int _secondaryRateLimitMaxRetries = SECONDARY_RATE_LIMIT_MAX_RETRIES; // Exposed for testing purposes
     internal int _secondaryRateLimitDefaultDelay = SECONDARY_RATE_LIMIT_DEFAULT_DELAY; // Exposed for testing purposes
@@ -187,14 +188,20 @@ public class GithubClient
         string url,
         Dictionary<string, string> customHeaders = null,
         HttpStatusCode expectedStatus = HttpStatusCode.OK) =>
-        await _retryPolicy.Retry(async () => await SendAsync(HttpMethod.Get, url, customHeaders: customHeaders, expectedStatus: expectedStatus));
+        await _retryPolicy.Retry(
+            async () => await SendAsync(HttpMethod.Get, url, customHeaders: customHeaders, expectedStatus: expectedStatus),
+            exception => !IsSecretScanningAlertsRequest(url) ||
+                exception is not HttpRequestException { StatusCode: HttpStatusCode.UnprocessableEntity });
 
     private async Task<(string Content, KeyValuePair<string, IEnumerable<string>>[] ResponseHeaders)> PostWithRetry(
         string url,
         object body,
         Dictionary<string, string> customHeaders = null,
         HttpStatusCode expectedStatus = HttpStatusCode.OK) =>
-        await _retryPolicy.Retry(async () => await SendAsync(HttpMethod.Post, url, body, customHeaders: customHeaders, expectedStatus: expectedStatus));
+        await _retryPolicy.Retry(
+            async () => await SendAsync(HttpMethod.Post, url, body, customHeaders: customHeaders, expectedStatus: expectedStatus),
+            exception => !IsSecretScanningAlertsRequest(url) ||
+                exception is not HttpRequestException { StatusCode: HttpStatusCode.UnprocessableEntity });
 
     private async Task<(string Content, KeyValuePair<string, IEnumerable<string>>[] ResponseHeaders)> SendAsync(
         HttpMethod httpMethod,
@@ -219,7 +226,7 @@ public class GithubClient
             else
             {
                 var jsonBody = body.ToJson();
-                _log.LogVerbose($"HTTP BODY: {jsonBody}");
+                _log.LogVerbose(IsSecretScanningAlertsRequest(url) ? "HTTP BODY: [redacted]" : $"HTTP BODY: {jsonBody}");
                 request.Content = jsonBody.ToStringContent();
             }
         }
@@ -228,7 +235,8 @@ public class GithubClient
 
         _log.LogVerbose($"GITHUB REQUEST ID: {ExtractHeaderValue("X-GitHub-Request-Id", response.Headers)}");
         var content = await response.Content.ReadAsStringAsync();
-        _log.LogVerbose($"RESPONSE ({response.StatusCode}): {content}");
+        var contentForLogging = GetResponseContentForLogging(url, content);
+        _log.LogVerbose($"RESPONSE ({response.StatusCode}): {contentForLogging}");
 
         var headers = response.Headers.ToArray();
 
@@ -260,7 +268,7 @@ public class GithubClient
             }
             catch (HttpRequestException ex)
             {
-                throw new HttpRequestException($"GitHub API error: {content}", ex, response.StatusCode);
+                throw new HttpRequestException($"GitHub API error: {contentForLogging}", ex, response.StatusCode);
             }
         }
         else if (response.StatusCode != expectedStatus)
@@ -269,6 +277,55 @@ public class GithubClient
         }
 
         return (content, headers);
+    }
+
+    private static bool IsSecretScanningAlertsRequest(string url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
+        uri.AbsolutePath.Contains(SECRET_SCANNING_ALERTS_PATH, StringComparison.OrdinalIgnoreCase);
+
+    private static string GetResponseContentForLogging(string url, string content)
+    {
+        if (!IsSecretScanningAlertsRequest(url))
+        {
+            return content;
+        }
+
+        try
+        {
+            var response = JToken.Parse(content);
+            RedactSecretValues(response);
+            return response.ToString();
+        }
+        catch (Newtonsoft.Json.JsonException)
+        {
+            return "[response body omitted]";
+        }
+    }
+
+    private static void RedactSecretValues(JToken token)
+    {
+        if (token is JObject obj)
+        {
+            foreach (var property in obj.Properties())
+            {
+                if (string.Equals(property.Name, "secret", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(property.Name, "resolution_comment", StringComparison.OrdinalIgnoreCase))
+                {
+                    property.Value = "***";
+                }
+                else
+                {
+                    RedactSecretValues(property.Value);
+                }
+            }
+        }
+        else if (token is JArray array)
+        {
+            foreach (var item in array)
+            {
+                RedactSecretValues(item);
+            }
+        }
     }
 
     private async Task ApplyRetryDelayAsync()

@@ -4444,7 +4444,42 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         // Assert
         results.Should().HaveCount(1);
         results.Single().SecretType.Should().Be("google_api_key");
-        _logMock.Verify(m => m.LogWarning(It.IsAny<string>()), Times.Once);
+        _logMock.Verify(m => m.LogWarning(
+            $"Repository {GITHUB_ORG}/{GITHUB_REPO} does not support one or more requested generic or AI-detected secret scanning types, " +
+            "so alerts of those types will not be migrated. This is expected on older GitHub Enterprise Server " +
+            "versions where some of these secret types are not available."), Times.Once);
+    }
+
+    [Theory]
+    [InlineData("secret_type", "invalid")]
+    [InlineData("other_field", "unsupported")]
+    public async Task GetSecretScanningAlertsForRepository_Propagates_422_Errors_Other_Than_Unsupported_Secret_Type(
+        string field,
+        string code)
+    {
+        // Arrange
+        var baseUrl = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/secret-scanning/alerts?per_page=100";
+        var nonDefaultUrl = $"{baseUrl}&secret_type={NON_DEFAULT_SECRET_TYPES}";
+
+        static async IAsyncEnumerable<JToken> DefaultPage()
+        {
+            await Task.CompletedTask;
+            yield break;
+        }
+
+        var validationError = new HttpRequestException(
+            $"GitHub API error: {{\"message\":\"Validation Failed\",\"errors\":[{{\"field\":\"{field}\",\"code\":\"{code}\"}}]}}",
+            null,
+            HttpStatusCode.UnprocessableEntity);
+
+        _githubClientMock.Setup(m => m.GetAllAsync(baseUrl, null)).Returns(DefaultPage);
+        _githubClientMock.Setup(m => m.GetAllAsync(nonDefaultUrl, null)).Throws(validationError);
+
+        // Act
+        var act = async () => await _githubApi.GetSecretScanningAlertsForRepository(GITHUB_ORG, GITHUB_REPO);
+
+        // Assert
+        await act.Should().ThrowAsync<HttpRequestException>().WithMessage(validationError.Message);
     }
 
     [Fact]

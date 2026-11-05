@@ -1043,10 +1043,10 @@ public class GithubApi
         {
             nonDefaultAlerts = await _client.GetAllAsync(nonDefaultUrl).ToListAsync();
         }
-        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.UnprocessableEntity && ex.Message.Contains("secret_type"))
+        catch (HttpRequestException ex) when (IsUnsupportedSecretTypeError(ex))
         {
             _log?.LogWarning(
-                "The target does not support one or more of the generic or AI-detected secret scanning types, " +
+                $"Repository {org}/{repo} does not support one or more requested generic or AI-detected secret scanning types, " +
                 "so alerts of those types will not be migrated. This is expected on older GitHub Enterprise Server " +
                 "versions where some of these secret types are not available.");
         }
@@ -1060,6 +1060,29 @@ public class GithubApi
             .Select(secretAlert => BuildSecretScanningAlert(secretAlert))
             .DistinctBy(alert => alert.Number)
             .ToList();
+    }
+
+    private static bool IsUnsupportedSecretTypeError(HttpRequestException exception)
+    {
+        const string errorPrefix = "GitHub API error: ";
+        if (exception.StatusCode != HttpStatusCode.UnprocessableEntity ||
+            !exception.Message.StartsWith(errorPrefix, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        try
+        {
+            var error = JObject.Parse(exception.Message[errorPrefix.Length..]);
+            return error["errors"] is JArray errors &&
+                errors.Any(item =>
+                    string.Equals((string)item["field"], "secret_type", StringComparison.Ordinal) &&
+                    string.Equals((string)item["code"], "unsupported", StringComparison.Ordinal));
+        }
+        catch (Newtonsoft.Json.JsonException)
+        {
+            return false;
+        }
     }
 
     public virtual async Task<IEnumerable<GithubSecretScanningAlertLocation>> GetSecretScanningAlertsLocations(string org, string repo, int alertNumber)

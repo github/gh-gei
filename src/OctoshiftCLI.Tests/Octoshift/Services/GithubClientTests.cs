@@ -206,6 +206,104 @@ public sealed class GithubClientTests
     }
 
     [Fact]
+    public async Task GetAllAsync_Redacts_Secret_Scanning_Alert_Response_Content_From_Logs()
+    {
+        // Arrange
+        const string url = "https://api.github.com/repos/org/repo/secret-scanning/alerts?per_page=100";
+        const string secret = "test-secret-value";
+        const string comment = "private resolution comment";
+        const string response = """[{"number":1,"secret_type":"generic_private_key","secret":"test-secret-value","resolution_comment":"private resolution comment"}]""";
+        var handlerMock = MockHttpHandler(
+            req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == url,
+            CreateHttpResponseFactory(content: response));
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act
+        var alert = (await githubClient.GetAllAsync(url).SingleAsync()).ToObject<JObject>();
+
+        // Assert
+        alert["secret"].Value<string>().Should().Be(secret);
+        alert["resolution_comment"].Value<string>().Should().Be(comment);
+        _mockOctoLogger.Verify(m => m.LogVerbose(It.Is<string>(message =>
+            message.Contains("RESPONSE (OK)") && message.Contains("\"secret\"") && message.Contains("***") &&
+            message.Contains("\"resolution_comment\""))), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogVerbose(It.Is<string>(message => message.Contains(secret))), Times.Never);
+        _mockOctoLogger.Verify(m => m.LogVerbose(It.Is<string>(message => message.Contains(comment))), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_Redacts_Secret_Scanning_Alert_Error_Body_From_Exception()
+    {
+        // Arrange
+        const string url = "https://api.github.com/repos/org/repo/secret-scanning/alerts?per_page=100";
+        const string secret = "test-secret-value";
+        const string response = """{"message":"Validation Failed","secret":"test-secret-value","errors":[{"field":"secret_type","code":"unsupported"}]}""";
+        var handlerMock = MockHttpHandler(
+            req => req.Method == HttpMethod.Get,
+            CreateHttpResponseFactory(HttpStatusCode.UnprocessableEntity, response));
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act
+        var exception = await FluentActions
+            .Invoking(async () => await githubClient.GetAllAsync(url).ToListAsync())
+            .Should()
+            .ThrowAsync<HttpRequestException>();
+
+        // Assert
+        exception.Which.Message.Should().NotContain(secret);
+        exception.Which.Message.Should().Contain("\"code\": \"unsupported\"");
+    }
+
+    [Fact]
+    public async Task PatchAsync_Redacts_Secret_Scanning_Alert_Request_Body_From_Logs()
+    {
+        // Arrange
+        const string url = "https://api.github.com/repos/org/repo/secret-scanning/alerts/1";
+        const string comment = "sensitive resolution comment";
+        var handlerMock = MockHttpHandler(
+            req => req.Method == HttpMethod.Patch && req.RequestUri.ToString() == url,
+            CreateHttpResponseFactory());
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act
+        await githubClient.PatchAsync(url, new { resolution_comment = comment });
+
+        // Assert
+        _mockOctoLogger.Verify(m => m.LogVerbose("HTTP BODY: [redacted]"), Times.Once);
+        _mockOctoLogger.Verify(m => m.LogVerbose(It.Is<string>(message => message.Contains(comment))), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_Does_Not_Retry_422_Responses()
+    {
+        // Arrange
+        const string url = "https://api.github.com/repos/org/repo/secret-scanning/alerts?per_page=100";
+        var handlerMock = MockHttpHandler(
+            req => req.Method == HttpMethod.Get,
+            CreateHttpResponseFactory(HttpStatusCode.UnprocessableEntity, """{"message":"Validation Failed"}"""));
+
+        using var httpClient = new HttpClient(handlerMock.Object);
+        var githubClient = new GithubClient(_mockOctoLogger.Object, httpClient, null, _retryPolicy, _dateTimeProvider.Object, PERSONAL_ACCESS_TOKEN);
+
+        // Act
+        var act = async () => await githubClient.GetAllAsync(url).ToListAsync();
+
+        // Assert
+        await act.Should().ThrowAsync<HttpRequestException>();
+        handlerMock.Protected().Verify(
+            "SendAsync",
+            Times.Once(),
+            ItExpr.IsAny<HttpRequestMessage>(),
+            ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact]
     public async Task GetAsync_Throws_HttpRequestException_On_Non_Success_Response()
     {
         // Arrange
