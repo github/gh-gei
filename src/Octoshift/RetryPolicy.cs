@@ -64,8 +64,15 @@ namespace OctoshiftCLI
 
         public async Task<T> Retry<T>(Func<Task<T>> func) => await CreateRetryPolicyForException<Exception>().ExecuteAsync(func);
 
-        private AsyncRetryPolicy CreateRetryPolicyForException<TException>() where TException : Exception => Policy
-                .Handle<TException>()
+        public async Task<T> Retry<T>(Func<Task<T>> func, Func<Exception, bool> shouldRetry)
+        {
+            return shouldRetry is null
+                ? throw new ArgumentNullException(nameof(shouldRetry))
+                : await CreateRetryPolicyForException<Exception>(shouldRetry).ExecuteAsync(func);
+        }
+
+        private AsyncRetryPolicy CreateRetryPolicyForException<TException>(Func<Exception, bool> shouldRetry = null) where TException : Exception => Policy
+                .Handle<TException>(exception => shouldRetry?.Invoke(exception) ?? true)
                 .WaitAndRetryAsync(5, retry => retry * TimeSpan.FromMilliseconds(_retryInterval), (Exception ex, TimeSpan ts, Context ctx) =>
                 {
                     if (ex is HttpRequestException httpEx)
