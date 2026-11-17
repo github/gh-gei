@@ -47,10 +47,12 @@ public class CodeScanningAlertServiceTests
         _mockTargetGithubApi.Verify(x => x.GetCodeScanningAlertsForRepository(TARGET_ORG, TARGET_REPO, "main"), Times.Once);
     }
 
-    [Fact]
-    public async Task MigrateAnalyses_Migrate_Single_Analysis()
+    [Theory]
+    [InlineData(123456L)]
+    [InlineData(2153368829L)]
+    [InlineData(long.MaxValue)]
+    public async Task MigrateAnalyses_Migrate_Single_Analysis(long analysisId)
     {
-        var analysisId = 123456;
         var sarifId = "foo";
         var sarif = "MOCK_SARIF_REPORT";
         var sarifCommitSha = "TEST_COMMIT_SHA";
@@ -76,6 +78,8 @@ public class CodeScanningAlertServiceTests
 
         await _alertService.MigrateAnalyses(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, "main", false);
 
+        _mockSourceGithubApi.Verify(x => x.GetSarifReport(SOURCE_ORG, SOURCE_REPO, analysisId), Times.Once);
+        _mockTargetGithubApi.Verify(x => x.UploadSarifReport(TARGET_ORG, TARGET_REPO, sarif, sarifCommitSha, sarifRef), Times.Once);
         _mockTargetGithubApi.Verify(x => x.GetSarifProcessingStatus(TARGET_ORG, TARGET_REPO, sarifId));
     }
 
