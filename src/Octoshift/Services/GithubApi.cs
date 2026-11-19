@@ -1099,7 +1099,7 @@ public class GithubApi
         await _client.PatchAsync(url, payload);
     }
 
-    public virtual async Task<string> GetSarifReport(string org, string repo, int analysisId)
+    public virtual async Task<string> GetSarifReport(string org, string repo, long analysisId)
     {
         var url = $"{_apiUrl}/repos/{org.EscapeDataString()}/{repo.EscapeDataString()}/code-scanning/analyses/{analysisId}";
         // Need change the Accept header to application/sarif+json otherwise it will just be the analysis record
@@ -1341,7 +1341,7 @@ public class GithubApi
     private static CodeScanningAnalysis BuildCodeScanningAnalysis(JToken codescan) =>
         new()
         {
-            Id = (int)codescan["id"],
+            Id = (long)codescan["id"],
             CommitSha = (string)codescan["commit_sha"],
             Ref = (string)codescan["ref"],
             CreatedAt = (string)codescan["created_at"],

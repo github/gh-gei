@@ -5,7 +5,7 @@ namespace Octoshift.Models
         public string Ref { get; set; }
         public string CommitSha { get; set; }
         public string CreatedAt { get; set; }
-        public int Id { get; set; }
+        public long Id { get; set; }
         public string Error { get; set; }
     }
 }

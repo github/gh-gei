@@ -3302,8 +3302,13 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         result.Should().Be("main");
     }
 
-    [Fact]
-    public async Task GetCodeScanningAnalysisForRepository_Returns_Analyses()
+    [Theory]
+    [InlineData(38200197L)]
+    [InlineData(2147483647L)]
+    [InlineData(2147483648L)]
+    [InlineData(2153368829L)]
+    [InlineData(long.MaxValue)]
+    public async Task GetCodeScanningAnalysisForRepository_Returns_Analyses(long analysisId)
     {
         // Arrange
         const string url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses?per_page=100&sort=created&direction=asc";
@@ -3313,7 +3318,7 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
                     ""ref"": ""refs/heads/sg-tfsec-test"",
                     ""commit_sha"": ""25cb837876685f98756d0c934ffe6cd09da570f8"",
                     ""created_at"": ""2022-08-08T19:00:18Z"",
-                    ""id"": 38200197,
+                    ""id"": {analysisId},
                 }}
             ";
 
@@ -3348,19 +3353,19 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         scanResults.Count().Should().Be(3);
 
         var expectedData = JObject.Parse(analysis1);
-        scanResults.ElementAt(0).Id.Should().Be((int)expectedData["id"]);
+        scanResults.ElementAt(0).Id.Should().Be(analysisId);
         scanResults.ElementAt(0).Ref.Should().Be((string)expectedData["ref"]);
         scanResults.ElementAt(0).CommitSha.Should().Be((string)expectedData["commit_sha"]);
         scanResults.ElementAt(0).CreatedAt.Should().Be((string)expectedData["created_at"]);
 
         expectedData = JObject.Parse(analysis2);
-        scanResults.ElementAt(1).Id.Should().Be((int)expectedData["id"]);
+        scanResults.ElementAt(1).Id.Should().Be((long)expectedData["id"]);
         scanResults.ElementAt(1).Ref.Should().Be((string)expectedData["ref"]);
         scanResults.ElementAt(1).CommitSha.Should().Be((string)expectedData["commit_sha"]);
         scanResults.ElementAt(1).CreatedAt.Should().Be((string)expectedData["created_at"]);
 
         expectedData = JObject.Parse(analysis3);
-        scanResults.ElementAt(2).Id.Should().Be((int)expectedData["id"]);
+        scanResults.ElementAt(2).Id.Should().Be((long)expectedData["id"]);
         scanResults.ElementAt(2).Ref.Should().Be((string)expectedData["ref"]);
         scanResults.ElementAt(2).CommitSha.Should().Be((string)expectedData["commit_sha"]);
         scanResults.ElementAt(2).CreatedAt.Should().Be((string)expectedData["created_at"]);
@@ -3676,11 +3681,13 @@ $",\"variables\":{{\"id\":\"{orgId}\",\"login\":\"{login}\"}}}}";
         _githubClientMock.Verify(m => m.PatchAsync(url, It.Is<object>(x => x.ToJson() == payload.ToJson()), null));
     }
 
-    [Fact]
-    public async Task GetSarifReport_For_Third_Party_Scanning_Tool()
+    [Theory]
+    [InlineData(37019295L)]
+    [InlineData(2153368829L)]
+    [InlineData(long.MaxValue)]
+    public async Task GetSarifReport_For_Third_Party_Scanning_Tool(long analysisId)
     {
         // Arrange
-        const int analysisId = 37019295;
         var url = $"https://api.github.com/repos/{GITHUB_ORG}/{GITHUB_REPO}/code-scanning/analyses/{analysisId}";
 
         var response = "SARIF_DATA";
