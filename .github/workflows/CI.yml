@@ -357,8 +357,8 @@ jobs:
           CLI_VERSION: ${{ github.ref }}
 
       - name: Create gh-gei Release
-        # efb35369e0ad2afab669f228072c1b0d510eae64 is tag v3, pinned to avoid supply chain attacks
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
+        # 8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 is tag v3.0.4, pinned to avoid supply chain attacks
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3
         with:
           body_path: ./RELEASENOTES.md
           files: |
@@ -376,8 +376,8 @@ jobs:
             ./dist/osx-arm64/gei-darwin-arm64
 
       - name: Create gh-ado2gh Release
-        # a06a81a03ee405af7f2048a818ed3f03bbf83c7b is tag v2, pinned to avoid supply chain attacks
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
+        # 8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 is tag v3.0.4, pinned to avoid supply chain attacks
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3
         with:
           body_path: ./RELEASENOTES.md
           repository: github/gh-ado2gh
@@ -391,8 +391,8 @@ jobs:
             ./dist/osx-arm64/ado2gh-darwin-arm64
 
       - name: Create gh-bbs2gh Release
-        # a06a81a03ee405af7f2048a818ed3f03bbf83c7b is tag v2, pinned to avoid supply chain attacks
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
+        # 8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 is tag v3.0.4, pinned to avoid supply chain attacks
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3
         with:
           body_path: ./RELEASENOTES.md
           repository: github/gh-bbs2gh
@@ -406,8 +406,8 @@ jobs:
             ./dist/osx-arm64/bbs2gh-darwin-arm64
 
       - name: Create gh-gl2gh Release
-        # a06a81a03ee405af7f2048a818ed3f03bbf83c7b is tag v2, pinned to avoid supply chain attacks
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
+        # 8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 is tag v3.0.4, pinned to avoid supply chain attacks
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3
         with:
           body_path: ./RELEASENOTES.md
           repository: github/gh-gl2gh
