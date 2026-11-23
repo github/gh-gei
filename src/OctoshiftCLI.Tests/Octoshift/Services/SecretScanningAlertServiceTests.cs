@@ -174,6 +174,41 @@ public class SecretScanningAlertServiceTests
             SecretScanningAlert.ResolutionRevoked,
             $"[@{sourceSecret.ResolverName}] {sourceSecret.ResolutionComment}")
         );
+        _mockOctoLogger.Verify(
+            m => m.LogSuccess(It.Is<string>(message => message.Contains(resolutionComment))),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task Open_Alerts_Do_Not_Fetch_Locations()
+    {
+        var source = new GithubSecretScanningAlert
+        {
+            Number = 1,
+            State = SecretScanningAlert.AlertStateOpen,
+            SecretType = "generic_private_key",
+            Secret = "secret"
+        };
+        var target = new GithubSecretScanningAlert
+        {
+            Number = 2,
+            State = SecretScanningAlert.AlertStateOpen,
+            SecretType = source.SecretType,
+            Secret = source.Secret
+        };
+        _mockSourceGithubApi.Setup(x => x.GetSecretScanningAlertsForRepository(SOURCE_ORG, SOURCE_REPO))
+            .ReturnsAsync(new[] { source });
+        _mockTargetGithubApi.Setup(x => x.GetSecretScanningAlertsForRepository(TARGET_ORG, TARGET_REPO))
+            .ReturnsAsync(new[] { target });
+
+        await _service.MigrateSecretScanningAlerts(SOURCE_ORG, SOURCE_REPO, TARGET_ORG, TARGET_REPO, false);
+
+        _mockSourceGithubApi.Verify(
+            x => x.GetSecretScanningAlertsLocations(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()),
+            Times.Never);
+        _mockTargetGithubApi.Verify(
+            x => x.GetSecretScanningAlertsLocations(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()),
+            Times.Never);
     }
 
     [Fact]
@@ -307,6 +342,12 @@ public class SecretScanningAlertServiceTests
             It.IsAny<string>(),
             It.IsAny<string>(),
             It.IsAny<string>()), Times.Never);
+        _mockSourceGithubApi.Verify(
+            x => x.GetSecretScanningAlertsLocations(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()),
+            Times.Never);
+        _mockTargetGithubApi.Verify(
+            x => x.GetSecretScanningAlertsLocations(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()),
+            Times.Never);
     }
 
     [Fact]
