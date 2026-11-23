@@ -45,6 +45,7 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
         AddOption(AwsRegion);
         AddOption(QueueOnly);
         AddOption(TargetRepoVisibility.FromAmong("public", "private", "internal"));
+        AddOption(CustomProperties);
         AddOption(Kerberos);
         AddOption(Verbose);
         AddOption(KeepArchive);
@@ -176,6 +177,12 @@ public class MigrateRepoCommand : CommandBase<MigrateRepoCommandArgs, MigrateRep
     public Option<string> TargetRepoVisibility { get; } = new(
         name: "--target-repo-visibility",
         description: "The visibility of the target repo. Defaults to private. Valid values are public, private, or internal.");
+
+    public Option<string> CustomProperties { get; } = new(
+        name: "--custom-properties",
+        description: "A JSON object of custom property names and values to apply after the migration succeeds. " +
+                     "Values must be strings, arrays of strings, or null. Properties must already be defined in the target organization. " +
+                     "Cannot be used with --queue-only.");
 
     public Option<bool> Kerberos { get; } = new(
         name: "--kerberos",

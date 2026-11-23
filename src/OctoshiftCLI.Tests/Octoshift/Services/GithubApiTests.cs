@@ -57,6 +57,54 @@ public class GithubApiTests
         _githubApi = new GithubApi(_githubClientMock.Object, API_URL, _retryPolicy, _archiveUploader.Object);
     }
 
+    [Theory]
+    [InlineData(API_URL, GITHUB_ORG, GITHUB_REPO, "ORG_LOGIN/REPOSITORY_NAME")]
+    [InlineData("https://api.example.ghe.com", "org/name", "repo name", "org%2Fname/repo%20name")]
+    public async Task SetRepositoryCustomProperties_Calls_The_Right_Endpoint_With_Payload(string apiUrl, string org, string repo, string escapedPath)
+    {
+        var githubApi = new GithubApi(_githubClientMock.Object, apiUrl, _retryPolicy, _archiveUploader.Object);
+        var properties = JObject.Parse("""
+            {"environment":"production","teams":["platform","security"],"reviewed":"true","unset":null,"text":"quotes: \" and newline: \n"}
+            """);
+        var payload = JObject.Parse("""
+            {
+                "properties": [
+                    {"property_name":"environment","value":"production"},
+                    {"property_name":"teams","value":["platform","security"]},
+                    {"property_name":"reviewed","value":"true"},
+                    {"property_name":"unset","value":null},
+                    {"property_name":"text","value":"quotes: \" and newline: \n"}
+                ]
+            }
+            """);
+
+        await githubApi.SetRepositoryCustomProperties(org, repo, properties);
+
+        _githubClientMock.Verify(x => x.PatchAsync($"{apiUrl}/repos/{escapedPath}/properties/values",
+            It.Is<object>(body => JToken.DeepEquals(JObject.FromObject(body), payload)), null), Times.Once);
+    }
+
+    [Fact]
+    public async Task SetRepositoryCustomProperties_Rejects_Null_Properties()
+    {
+        await _githubApi.Invoking(x => x.SetRepositoryCustomProperties(GITHUB_ORG, GITHUB_REPO, null))
+            .Should().ThrowExactlyAsync<ArgumentNullException>();
+
+        _githubClientMock.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task SetRepositoryCustomProperties_Propagates_Api_Errors()
+    {
+        var exception = new HttpRequestException("Permission denied", null, HttpStatusCode.Forbidden);
+        _githubClientMock.Setup(x => x.PatchAsync(It.IsAny<string>(), It.IsAny<object>(), null)).ThrowsAsync(exception);
+
+        var result = await _githubApi.Invoking(x => x.SetRepositoryCustomProperties(GITHUB_ORG, GITHUB_REPO, JObject.Parse("{\"environment\":\"production\"}")))
+            .Should().ThrowExactlyAsync<HttpRequestException>();
+
+        result.Which.Should().BeSameAs(exception);
+    }
+
     [Fact]
     public async Task AddAutoLink_Calls_The_Right_Endpoint_With_Payload()
     {

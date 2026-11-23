@@ -1,4 +1,7 @@
-﻿using System.Linq;
+﻿using System.IO;
+using System.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using OctoshiftCLI.Commands;
 using OctoshiftCLI.Extensions;
 using OctoshiftCLI.Services;
@@ -28,6 +31,7 @@ public class MigrateRepoCommandArgs : CommandArgs
     public string GithubPat { get; set; }
     public bool QueueOnly { get; set; }
     public string TargetRepoVisibility { get; set; }
+    public string CustomProperties { get; set; }
     public string TargetApiUrl { get; set; }
     public string TargetUploadsUrl { get; set; }
     public bool Kerberos { get; set; }
@@ -56,6 +60,8 @@ public class MigrateRepoCommandArgs : CommandArgs
 
     public override void Validate(OctoLogger log)
     {
+        _ = ParseCustomProperties();
+
         if (!BbsServerUrl.HasValue() && !ArchiveUrl.HasValue() && !ArchivePath.HasValue())
         {
             throw new OctoshiftCliException("Either --bbs-server-url, --archive-path, or --archive-url must be specified.");
@@ -90,6 +96,56 @@ public class MigrateRepoCommandArgs : CommandArgs
         {
             log?.LogWarning("--ssh-port is set to 7999, which is the default port that Bitbucket Server and Bitbucket Data Center use for Git operations over SSH. This is probably the wrong value, because --ssh-port should be configured with the SSH port used to manage the server where Bitbucket Server/Bitbucket Data Center is running, not the port used for Git operations over SSH.");
         }
+    }
+
+    public JObject ParseCustomProperties()
+    {
+        if (CustomProperties is null)
+        {
+            return null;
+        }
+
+        if (QueueOnly)
+        {
+            throw new OctoshiftCliException("--custom-properties cannot be used with --queue-only because custom properties are applied after the migration succeeds.");
+        }
+
+        if (GithubOrg.IsNullOrWhiteSpace() || GithubRepo.IsNullOrWhiteSpace())
+        {
+            throw new OctoshiftCliException("--custom-properties requires --github-org and --github-repo and cannot be used for an export-only migration.");
+        }
+
+        JObject properties;
+        try
+        {
+            using var stringReader = new StringReader(CustomProperties);
+            using var jsonReader = new JsonTextReader(stringReader) { DateParseHandling = DateParseHandling.None };
+            properties = JObject.Load(jsonReader, new JsonLoadSettings { DuplicatePropertyNameHandling = DuplicatePropertyNameHandling.Error });
+            if (jsonReader.Read())
+            {
+                throw new OctoshiftCliException("--custom-properties must contain a single JSON object.");
+            }
+        }
+        catch (JsonException ex)
+        {
+            throw new OctoshiftCliException("--custom-properties must be a valid JSON object with unique property names, for example: '{\"environment\":\"production\"}'.", ex);
+        }
+
+        foreach (var property in properties.Properties())
+        {
+            if (property.Name.IsNullOrWhiteSpace())
+            {
+                throw new OctoshiftCliException("--custom-properties cannot contain an empty property name.");
+            }
+
+            if (property.Value.Type is not (JTokenType.String or JTokenType.Null) &&
+                !(property.Value is JArray values && values.All(value => value.Type == JTokenType.String)))
+            {
+                throw new OctoshiftCliException($"The custom property '{property.Name}' must have a string, an array of strings, or null as its value. Use \"true\" or \"false\" strings for boolean properties.");
+            }
+        }
+
+        return properties;
     }
 
     private void ValidateNoGenerateOptions()

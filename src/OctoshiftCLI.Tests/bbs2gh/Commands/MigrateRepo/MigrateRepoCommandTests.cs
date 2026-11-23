@@ -1,4 +1,6 @@
 using System;
+using System.CommandLine;
+using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using OctoshiftCLI.BbsToGithub.Commands.MigrateRepo;
@@ -58,7 +60,7 @@ public class MigrateRepoCommandTests
         var command = new MigrateRepoCommand();
         command.Should().NotBeNull();
         command.Name.Should().Be("migrate-repo");
-        command.Options.Count.Should().Be(33);
+        command.Options.Count.Should().Be(34);
 
         TestHelpers.VerifyCommandOption(command.Options, "bbs-server-url", true);
         TestHelpers.VerifyCommandOption(command.Options, "bbs-project", true);
@@ -85,6 +87,7 @@ public class MigrateRepoCommandTests
         TestHelpers.VerifyCommandOption(command.Options, "smb-domain", false);
         TestHelpers.VerifyCommandOption(command.Options, "queue-only", false);
         TestHelpers.VerifyCommandOption(command.Options, "target-repo-visibility", false);
+        TestHelpers.VerifyCommandOption(command.Options, "custom-properties", false);
         TestHelpers.VerifyCommandOption(command.Options, "kerberos", false, true);
         TestHelpers.VerifyCommandOption(command.Options, "verbose", false);
         TestHelpers.VerifyCommandOption(command.Options, "keep-archive", false);
@@ -92,6 +95,29 @@ public class MigrateRepoCommandTests
         TestHelpers.VerifyCommandOption(command.Options, "target-api-url", false);
         TestHelpers.VerifyCommandOption(command.Options, "target-uploads-url", false);
         TestHelpers.VerifyCommandOption(command.Options, "use-github-storage", false);
+    }
+
+    [Fact]
+    public async Task It_Binds_Custom_Properties_Json_To_Command_Args()
+    {
+        const string customProperties = "{\"environment\":\"production\",\"teams\":[\"platform\",\"security\"]}";
+        MigrateRepoCommandArgs boundArgs = null;
+        var argsBinder = new GenericArgsBinder<MigrateRepoCommand, MigrateRepoCommandArgs>(_command);
+        _command.SetHandler(args => { boundArgs = args; }, argsBinder);
+
+        var exitCode = await _command.InvokeAsync(new[]
+        {
+            "--bbs-server-url", BBS_SERVER_URL,
+            "--bbs-project", "project",
+            "--bbs-repo", "repo",
+            "--github-org", GITHUB_ORG,
+            "--github-repo", "target-repo",
+            "--custom-properties", customProperties
+        });
+
+        exitCode.Should().Be(0);
+        boundArgs.Should().NotBeNull();
+        boundArgs.CustomProperties.Should().Be(customProperties);
     }
 
     [Fact]
